@@ -1,0 +1,141 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "about": "عن الشركة",
+    "contact": "الاتصال بنا",
+    "login": "تسجيل الدخول",
+    "register": "التسجيل",
+    "bookingHistory": "تاريخ الحجوزات",
+    "logout": "خروج"
+  },
+  "home": {
+    "title": "الطريقة الافضل لحجز سيارة",
+    "bookNow": "إحجز الان",
+    "bookLater": "حجز موعد",
+    "sections": {
+      "ourVehicle": "مركباتنا",
+      "ourServices": "خدماتنا",
+      "testimonials": "رأى عملائنا"
+    },
+    "vehicleDetailLabels": {
+      "make": "جعل",
+      "model": "نموذج",
+      "vehicleType": "نوع السيارة",
+      "color": "اللون",
+      "vehicleYear": "السيارة العام",
+      "engineType": "نوع المحرك",
+      "seatingCapacity": "المقاعد",
+      "average": "متوسط (ميل لكل جالون)"
+    },
+    "form": {
+      "pickupAddr": "إختار عنوان",
+      "dropAddr": "عنوان التوصيل",
+      "noPerson": "عدد الاشخاص",
+      "selectVehicle": "يرجى اختيار نوع المركبة",
+      "selectDate": "تحديد اليوم",
+      "selectTime": "تحديد الوقت",
+      "other": "معلومات أخرى",
+      "book": "حجز"
+    }
+  },
+  "about": {
+    "title": "معلومات عن إدارة الاسطول",
+    "subTitle": "نظام إدارة المركبات",
+    "proudly": "نخدمكم بفخر",
+    "cities": "المناطق",
+    "cityText": "ندير اسطولك لتصل وجهتك بالوقت المحدد كل مرة",
+    "vehicleText": "نخدم مئات العملاء يوميا",
+    "vehicles": "المركبات",
+    "testimonialTitle": "افكار بلا حدود وراء نظام إدارة الاسطول"
+  },
+  "contact": {
+    "title": "موقعنا",
+    "subTitle": "موجودون دائما بخدمتك",
+    "haveQuery": "موجودين لاى استفسار",
+    "articles": "مستندات للمساعدة",
+    "clickHere": "اضغط هنا",
+    "customerCare": "خدمة العملاء",
+    "email": "للتواصل من خلال الايميل",
+    "driveFleet": "Drive for fleet",
+    "join": "إنضم الينا",
+    "formSuccess": "شكرا لاتصالك ..سوف نقوم بالرد باقرب وقت",
+    "form": {
+      "title": "للتواصل معنا"
+    }
+  },
+  "bookingHistory": {
+    "searchText": "للبحث عن حجز بالتاريخ",
+    "searchResult": "نتيجة البحث",
+    "searchTitle": "إظهار الحجوزات من",
+    "rideDate": "تاريخ الرحلة",
+    "from": "من",
+    "to": "الى",
+    "Time": "الوقت",
+    "Rupees": "روبية",
+    "Kilometers": "كيلومترات",
+    "noPerson": "عدد الاشخاص",
+    "vehicleType": "نوع المركبة",
+    "status": "الحالة"
+  },
+  "form": {
+    "email": "الايميل",
+    "SignIn": "تسجيل الدخول",
+    "forgotPassword": "نسيت كلمة المرور ?",
+    "noAccount": "لا يوجد حساب  ?",
+    "register": "تسجيل جديد",
+    "firstName": "الاسم الاول",
+    "lastName": "الاسم الاخير",
+    "address": "العنوان (إختيارى)",
+    "mobile": "رقم الموبيل",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "male": "ذكر",
+    "female": "انثى",
+    "signUp": "تسجيل",
+    "signIn": "تسجيل الدخول",
+    "createAcc": "إنشاء حساب جديد",
+    "haveAcc": "يوجد لدى حساب ?",
+    "login": "تسجيل الدخول",
+    "name": "الاسم",
+    "message": "رجاء اكتب رسالتك",
+    "send": "إرسال",
+    "bookSuccess": "تم تسجيل الحجز بنجاح",
+    "bookFail": "لا يمكن اتمام طلبك. برجاء المحاولة لاحقا",
+    "registerSuccess": "تم التسجيل بنجاح",
+    "registerSuccess2": "يرجى تسجيل الدخول للمتابعة",
+    "passwordReset": "يرجى الدخول بكلمة المرور الجديدة",
+    "passwordReset2": "تم تعديل كلمة المرور"
+  },
+  "forgetPassword": {
+    "title": "نسيت كلمة المرور",
+    "text": "سوف يتم ارسال رابط إعادة تعيين كلمة المرور للإيميل المسجل لدينا",
+    "getLink": "لديك رابط",
+    "success": "يرجى مراجعة الايميل",
+    "success2": "تم ارسال رابط إعادة تعيين كلمة المرور",
+    "failed": "يرجى مراجعة الايميل الخاص بك",
+    "reset": "إعادة تعيين كلمة المرور",
+    "resetPass": "إعادة تعيين"
+  },
+  "footer": {
+    "aboutUs": "عن الشركة",
+    "address": "العنوان",
+    "contactUs": "الاتصال بنا",
+    "usefulLinks": {
+      "title": "روابط مفيدة",
+      "booking": "حجوزات",
+      "contactUs": "الاتصال بنا",
+      "cancellation": "الغاء الحجز",
+      "terms": "الشروط",
+      "privacy": "سياسة الخصوصية"
+    }
+  },
+  "formErrors": {
+    "required": "هذا الحقل مطلوب",
+    "email": "لابد من ادخال ايميل صحيح",
+    "confirmPassword": "كلمة المرور غير مطابقة",
+    "loginError": "المعلومات المدخلة غير مطابقة لبياناتك لدينا",
+    "registerError": "يرجى المحاولة مرة أخرى بمعلومات صحيحة",
+    "pleaseLogin": "يرجى تسجيل الدخول",
+    "pleaseLogin2": "يرجى تسجيل الدخول لحجز موعد"
+  }
+}

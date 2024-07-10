@@ -1,0 +1,248 @@
+// Mixins
+
+/*=============================================
+=            Responsive media queries         =
+=============================================*/
+
+$laptop: 1280px;
+$tablet: 1025px;
+$mobile: 770px;
+
+@mixin for-size($range) {
+  $mobile: 600px;
+  $tablet: 900px;
+  $laptop: 1200px;
+
+  @if $range==mobile {
+    @media (max-width: $mobile) {
+      @content;
+    }
+  } @else if $range==tablet {
+    @media (max-width: $tablet) {
+      @content;
+    }
+  } @else if $range==laptop {
+    @media (max-width: $laptop) {
+      @content;
+    }
+  }
+}
+
+/*=============================================
+//                 All Mixins       
+=============================================*/
+
+$opacity-list: 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1;
+
+@each $op in $opacity-list {
+  $i: index($opacity-list, $op);
+
+  .opacity-#{$i} {
+    opacity: $op;
+  }
+}
+
+@mixin round-image($d, $r: 50%) {
+  width: $d;
+  height: $d;
+  border-radius: $r;
+}
+
+@mixin size($d) {
+  width: $d;
+  height: $d;
+}
+
+@mixin flex($d, $j, $a) {
+  display: flex;
+  flex-direction: $d;
+  justify-content: $j;
+  align-items: $a;
+}
+
+@mixin flex-col-center() {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-row-center() {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin horizontal-align() {
+  left: 50%;
+  transform: translatex(-50%);
+}
+
+@mixin flex-row() {
+  display: flex;
+  flex-direction: row;
+}
+
+@mixin flex-row-reverse() {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+@mixin flex-col() {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin flex-align($justify, $align) {
+  justify-content: $justify;
+  align-items: $align;
+}
+
+@mixin psuedo() {
+  content: "";
+  position: absolute;
+}
+
+@mixin psuedo-basic() {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+// Global variables
+@import url("https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700");
+
+$primary-color: #00cc37;
+$text-color: #02001c;
+$grey-color: #34404b;
+$light-grey-color: rgb(216, 222, 222);
+
+$service-section: transparentize($primary-color, 0.01);
+
+$font-primary: "Montserrat";
+
+// Default template styles
+
+//  Global Reset style //
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  line-height: 1.15;
+  font-family: $font-primary;
+  color: $text-color;
+  /* 1 */
+}
+p {
+  font-size: 14px;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+[data-target]:hover,
+[data-close]:hover {
+  cursor: pointer;
+}
+
+body[dir="rtl"] {
+  .text-left {
+    text-align: right !important;
+  }
+  input.vs__search {
+    text-align: right !important;
+  }
+  ul.vs__dropdown-menu li {
+    text-align: right !important;
+  }
+}
+
+body[dir="rtl"] div[class^="col"],
+div[class*="col"] {
+  &:focus {
+    outline: 0 !important;
+    box-shadow: none;
+  }
+}
+
+section,
+main,
+footer {
+  display: block;
+}
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  -webkit-appearance: button;
+
+  &:hover {
+    cursor: pointer !important;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+[type="number"]::-webkit-inner-spin-button,
+[type="number"]::-webkit-outer-spin-button {
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover,
+  &:focus,
+  &:active {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+*,
+::before,
+::after {
+  background-repeat: no-repeat;
+}
+
+// list reset
+
+ul {
+  padding: 0;
+}
+
+.error {
+  margin-top: 13px;
+  display: block;
+  padding-left: 30px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #c62828;
+  position: absolute;
+
+  bottom: -20px;
+}
+
+.f {
+  font-size: 12px;
+}
+
+.form-action-button {
+  &:hover {
+    background-color: darken($primary-color, 10);
+    box-shadow: 0px 6px 20px -2px transparentize($primary-color, 0.7);
+  }
+}

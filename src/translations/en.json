@@ -1,0 +1,142 @@
+{
+  "nav": {
+    "home": "home",
+    "about": "about",
+    "contact": "contact",
+    "login": "login",
+    "register": "register",
+    "bookingHistory": "booking history",
+    "logout": "logout"
+  },
+  "home": {
+    "title": "Reliable way to book a cab",
+    "bookNow": "Book now",
+    "bookLater": "Book later",
+    "sections": {
+      "ourVehicle": "Our vehicles",
+      "ourServices": "Our services",
+      "testimonials": "Testimonials"
+    },
+    "vehicleDetailLabels": {
+      "make": "Make",
+      "model": "Model",
+      "vehicleType": "Vehicle type",
+      "color": "Color",
+      "vehicleYear": "Vehicle year",
+      "engineType": "Engine type",
+      "seatingCapacity": "Seating capacity",
+      "average": "Average (Miles per Gallon)"
+    },
+    "form": {
+      "pickupAddr": "Pickup address",
+      "dropAddr": "Dropoff address",
+      "noPerson": "No of persons",
+      "selectVehicle": "Select vehicle type",
+      "selectDate": "Select date",
+      "selectTime": "Select time",
+      "other": "Other things that we should know",
+      "book": "Book"
+    }
+  },
+  "about": {
+    "title": "About Fleet manager",
+    "subTitle": "A vehicle Mgmt system",
+    "proudly": "Proudly serving you",
+    "cities": "cities",
+    "cityText": "serviced by the fleet to get you to your destination on time, every time",
+    "vehicleText": "serving millions of customers everyday",
+    "vehicles": "vehicles",
+    "testimonialTitle": "Minds behind Fleet Managers"
+  },
+  "contact": {
+    "title": "Our location",
+    "subTitle": "Always be there for you",
+    "haveQuery": "Have any query",
+    "articles": "Articles for you",
+    "clickHere": "Click here",
+    "customerCare": "Customer care",
+    "email": "Contact us by email",
+    "driveFleet": "Drive for fleet",
+    "join": "To join us",
+    "formSuccess": "Thank you ! We will get back to you Soon...",
+    "form": {
+      "title": "Get into touch with us"
+    }
+  },
+  "bookingHistory": {
+    "searchText": "Search Bookings by date",
+    "searchResult": "Search results",
+    "searchTitle": "Showing booking from",
+    "rideDate": "Ride date",
+    "from": "From",
+    "to": "To",
+    "Time": "Time",
+    "Rupees": "Rupees",
+    "Kilometers": "Kilometers",
+    "noPerson": "No of persons",
+    "vehicleType": "Vehicle type",
+    "status": "Status"
+  },
+
+  "form": {
+    "email": "Email address",
+    "SignIn": "Sign In",
+    "forgotPassword": "Forgot password ?",
+    "noAccount": "Don't have an account ?",
+    "register": "Register",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "address": "Address (optional)",
+    "mobile": "Mobile number",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "male": "Male",
+    "female": "Female",
+    "signUp": "Sign up",
+    "signIn": "Sign In",
+    "createAcc": "Create an account",
+    "haveAcc": "Already have an account ?",
+    "login": "Login",
+    "name": "Name",
+    "message": "Enter your message",
+    "send": "Send",
+    "bookSuccess": "Your cab has been booked succesfully.",
+    "bookFail": "Cannot complete your request, try again later.",
+    "registerSuccess": "Registered successfully",
+    "registerSuccess2": "please log in to continue.",
+    "passwordReset": "Please login with your new password.",
+    "passwordReset2": "Your Password has been reset.."
+  },
+  "forgetPassword": {
+    "title": "Forget password",
+    "text": "We will send you a password reset link on registered email address.",
+    "getLink": "Get Link",
+    "success": "Check your email",
+    "success2": "Password reset link has been sent.",
+    "failed": "Please check your email address.",
+    "reset": "Reset Password",
+    "resetPass": "Reset"
+  },
+  "footer": {
+    "aboutUs": "About us",
+    "address": "Address",
+    "contactUs": "Contact us",
+    "usefulLinks": {
+      "title": "Useful links",
+      "booking": "Booking",
+      "contactUs": "Contact us",
+      "cancellation": "Cancellation",
+      "terms": "Terms",
+      "privacy": "Privacy policy"
+    }
+  },
+  "formErrors": {
+    "required": "This field is required",
+    "email": "The email field must be a valid email",
+    "confirmPassword": "Passwords does not match.",
+    "loginError": "These credentials do not match our records.",
+    "registerError": "Please try with different credentials.",
+    "pleaseLogin": "Please log in.",
+    "pleaseLogin2": "login is required to book a cab"
+  }
+}
