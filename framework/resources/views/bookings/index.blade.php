@@ -119,7 +119,7 @@
                 @endif
                 </td> --}}
                 <td style="width: 10% !important">
-                <div class="btn-group">
+                  <div class="btn-group">
                     <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
                       <span class="fa fa-gear"></span>
                       <span class="sr-only">Toggle Dropdown</span>
