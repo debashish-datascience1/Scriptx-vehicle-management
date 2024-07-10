@@ -1,0 +1,39 @@
+{
+  "name": "safestudio/firebase-php",
+  "description": "Firebase REST API easy wrapper for Laravel",
+  "license": "MIT",
+  "keywords": [
+    "framework",
+    "laravel",
+    "firebase",
+    "wrapper",
+    "rest",
+    "api"
+  ],
+  "authors": [
+    {
+      "name": "Le Minh Tri",
+      "email": "ansidev@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "SafeStudio\\Firebase\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SafeStudio\\Firebase\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": ">=7.1",
+    "ktamas77/firebase-php": "^2.2",
+    "illuminate/support": "^5.4"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.3",
+    "orchestra/testbench": "~3.4",
+    "vlucas/phpdotenv": "2.4"
+  }
+}

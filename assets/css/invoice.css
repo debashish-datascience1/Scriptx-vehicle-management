@@ -1,0 +1,529 @@
+@import url('https://fonts.googleapis.com/css2?family=PT+Serif&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+@charset "utf-8";
+/* CSS Document */
+body {
+    font-size: 14px !important;
+    background-color: #ffffff !important;
+    background-image: url(images/tr-bg.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.invoice {
+    width: 100%;
+    float: left;
+    background: #dafbc0;
+    padding-top: 3%;
+}
+.r-logo {
+    width: 10%;
+    float: left;
+}
+.r-logo img {
+    width: 100%;
+    float: left;
+}
+.lg-tx {
+    width: 80%;
+    float: left;
+}
+.tx-bx {
+    width: 100%;
+    float: left;
+    text-align: center;
+}
+.tx-bx p {
+    font-size: 16px;
+    font-family: 'Open Sans', sans-serif;
+    margin-bottom: 0;
+    line-height: 19px;
+}
+.tx-bx h3 {
+    font-size: 30px;
+    text-transform: capitalize;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+}
+.gs-tx {
+    width: 100%;
+    text-align: center;
+    float: left;
+    padding-top: 4%;
+}
+.gs-tx p {
+    width: 47%;
+    float: left;
+    font-size: 16px;
+    font-family: 'Open Sans', sans-serif;
+    
+}
+.tax {
+    width: 100%;
+    float: left;
+    border-bottom: solid 1px #000;
+    padding: 0;
+}
+.tax h6 {
+    margin-top: 0;
+    font-size: 18px;
+    text-transform: uppercase;
+    border-bottom: solid 1px #000;
+    padding: 5px 4px;
+    margin-bottom: 0;
+}
+.tax span {
+    width: 54%;
+    float: right;
+    font-weight: 700;
+}
+.tax-lt {
+    width: 50%;
+    float: left;
+    padding: 15px 5px;
+}
+.tax-rt {
+    width: 50%;
+    float: left;
+    padding: 0 7px;
+    padding-bottom: 20px;
+    border-left: solid #000 1px;
+}
+.gs-tx p span {
+    font-weight: 600;
+}
+.tax-lt p {
+    font-size: 15px;
+    line-height: 19px;
+    font-family: 'Open Sans', sans-serif;
+}
+.tax-rt p {
+    font-size: 15px;
+    line-height: 19px;
+    font-family: 'Open Sans', sans-serif;
+    margin-top: 17px;
+    margin-bottom: 0;
+}
+.co-re {
+    float: left;
+    width: 49%;
+}
+.tax-lt2 {
+    width: 100%;
+    float: left;
+    padding: 0;
+    border-top: none;
+}
+.tax-lt2 h6 {
+    font-size: 18px;
+    text-transform: uppercase;
+    border-bottom: solid 1px #000;
+    padding: 5px 4px;
+    margin-bottom: 0;
+    text-align: center;
+    border-right: solid 1px #000;
+    margin-top: 0;
+}
+.tax-lt2 span {
+    width: 54%;
+    float: right;
+    font-weight: 700;
+}
+.tx-lt2 {
+    width: 50%;
+    float: left;
+}
+.tx-rt2 {
+    width: 50%;
+    float: left;
+}
+p.traprt {
+    float: left;
+}
+.tx-lt2 p {
+    font-size: 15px;
+    line-height: 19px;
+    font-family: 'Open Sans', sans-serif;
+}
+.tx-rt2 p {
+    font-size: 15px;
+    line-height: 19px;
+    font-family: 'Open Sans', sans-serif;
+}
+.dt-bx {
+    border-right: solid 1px #000;
+    padding: 21px 0 45px 7px;
+}
+.tx-rt2 .dt-bx {
+    border: none;
+}
+p.bal-tx {
+    width: 50%;
+    float: left;
+    margin-bottom: 0;
+}
+.tax-3 {
+    border: solid 0px #000;
+    float: left;
+    width: 100%;
+}
+.tax-3 table {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+.tax-3 td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  text-align: center;
+}
+.tax-3 th {
+    text-align: center;
+    width: 108px;
+    padding: 0 0;
+    border: 1px solid black;
+    font-size: 15px;
+}
+th.igcr {
+    width: 372px;
+    float: left;
+    border: 0;
+}
+td.dm {
+    width: 124px;
+    border: 1px solid #dafbc0;
+    border-right: 1px solid #000;
+    line-height: 44px;
+    font-weight: 700;
+    font-size: 15px;
+}
+.tax-4 {
+    width: 100%;
+    float: left;
+    border-bottom: solid 1px #000;
+    margin-top: 0px;
+    border-top: none;
+}
+.tx-44{
+width: 50%;
+    float: left;
+    padding-top: 22px;
+}
+.tx-55 {
+    width: 50%;
+    float: left;
+    padding-top: 22px;
+}
+.tx-55 p {
+    font-size: 15px;
+    line-height: 19px;
+    font-family: 'Open Sans', sans-serif;
+    text-align: right;
+    font-weight: 600;
+    padding: 0 11px 0 0;
+}
+.tx-44 p {
+    font-size: 15px;
+    line-height: 8px;
+    font-family: 'Open Sans', sans-serif;
+    padding: 0 9px;
+    text-transform: uppercase;
+}
+.tax-5 {
+    width: 100%;
+    float: left;
+}
+.tax-5 span {
+    float: right;
+}
+.tax-5 h6 {
+    margin-bottom: 0;
+    line-height: 34px;
+    padding: 0 10px 0 8px;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 0px;
+}
+.tax-6 {
+    width: 100%;
+    float: left;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    text-transform: uppercase;
+    border-bottom: solid 1px #000;
+    padding: 0 10px;
+    border-top: solid 1px #000;
+    line-height: 29px;
+}
+
+.tax-7 {
+    width: 100%;
+    float: left;
+}
+.tx-66 {
+    width: 50%;
+    float: left;
+    /* border: solid; */
+    padding-top: 4%;
+}
+.tx-77 {
+    width: 50%;
+    float: right;
+    text-align: right;
+}
+.tx-66 p {
+    font-size: 15px;
+    line-height: 21px;
+    font-family: 'Open Sans', sans-serif;
+    padding: 0 9px;
+}
+.tx-66 h6 {
+    margin-top: 13%;
+    padding: 0 10px;
+    font-weight: 600;
+    font-size: 15px;
+}
+.tx-77 p {
+    width: 100%;
+    float: left;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    text-transform: uppercase;
+    /* border: solid 1px #000; */
+    padding: 0 10px;
+    margin-top: 12%;
+    text-align: right;
+}
+.stam img {
+    width: 26%;
+    padding-right: 14px;
+    padding-bottom: 20px;
+}
+.tx-77 h6 {
+    padding-right: 11px;
+    font-size: 15px;
+    font-weight: 600;
+}
+.md-pr {
+    width: 100%;
+    float: left;
+    border: solid 1px #000;
+    padding-bottom: 21px;
+    margin-bottom: 7%;
+}
+
+/* login */
+.tr-fr {
+    text-align: center;
+    width: 100%;
+    display: inline-block;
+    padding-top: 0%;
+    padding-bottom: 6%;
+}
+.l-logo img {
+    width: 100px;
+}
+
+.l-logo {
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+    padding-top: 1%;
+    text-align: left;
+}
+
+.tr-fr h5 {
+    font-size: 24px;
+    padding-top: 7px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+input.input100 {
+    width:353px;
+    padding: 12px 38px;
+    margin-bottom: 11px;
+    margin-top: 6px;
+    border-radius: 26px;
+    border: 1px #ccc solid;
+}
+.tr-fr i.fa.fa-user {
+    position: relative;
+    right: 75%;
+    font-size: 22px;
+    top: 2px;
+}
+.tr-fr i.fa.fa-lock {
+    position: relative;
+    right: 75%;
+    font-size: 22px;
+    top: 2px;
+}
+button.login100-form-btn {
+    color: #fff;
+    border: solid 1px #0b3a69c4;
+    padding: 10px 40px;
+    border-radius: 34px;
+    background-image: linear-gradient(to right, #111c84 , #040c58);
+    cursor: pointer;
+    font-size: 17px;
+    margin-top: 6px;
+}
+button.login100-form-btn:hover {
+    background-image: linear-gradient(to right, #040c58 ,#111c84);
+}
+
+.ft {
+    width: 100%;
+    float: left;
+    text-align: center;
+    background-color: #040c58;
+    color: #fff;
+    font-size: 17px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+}
+.ft-lt {
+    width: 50%;
+    float: left;
+    text-align: left;
+}
+.ft-rt {
+    width: 50%;
+    float: left;
+    text-align: left;
+}
+
+.ft-ud {
+    text-align: center;
+    background-color: #050706;
+    float: left;
+    width: 100%;
+    color: #fff;
+    padding: 12px 0;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 17px;
+}
+.lg-fr {
+    width: 100%;
+    float: left;
+}
+form {
+    background-color: #040c58;
+    width: 40%;
+    padding: 32px 0 70px 0;
+    display: inline-block;
+    margin-top: 4%;
+}
+
+/*excel sheet*/
+table.excel-1 {
+    width: 100%;
+    float: left;
+}
+
+.excel-1 td, th {
+    border: 1px solid #5d5757;
+    text-align: center;
+    padding: 8px;
+    width: 84%;
+    font-weight: 500;
+    font-size: 20px;
+}
+
+.excel-1 tr{
+  background-color: #dddddd;
+}
+table.excel-2 {
+    width: 100%;
+    float: left;
+}
+section.excel {
+    padding-top: 3%;
+}
+
+.excel-2 td, th {
+    border: 1px solid #5d5757;
+    text-align: center;
+    padding: 8px;
+    width: 50%;
+}
+
+.excel-2 tr{
+  background-color: #dddddd;
+}
+table.excel-3 {
+    width: 100%;
+    float: left;
+}
+
+.excel-3 td, th {
+    border: 1px solid #5d5757;
+    text-align: left;
+    padding: 8px;
+}
+
+.excel-3 tr{
+  background-color: #dddddd;
+}
+.cs {
+    background-color: #0f4e09;
+    color: #fff;
+}
+.excel-3 td.dt {
+    background-color: #0f4e09;
+    text-align: left;
+    color: #fff;
+    font-weight: 500;
+}
+.excel-3 td.dt1 {
+    text-align:center;
+    background-color: #0f4e09;
+    color: #fff;
+    font-weight: 500;
+}
+.excel-3 span {
+    text-align: right;
+    width: 75%;
+    float: right;
+}
+.excel-3 i.fa.fa-rupee {
+    padding-top: 5px;
+}
+
+/*sheet*/
+.sheet1 table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+.sheet1 th {
+    border: 0px solid black;
+    border-collapse: collapse;
+    text-align: center;
+}
+.sheet1 td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: 500px;
+    text-align: center;
+}
+td.de-1 {
+    width: 25%;
+}
+td.de-3 {
+    width: 25%;
+    color:#fff;
+}
+td.de-4 {
+    width: 14%;
+}
+td.de-5 {
+    width: 28%;
+}
+section.sheet1 {
+    padding-top: 3%;
+    padding-bottom: 4%;
+}
