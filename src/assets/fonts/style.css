@@ -1,0 +1,142 @@
+@font-face {
+  font-family: 'Fleet';
+  src:
+    url('fonts/Fleet.ttf?8wp8i8') format('truetype'),
+    url('fonts/Fleet.woff?8wp8i8') format('woff'),
+    url('fonts/Fleet.svg?8wp8i8#Fleet') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+i {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'Fleet' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fleet-pickup:before {
+  content: "\e900";
+}
+.fleet-drop:before {
+  content: "\e901";
+}
+.fleet-person:before {
+  content: "\e902";
+}
+.fleet-vehicle:before {
+  content: "\e903";
+}
+.fleet-calendar:before {
+  content: "\e904";
+}
+.fleet-time:before {
+  content: "\e905";
+}
+.fleet-close:before {
+  content: "\e906";
+}
+.fleet-booking-history:before {
+  content: "\e907";
+}
+.Fleet-Icons-09:before {
+  content: "\e908";
+}
+.Fleet-Icons-10:before {
+  content: "\e909";
+}
+.fleet-login:before {
+  content: "\e90a";
+}
+.fleet-arrow-right:before {
+  content: "\e90b";
+}
+.fleet-arrow-left:before {
+  content: "\e90c";
+}
+.fleet-search:before {
+  content: "\e90d";
+}
+.Fleet-Icons-15:before {
+  content: "\e90e";
+}
+.fleet-diamond:before {
+  content: "\e90f";
+}
+.fleet-quote:before {
+  content: "\e910";
+}
+.fleet-chevron-down:before {
+  content: "\e911";
+}
+.fleet-arrow-up:before {
+  content: "\e912";
+}
+.fleet-chevron-left:before {
+  content: "\e913";
+}
+.fleet-chevron-right:before {
+  content: "\e914";
+}
+.fleet-arrow-right-2:before {
+  content: "\e915";
+}
+.fleet-rupee:before {
+  content: "\e916";
+}
+.fleet-meter:before {
+  content: "\e917";
+}
+.fleet-Icons-25:before {
+  content: "\e918";
+}
+.fleet-phone:before {
+  content: "\e919";
+}
+.fleet-female:before {
+  content: "\e91a";
+}
+.fleet-male:before {
+  content: "\e91b";
+}
+.fleet-headphone:before {
+  content: "\e91c";
+}
+.fleet-book:before {
+  content: "\e91d";
+}
+.fleet-mail:before {
+  content: "\e91e";
+}
+.fleet-steering:before {
+  content: "\e91f";
+}
+.fleet-logout:before {
+  content: "\e920";
+}
+.fleet-facebook:before {
+  content: "\e921";
+}
+.fleet-google:before {
+  content: "\e922";
+}
+.fleet-instagram:before {
+  content: "\e923";
+}
+.fleet-linkedin:before {
+  content: "\e924";
+}
+.fleet-linkedin-in:before {
+  content: "\e925";
+}
+.fleet-twitter:before {
+  content: "\e926";
+}

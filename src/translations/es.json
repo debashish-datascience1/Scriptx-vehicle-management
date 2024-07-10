@@ -1,0 +1,139 @@
+{
+  "nav": {
+    "home": "casa",
+    "about": "acerca de",
+    "contact": "contacto",
+    "login": "inicio de sesión",
+    "register": "registro",
+    "bookingHistory": "reserva historia",
+    "logout": "cierre de sesión"
+  },
+  "home": {
+    "title": "De una forma confiable para reservar un taxi",
+    "bookNow": "Reserva ahora",
+    "bookLater": "Libro más adelante",
+    "sections": {
+      "ourVehicle": "Nuestros vehículos",
+      "ourServices": "Nuestros servicios",
+      "testimonials": "Testimonios"
+    },
+    "vehicleDetailLabels": {
+      "make": "Hacer",
+      "model": "Modelo",
+      "vehicleType": "Tipo de vehículo",
+      "color": "Color",
+      "vehicleYear": "Año del vehículo",
+      "engineType": "Tipo de motor",
+      "seatingCapacity": "Capacidad de asientos",
+      "average": "Promedio (Millas por Galón)"
+    },
+    "form": {
+      "pickupAddr": "Dirección de recogida",
+      "dropAddr": "Dirección de recepción de boletas",
+      "noPerson": "Ninguna de las personas",
+      "selectVehicle": "Seleccione el tipo de vehículo",
+      "selectDate": "Seleccione la fecha",
+      "selectTime": "Seleccione el tiempo",
+      "other": "Otras cosas que debemos saber",
+      "book": "Libro"
+    }
+  },
+  "about": {
+    "title": "Acerca del administrador de Flota",
+    "subTitle": "Un vehículo Mgmt sistema",
+    "proudly": "Orgullosamente sirviendo",
+    "cities": "ciudades",
+    "cityText": "atendidos por la flota para llegar a su destino a tiempo, todo el tiempo",
+    "vehicleText": "servir a millones de clientes todos los días",
+    "vehicles": "los vehículos",
+    "testimonialTitle": "Las mentes detrás de los Gestores de Flotas"
+  },
+  "contact": {
+    "title": "Nuestra ubicación",
+    "subTitle": "Siempre estar allí para usted",
+    "haveQuery": "Tiene alguna consulta",
+    "articles": "Artículos para usted",
+    "clickHere": "Haga clic aquí",
+    "customerCare": "Atención al cliente",
+    "email": "Póngase en contacto con nosotros por correo electrónico",
+    "driveFleet": "La unidad de la flota",
+    "join": "Para unirse a nosotros",
+    "formSuccess": "Gracias ! Nos pondremos en contacto con usted Pronto...",
+    "form": { "title": "Entrar en contacto con nosotros" }
+  },
+  "bookingHistory": {
+    "searchText": "Búsqueda de Reservas por fecha",
+    "searchResult": "Resultados de la búsqueda",
+    "searchTitle": "Mostrando de reserva de",
+    "rideDate": "Paseo de la fecha de",
+    "from": "De",
+    "to": "A",
+    "Time": "Tiempo",
+    "Rupees": "Rupias",
+    "Kilometers": "Kilómetros",
+    "noPerson": "Ninguna de las personas",
+    "vehicleType": "Tipo de vehículo",
+    "status": "Estado"
+  },
+  "form": {
+    "email": "Dirección de correo electrónico",
+    "SignIn": "Signo En",
+    "forgotPassword": "¿Olvidó la contraseña ?",
+    "noAccount": "No tienes una cuenta ?",
+    "register": "Registro",
+    "firstName": "Primer nombre",
+    "lastName": "Apellido",
+    "address": "Dirección (opcional)",
+    "mobile": "Número de móvil",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "male": "Macho",
+    "female": "Hembra",
+    "signUp": "Regístrate",
+    "signIn": "Signo En",
+    "createAcc": "Crear una cuenta",
+    "haveAcc": "Ya tienes una cuenta ?",
+    "login": "Inicio de sesión",
+    "name": "Nombre",
+    "message": "Introduzca su mensaje",
+    "send": "Enviar",
+    "bookSuccess": "Su cabina ha sido registrada con éxito.",
+    "bookFail": "No se puede completar la solicitud, inténtelo de nuevo más tarde.",
+    "registerSuccess": "Se ha registrado correctamente",
+    "registerSuccess2": "por favor, inicie sesión para continuar.",
+    "passwordReset": "Por favor, inicia sesión con tu nueva contraseña.",
+    "passwordReset2": "Su Contraseña se ha restablecido.."
+  },
+  "forgetPassword": {
+    "title": "Olvide la contraseña",
+    "text": "Le enviaremos un enlace para restablecer la contraseña en la dirección de correo electrónico registrada.",
+    "getLink": "Obtener Enlace",
+    "success": "Revise su correo electrónico",
+    "success2": "Enlace de restablecimiento de contraseña ha sido enviada.",
+    "failed": "Por favor, compruebe su dirección de correo electrónico.",
+    "reset": "Para Restablecer La Contraseña",
+    "resetPass": "Reset"
+  },
+  "footer": {
+    "aboutUs": "Acerca de nosotros",
+    "address": "Dirección",
+    "contactUs": "Póngase en contacto con nosotros",
+    "usefulLinks": {
+      "title": "Enlaces útiles",
+      "booking": "Reserva",
+      "contactUs": "Póngase en contacto con nosotros",
+      "cancellation": "Cancelación",
+      "terms": "Términos",
+      "privacy": "Política de privacidad"
+    }
+  },
+  "formErrors": {
+    "required": "Este campo es obligatorio",
+    "email": "El campo de correo electrónico debe ser un email válido",
+    "confirmPassword": "Las contraseñas no coinciden.",
+    "loginError": "Estas credenciales no coinciden con nuestros registros.",
+    "registerError": "Por favor, pruebe con diferentes credenciales.",
+    "pleaseLogin": "Por favor, inicie sesión en.",
+    "pleaseLogin2": "se requiere inicio de sesión para reservar un taxi"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "vehicleDetailLabels": {
+    "make": "جعل",
+    "model": "نموذج",
+    "vehicleType": "نوع السيارة",
+    "color": "اللون",
+    "vehicleYear": "السيارة العام",
+    "engineType": "نوع المحرك",
+    "seatingCapacity": "المقاعد",
+    "average": "متوسط (ميل لكل جالون)"
+  }
+}

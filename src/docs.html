@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="font-weight-bold my-5">Fleet Frontend</h1>
+        <h1>Installation</h1>
+        <ol>
+            <li>
+                <p>Make sure that your machine has node.js ( version 10 or greater ) and vue-cli ( latest version 3 )
+                    has
+                    installed. </p>
+            </li>
+            <li>
+                <p>After successfully installed both package go to front-end folder and in command prompt type
+                    <code>npm run serve</code> this will open the project in browser. this is to only make sure the
+                    project
+                    is
+                    working fine.</p>
+            </li>
+            <li>
+                <p><code>.env</code> files holds the API and deployment path configurations which are needed to make the
+                    application work, you can modify the values of <code>VUE_APP_API</code> and
+                    <code>VUE_APP_PATH</code>.
+                </p>
+                <blockquote>
+                    <p>Note : Do not modify the name of variables e.g. VUE_APP_API, only change it&#39;s values else it
+                        will
+                        not
+                        work. and you must specify the <code>VUE_APP_PATH</code> if you are deploying it in the sub
+                        directory
+                        else you can leave it as it is.</p>
+                </blockquote>
+            </li>
+
+        </ol>
+        <ol start='4'>
+            <li>Now, to finally to build the project open folder and in command prompt type <code>npm run build</code> .
+            </li>
+            <li>it will then build the project and will put the built files in <code>/dist</code> directory.</li>
+            <li>you will have to deploy all the files inside it into your server to make the application work.</li>
+
+        </ol>
+        <p>&nbsp;</p>
+        <h1 data-breakpage>Documentation </h1>
+        <p>&nbsp;</p>
+        <h2>Directory structure</h2>
+        <p>All the project files are stored in <code>/src</code> folder.</p>
+        <ol>
+            <li>
+                <p><code>/assets</code> : it holds all the static assets of the project which contains font-icon files ,
+                    images
+                    and global scss file.</p>
+            </li>
+            <li>
+                <p><code>/components</code> : it holds the ui components which are used in the application </p>
+                <ol>
+                    <li><code>/pages</code> : it contains all the page specific components.</li>
+                    <li><code>/ui</code> : it contains the global elements which are used in the application.</li>
+
+                </ol>
+            </li>
+            <li>
+                <p><code>/mixins</code> : holds the mixing file for the vue.js mixins.</p>
+            </li>
+            <li>
+                <p><code>/store</code> : It holds the VueX store.js file which handles the data which is used globally
+                    in
+                    application.</p>
+            </li>
+            <li>
+                <p><code>/api.js</code> : this file holds the configuration parameters.</p>
+            </li>
+            <li>
+                <p><code>/globalComponents.js</code> : it holds the global definition of some components so they are not
+                    needed
+                    to declare separately when we need it.</p>
+            </li>
+            <li>
+                <p><code>/routes.js</code> : it holds the router and paths configuration.</p>
+            </li>
+            <li>
+                <p><code>/auth.js</code> : it holds the authentication function for login / logout.</p>
+            </li>
+            <li>
+                <p><code>vendor.js</code> : it holds all the third party libraries used in the application.</p>
+            </li>
+
+        </ol>
+        <p>&nbsp;</p>
+        <h2>Working with API.</h2>
+        <p>We used axios module as our api support library.</p>
+        <p>Each Components holds its own logic and every API call are made in their corresponding component.
+            You can easily modify it in the component.</p>
+        <blockquote>
+            <p>Some api calls are made in vueX store ( store.js file ) as we need to access it in multiple components
+                which
+                is
+                made easier by doing so.</p>
+        </blockquote>
+        <p>We have included full API documentation in the separate file which you can check out.</p>
+        <p>&nbsp;</p>
+        <h2>Styling</h2>
+        <p>In our application we mostly used scoped css for better management and one single global scss file which we
+            included
+            globally because it holds the font / color etc basic default styles.</p>
+        <blockquote>
+            <p>In some components we had to use global styling ( not scoped ) to make sure it applies to third party
+                library
+                based components.</p>
+        </blockquote>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+    </div>
+</body>
+
+</html>
