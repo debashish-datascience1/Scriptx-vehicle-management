@@ -732,6 +732,7 @@ return [
     'selectPart' => "Select Part",
     'todayTransactions' => "Today's Transactions",
     'quantity' => 'Quantity',
+    'tyre_number'=> 'Tyre Number',
     'total' => 'Total',
     'serialNumber' => 'Serial Number',
     'parts' => 'Parts',

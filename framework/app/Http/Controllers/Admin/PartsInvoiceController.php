@@ -45,6 +45,8 @@ class PartsInvoiceController extends Controller
     {
         // dd($request->all());
         $parts = new PartsInvoice();
+        $allTyreNumbers = []; // Array to collect all tyre numbers
+
         // GST Calculations
         $total = empty($request->subtotal) ? null : (float) $request->subtotal;
         $cgst = empty($request->cgst) ? null : (float) $request->cgst;
@@ -93,12 +95,7 @@ class PartsInvoiceController extends Controller
         if ($request->file('invoice') && $request->file('invoice')->isValid()) {
             $this->upload_file($request->file('invoice'), "invoice", $id);
         }
-
-
         // dd($request->availability);
-
-
-
         foreach ($request->item as $k => $v) {
             // print($request->number[$k]);
             $category_id = PartsModel::find($v)->category_id;
@@ -111,7 +108,25 @@ class PartsInvoiceController extends Controller
                 'total' => $request->total[$k],
                 'date_of_purchase' => $dateofpurchase
             ];
-            PartsDetails::create($eachArr);
+            if (isset($request->tyre_number[$k]) && $request->tyre_number[$k] !== '') {
+                $tyreNumbers = explode(',', $request->tyre_number[$k]);
+                $tyreNumbers = array_map('trim', $tyreNumbers);
+                $tyreNumbers = array_filter($tyreNumbers);
+    
+                if (count($tyreNumbers) != $request->stock[$k]) {
+                    return redirect()->back()->withInput()->withErrors(['tyre_number' => 'The number of tyre numbers must match the quantity for each item.']);
+                }
+    
+                $eachArr['tyre_numbers'] = implode(',', $tyreNumbers);
+                $allTyreNumbers = array_merge($allTyreNumbers, $tyreNumbers); // Collect all tyre numbers
+            }
+    
+            $createdPart = PartsDetails::create($eachArr);
+            if (!empty($allTyreNumbers)) {
+                $parts->tyre_numbers = implode(',', array_unique($allTyreNumbers));
+            }
+        
+            $parts->save();
 
             $data = [
                 'part_id' => $v,

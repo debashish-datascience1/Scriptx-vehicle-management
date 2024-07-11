@@ -9,7 +9,7 @@ class PartsDetails extends Model {
 	use SoftDeletes;
 	protected $dates = ['deleted_at'];
 	protected $table = 'parts_details';
-	protected $fillable = ['parts_id','partsinv_id','title','parts_category','number','manufacture','status','unit_cost','availability','quantity','date_of_purchase','total'];
+	protected $fillable = ['parts_id','partsinv_id','title','parts_category','number','manufacture','status','unit_cost','availability','quantity','date_of_purchase','total','tyre_numbers'];
 
 	function parts_zero() {
 		return $this->belongsTo("App\Model\PartsModel", "parts_id")->withTrashed();
