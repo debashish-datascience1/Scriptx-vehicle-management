@@ -170,6 +170,22 @@
 
                       </div>
                   </div>
+                  <!-- <div class="col-md-2">
+                      <div class="form-group">
+                          <?php echo Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']); ?>
+
+                          <?php echo Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers', 'placeholder' => 'Select Tyre Number', 'required']); ?>
+
+                      </div>
+                  </div> -->
+                  <div class="col-md-2">
+                      <div class="form-group">
+                          <?php echo Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']); ?>
+
+                          <?php echo Form::select('tyre_numbers[]', [], $item->tyre_used, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers', 'placeholder' => 'Select Tyre Number', 'required', 'data-selected' => $item->tyre_used]); ?>
+
+                      </div>
+                  </div>
                   <div class="col-md-1">
                       <div class="form-group">
                           <?php echo Form::label('is_own',"Own Stock ?", ['class' => 'form-label']); ?>
@@ -634,6 +650,42 @@ $(document).ready(function() {
   //     });
   //   }
   // });
+  $(document).ready(function() {
+    function populateTyreNumbers(partId, tyreNumbersSelect) {
+    var selectedTyreNumber = tyreNumbersSelect.data('selected');
+    
+    if (partId) {
+        $.ajax({
+            url: '<?php echo e(route("get.tyre.numbers")); ?>',
+            type: 'GET',
+            data: { part_id: partId },
+            success: function(data) {
+                tyreNumbersSelect.empty();
+                tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+                $.each(data, function(key, value) {
+                    var selected = (value == selectedTyreNumber) ? 'selected' : '';
+                    tyreNumbersSelect.append('<option value="' + value + '" ' + selected + '>' + value + '</option>');
+                });
+            }
+        });
+    } else {
+        tyreNumbersSelect.empty();
+        tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+    }
+}
+    $(document).on('change', '.parts_id', function() {
+        var partId = $(this).val();
+        var tyreNumbersSelect = $(this).closest('.row').find('.tyre_numbers');
+        populateTyreNumbers(partId, tyreNumbersSelect);
+    });
+
+    // Populate tyre numbers for existing parts on page load
+    $('.parts_id').each(function() {
+        var partId = $(this).val();
+        var tyreNumbersSelect = $(this).closest('.row').find('.tyre_numbers');
+        populateTyreNumbers(partId, tyreNumbersSelect);
+    });
+});
 });
 </script>
 <?php $__env->stopSection(); ?>

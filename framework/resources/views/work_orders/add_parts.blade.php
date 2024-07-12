@@ -7,6 +7,12 @@
                 {!! Form::select('parts_id[]',$options,null,['class'=>'form-control parts_id','id'=>'parts_id','placeholder'=>'Select Part','required']) !!}
             </div>
         </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                {!! Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']) !!}
+                {!! Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers', 'placeholder' => 'Select Tyre Number', 'required']) !!}
+            </div>
+        </div>
         <div class="col-md-1">
             <div class="form-group">
                 {!! Form::label('is_own',"Own Stock ?", ['class' => 'form-label']) !!}
@@ -89,6 +95,12 @@
                 {!!Form::select('parts_id[]',$options,null,['class'=>'form-control parts_id','id'=>'parts_id','placeholder'=>'Select Part','required']) !!}
             </div>
         </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                {!! Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']) !!}
+                {!! Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers', 'placeholder' => 'Select Tyre Number', 'required']) !!}
+            </div>
+        </div>
         <div class="col-md-1">
             <div class="form-group">
                 {!! Form::label('is_own',"Own Stock ?", ['class' => 'form-label']) !!}
@@ -155,3 +167,35 @@
     </div>
 </div>
 @endif
+<script>
+$(document).ready(function() {
+    $(document).on('change', '.parts_id', function() {
+        var partId = $(this).val();
+        var tyreNumbersSelect = $(this).closest('.row').find('.tyre_numbers');
+        
+        console.log('Selected Part ID:', partId);
+        
+        if (partId) {
+            $.ajax({
+                url: '{{ route("get.tyre.numbers") }}',
+                type: 'GET',
+                data: { part_id: partId },
+                success: function(data) {
+                    console.log('Received data:', data);
+                    tyreNumbersSelect.empty();
+                    tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+                    $.each(data, function(key, value) {
+                        tyreNumbersSelect.append('<option value="' + value + '">' + value + '</option>');
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        } else {
+            tyreNumbersSelect.empty();
+            tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+        }
+    });
+});
+</script>
