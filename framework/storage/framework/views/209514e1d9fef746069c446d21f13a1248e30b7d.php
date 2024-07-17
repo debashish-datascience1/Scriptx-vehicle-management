@@ -30,6 +30,24 @@
 
         <?php echo Form::hidden("id",$data->id); ?>
 
+        <div class="row">
+        <div class="col-md-8"></div>
+        <div class="col-md-4">
+              <div class="form-group">
+                <?php echo Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']); ?>
+
+                <div class='input-group mb-3 date'>
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">
+                      <span class="fa fa-calendar"></span>
+                    </span>
+                  </div>
+                  <?php echo Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']); ?>
+
+                </div>
+              </div>
+            </div>
+        </div>
         
           <div class="row">
             <div class="col-md-4">
@@ -183,7 +201,7 @@
 
               </div>
             </div>
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <div class="form-group">
                 <?php echo Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']); ?>
 
@@ -214,8 +232,8 @@
                 <?php echo Form::text('cheque_draft_date',$data->chq_draft_date,['class'=>'form-control cheque_draft_date']); ?>
 
               </div>
-            </div>
-            <div class="col-md-4">
+            </div> -->
+            <!-- <div class="col-md-4">
               <div class="form-group">
                 <?php echo Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']); ?>
 
@@ -229,7 +247,7 @@
 
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="col-md-12">
               <div class="text-right">
                 <button class="btn btn-primary addmore" type="button" id="button_addform" name="button"><?php echo e(__('Add More')); ?></button>

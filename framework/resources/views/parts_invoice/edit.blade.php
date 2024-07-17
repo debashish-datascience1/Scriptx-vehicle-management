@@ -28,6 +28,22 @@
         {!! Form::open(['route' => ['parts-invoice.update',$data->id],'method'=>'PATCH','files'=>true]) !!}
         {!! Form::hidden("user_id",Auth::user()->id) !!}
         {!! Form::hidden("id",$data->id)!!}
+        <div class="row">
+        <div class="col-md-8"></div>
+        <div class="col-md-4">
+              <div class="form-group">
+                {!! Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']) !!}
+                <div class='input-group mb-3 date'>
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">
+                      <span class="fa fa-calendar"></span>
+                    </span>
+                  </div>
+                  {!! Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']) !!}
+                </div>
+              </div>
+            </div>
+        </div>
         
           <div class="row">
             <div class="col-md-4">
@@ -154,7 +170,7 @@
                 {!! Form::text('subtotal', Helper::properDecimals($data->sub_total),['class' => 'form-control subtotal','readonly','onkeypress'=>'return isNumber(event,this)']) !!}
               </div>
             </div>
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <div class="form-group">
                 {!! Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']) !!}
                 {!! Form::text('cash_payment', $data->cash_amount,['class' => 'form-control cash_payment','onkeypress'=>'return isNumber(event,this)']) !!}
@@ -177,8 +193,8 @@
                 {!! Form::label('cheque_draft_date',__('fleet.cheque_draft_date'), ['class' => 'form-label']) !!}
                 {!! Form::text('cheque_draft_date',$data->chq_draft_date,['class'=>'form-control cheque_draft_date']) !!}
               </div>
-            </div>
-            <div class="col-md-4">
+            </div> -->
+            <!-- <div class="col-md-4">
               <div class="form-group">
                 {!! Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']) !!}
                 <div class='input-group mb-3 date'>
@@ -190,7 +206,7 @@
                   {!! Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']) !!}
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="col-md-12">
               <div class="text-right">
                 <button class="btn btn-primary addmore" type="button" id="button_addform" name="button">{{ __('Add More') }}</button>
