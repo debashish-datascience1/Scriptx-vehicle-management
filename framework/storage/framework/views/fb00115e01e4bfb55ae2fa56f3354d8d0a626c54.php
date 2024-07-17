@@ -61,15 +61,26 @@
                       <th>Unit Cost</th>
                       <th>Quantity</th>
                       <th>Amount</th>
+                      <th>Tyre No.</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <?php $__currentLoopData = $row->partsDetails; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <?php $__currentLoopData = $row->partsDetails; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <tr>
-                      <td><?php echo e($dat->parts_zero->item); ?> <?php echo e($dat->parts_zero->category->name); ?> (<?php echo e($dat->parts_zero->manufacturer_details->name); ?>)</td>
+                      <td>
+                        <?php if($dat->parts_zero): ?>
+                          <?php echo e($dat->parts_zero->item ?? 'N/A'); ?> 
+                          <?php echo e($dat->parts_zero->category->name ?? 'N/A'); ?> 
+                          (<?php echo e($dat->parts_zero->manufacturer_details->name ?? 'N/A'); ?>)
+                          
+                        <?php else: ?>
+                          N/A
+                        <?php endif; ?>
+                      </td>
                       <td><?php echo e(Hyvikk::get('currency')." ". $dat->unit_cost); ?></td>
                       <td><?php echo e($dat->quantity); ?></td>
                       <td><?php echo e(Hyvikk::get('currency')." ". $dat->total); ?></td>
+                      <td><?php echo e($dat->tyre_numbers); ?></td>
                     </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     <tr>

@@ -246,6 +246,7 @@ class PartsInvoiceController extends Controller
 
     public function update(Request $request, PartsInvoice $partsInvoice)
     {
+        $allTyreNumbers = []; // Array to collect all tyre numbers
         // dd($partsInvoice->partsDetails);
         // dd($request->all());
         $part_id = $request->id;
@@ -270,25 +271,48 @@ class PartsInvoiceController extends Controller
         //Insert new data
         foreach ($request->item as $key => $val) {
             //update stock
+            $category_id = PartsModel::find($val)->category_id;
             $currentStock = PartsModel::find($val)->stock;
             $newstock = $currentStock + $request->stock[$key];
             $details_data = [
                 'parts_id' => $val,
                 'partsinv_id' => $part_id,
-                'parts_category' => $request->category_id[$key],
-                'number' => $request->number[$key],
-                'manufacture' => $request->manufacturer[$key],
-                'status' => $request->status[$key],
+                'parts_category' => $category_id,
+                // 'number' => $request->number[$key],
+                // 'manufacture' => $request->manufacturer[$key],
+                // 'status' => $request->status[$key],
                 'unit_cost' => $request->unit_cost[$key],
-                'availability' => $request->availability[$key],
+                // 'availability' => $request->availability[$key],
                 'quantity' => $request->stock[$key],
                 'date_of_purchase' => $dateofpurchase,
                 'total' => bcdiv($request->total[$key], 1, 2),
             ];
-
+            if (isset($request->tyre_number[$key]) && $request->tyre_number[$key] !== '') {
+                $tyreNumbers = explode(',', $request->tyre_number[$key]);
+                $tyreNumbers = array_map('trim', $tyreNumbers);
+                $tyreNumbers = array_filter($tyreNumbers);
+    
+                if (count($tyreNumbers) != $request->stock[$key]) {
+                    return redirect()->back()->withInput()->withErrors(['tyre_number' => 'The number of tyre numbers must match the quantity for each item.']);
+                }
+    
+                $details_data['tyre_numbers'] = implode(',', $tyreNumbers);
+                $allTyreNumbers = array_merge($allTyreNumbers, $tyreNumbers);
+            }
+    
             if (PartsDetails::create($details_data))
                 PartsModel::where('id', $val)->update(['stock' => $newstock]);
         }
+    
+        // Update the main PartsInvoice with all tyre numbers
+        if (!empty($allTyreNumbers)) {
+            $partsInvoice->tyre_numbers = implode(',', array_unique($allTyreNumbers));
+            $partsInvoice->save();
+        }
+
+        //     if (PartsDetails::create($details_data))
+        //         PartsModel::where('id', $val)->update(['stock' => $newstock]);
+        // }
 
 
         // GST Calculations

@@ -1,135 +1,162 @@
-@extends('layouts.app')
-@section("breadcrumb")
-<li class="breadcrumb-item"><a href="{{ route("parts-invoice.index")}}">Manage @lang('fleet.parts_inv')</a></li>
-<li class="breadcrumb-item active">Edit @lang('fleet.parts_inv')</li>
-@endsection
-@section('extra_css')
-<link rel="stylesheet" type="text/css" href="{{asset('assets/css/bootstrap-datetimepicker.min.css')}}">
-@endsection
-@section('content')
+<?php $__env->startSection("breadcrumb"); ?>
+<li class="breadcrumb-item"><a href="<?php echo e(route("parts-invoice.index")); ?>">Manage <?php echo app('translator')->getFromJson('fleet.parts_inv'); ?></a></li>
+<li class="breadcrumb-item active">Edit <?php echo app('translator')->getFromJson('fleet.parts_inv'); ?></li>
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('extra_css'); ?>
+<link rel="stylesheet" type="text/css" href="<?php echo e(asset('assets/css/bootstrap-datetimepicker.min.css')); ?>">
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('content'); ?>
 <div class="row">
   <div class="col-md-12">
     <div class="card card-warning">
       <div class="card-header">
-        <h3 class="card-title">Edit @lang('fleet.parts_inv')</h3>
+        <h3 class="card-title">Edit <?php echo app('translator')->getFromJson('fleet.parts_inv'); ?></h3>
       </div>
 
       <div class="card-body">
-        @if (count($errors) > 0)
+        <?php if(count($errors) > 0): ?>
           <div class="alert alert-danger">
             <ul>
-            @foreach ($errors->all() as $error)
-              <li>{{ $error }}</li>
-            @endforeach
+            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+              <li><?php echo e($error); ?></li>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
           </div>
-        @endif
+        <?php endif; ?>
 
-        {!! Form::open(['route' => ['parts-invoice.update',$data->id],'method'=>'PATCH','files'=>true]) !!}
-        {!! Form::hidden("user_id",Auth::user()->id) !!}
-        {!! Form::hidden("id",$data->id)!!}
+        <?php echo Form::open(['route' => ['parts-invoice.update',$data->id],'method'=>'PATCH','files'=>true]); ?>
+
+        <?php echo Form::hidden("user_id",Auth::user()->id); ?>
+
+        <?php echo Form::hidden("id",$data->id); ?>
+
         
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('invoice', "Bill/Invoice", ['class' => 'form-label']) !!}
-                {!! Form::file('invoice',['class' => 'form-control invoice','accept'=>'.pdf,.doc,.png,.jpg,.jpeg,.gif']) !!}
-                @if($data->invoice != null)
-                  <a href="{{ asset('uploads/'.$data->invoice) }}" target="_blank" class="col-xs-3 control-label">View</a>
-                @endif
+                <?php echo Form::label('invoice', "Bill/Invoice", ['class' => 'form-label']); ?>
+
+                <?php echo Form::file('invoice',['class' => 'form-control invoice','accept'=>'.pdf,.doc,.png,.jpg,.jpeg,.gif']); ?>
+
+                <?php if($data->invoice != null): ?>
+                  <a href="<?php echo e(asset('uploads/'.$data->invoice)); ?>" target="_blank" class="col-xs-3 control-label">View</a>
+                <?php endif; ?>
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('billno', __('fleet.billno'), ['class' => 'form-label']) !!}
-                {!! Form::text('billno', $data->billno,['class' => 'form-control billno','required','placeholer'=>'e.g PAT-15']) !!}
+                <?php echo Form::label('billno', __('fleet.billno'), ['class' => 'form-label']); ?>
+
+                <?php echo Form::text('billno', $data->billno,['class' => 'form-control billno','required','placeholer'=>'e.g PAT-15']); ?>
+
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('vendor_id',__('fleet.vendor'), ['class' => 'form-label']) !!}
-                {!! Form::select("vendor_id",$vendors,$data->vendor_id,['class'=>'form-control vendor_id','id'=>'vendor_id','placeholder'=>'Select Vendor','required']) !!}
+                <?php echo Form::label('vendor_id',__('fleet.vendor'), ['class' => 'form-label']); ?>
+
+                <?php echo Form::select("vendor_id",$vendors,$data->vendor_id,['class'=>'form-control vendor_id','id'=>'vendor_id','placeholder'=>'Select Vendor','required']); ?>
+
               </div>
             </div>
           </div>
         
-          @foreach($parts_details as $k=>$v)
-            @if($k==0)
+          <?php $__currentLoopData = $parts_details; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php if($k==0): ?>
             <div class="" id="parts_form">
               <div class="row cal_div">
                 <div class="col-md-12">
                   <div class="form-group">
-                    {!! Form::label('item', __('fleet.item'), ['class' => 'form-label']) !!}
-                    {!! Form::select('item[]',$items, $v->parts_id,['class' => 'form-control item','required','placeholder'=>'Select Part']) !!}
+                    <?php echo Form::label('item', __('fleet.item'), ['class' => 'form-label']); ?>
+
+                    <?php echo Form::select('item[]',$items, $v->parts_id,['class' => 'form-control item','required','placeholder'=>'Select Part']); ?>
+
                   </div> 
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    {!! Form::label('unit_cost', __('fleet.unit_cost'), ['class' => 'form-label']) !!}
+                    <?php echo Form::label('unit_cost', __('fleet.unit_cost'), ['class' => 'form-label']); ?>
+
                     <div class="input-group date">
                       <div class="input-group-prepend">
-                      <span class="input-group-text">{{Hyvikk::get('currency')}}</span> </div>
-                      {!! Form::text('unit_cost[]', $v->unit_cost,['class' => 'form-control unit_cost','required','onkeypress'=>'return isNumber(event,this)']) !!}
+                      <span class="input-group-text"><?php echo e(Hyvikk::get('currency')); ?></span> </div>
+                      <?php echo Form::text('unit_cost[]', $v->unit_cost,['class' => 'form-control unit_cost','required','onkeypress'=>'return isNumber(event,this)']); ?>
+
                     </div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    {!! Form::label('stock', __('fleet.quantity'), ['class' => 'form-label']) !!}
-                    {!! Form::text('stock[]', $v->quantity,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']) !!}
+                    <?php echo Form::label('stock', __('fleet.quantity'), ['class' => 'form-label']); ?>
+
+                    <?php echo Form::text('stock[]', $v->quantity,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']); ?>
+
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    {!! Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']) !!}
-                    {!! Form::text('tyre_number[]', $v->tyre_numbers, ['class' => 'form-control tyre_number', 'placeholder' => 'Enter comma-separated tyre numbers']) !!}
+                    <?php echo Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']); ?>
+
+                    <?php echo Form::text('tyre_number[]', $v->tyre_numbers, ['class' => 'form-control tyre_number', 'placeholder' => 'Enter comma-separated tyre numbers']); ?>
+
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    {!! Form::label('total', __('fleet.total'), ['class' => 'form-label']) !!}
-                    {!! Form::text('total[]',Helper::properDecimals($v->total),['class' => 'form-control total','onkeypress'=>'return isNumber(event,this)']) !!}
+                    <?php echo Form::label('total', __('fleet.total'), ['class' => 'form-label']); ?>
+
+                    <?php echo Form::text('total[]',Helper::properDecimals($v->total),['class' => 'form-control total','onkeypress'=>'return isNumber(event,this)']); ?>
+
                   </div>
                 </div>
               </div>
             </div>
-            @else
+            <?php else: ?>
             <div class="addmore_cont cal_div" style="width: 100%;">
               <hr>
                 <div class="" id="parts_form">
                   <div class="row">
                     <div class="col-md-12">
                       <div class="form-group">
-                        {!! Form::label('item', __('fleet.item'), ['class' => 'form-label']) !!}
-                        {!! Form::select('item[]',$items, $v->parts_id,['class' => 'form-control item','required','placeholder'=>'Select Part']) !!}
+                        <?php echo Form::label('item', __('fleet.item'), ['class' => 'form-label']); ?>
+
+                        <?php echo Form::select('item[]',$items, $v->parts_id,['class' => 'form-control item','required','placeholder'=>'Select Part']); ?>
+
                       </div> 
                     </div>
                     <div class="col-md-4">
                       <div class="form-group">
-                        {!! Form::label('unit_cost', __('fleet.unit_cost'), ['class' => 'form-label']) !!}
+                        <?php echo Form::label('unit_cost', __('fleet.unit_cost'), ['class' => 'form-label']); ?>
+
                         <div class="input-group date">
                           <div class="input-group-prepend">
-                          <span class="input-group-text">{{Hyvikk::get('currency')}}</span> </div>
-                          {!! Form::text('unit_cost[]', $v->unit_cost,['class' => 'form-control unit_cost','required','onkeypress'=>'return isNumber(event,this)']) !!}
+                          <span class="input-group-text"><?php echo e(Hyvikk::get('currency')); ?></span> </div>
+                          <?php echo Form::text('unit_cost[]', $v->unit_cost,['class' => 'form-control unit_cost','required','onkeypress'=>'return isNumber(event,this)']); ?>
+
                         </div>
                       </div>
                     </div>
                     <div class="col-md-4">
                       <div class="form-group">
-                        {!! Form::label('stock', __('fleet.quantity'), ['class' => 'form-label']) !!}
-                        {!! Form::text('stock[]', $v->quantity,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']) !!} 
+                        <?php echo Form::label('stock', __('fleet.quantity'), ['class' => 'form-label']); ?>
+
+                        <?php echo Form::text('stock[]', $v->quantity,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']); ?> 
                       </div>
                     </div>
                     <div class="col-md-4">
                       <div class="form-group">
-                          {!! Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']) !!}
-                          {!! Form::text('tyre_number[]', $v->tyre_numbers, ['class' => 'form-control tyre_number', 'placeholder' => 'Enter comma-separated tyre numbers']) !!}
+                          <?php echo Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']); ?>
+
+                          <?php echo Form::text('tyre_number[]', $v->tyre_numbers, ['class' => 'form-control tyre_number', 'placeholder' => 'Enter comma-separated tyre numbers']); ?>
+
                       </div>
                     </div>
                     <div class="col-md-4">
                       <div class="form-group">
-                        {!! Form::label('total', __('fleet.total'), ['class' => 'form-label']) !!}
-                            {!! Form::text('total[]',Helper::properDecimals($v->total),['class' => 'form-control total','onkeypress'=>'return isNumber(event,this)']) !!}
+                        <?php echo Form::label('total', __('fleet.total'), ['class' => 'form-label']); ?>
+
+                            <?php echo Form::text('total[]',Helper::properDecimals($v->total),['class' => 'form-control total','onkeypress'=>'return isNumber(event,this)']); ?>
+
                       </div>
                     </div>
                     <div class="row" style="width:100%;margin-bottom:10px;">
@@ -142,58 +169,70 @@
                   </div>
                 </div>
             </div>
-            @endif
-          @endforeach
+            <?php endif; ?>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
           <div class="row more_less"></div>
         
           <hr>
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('subtotal', __('fleet.sumtotal'), ['class' => 'form-label']) !!}
-                {!! Form::text('subtotal', Helper::properDecimals($data->sub_total),['class' => 'form-control subtotal','readonly','onkeypress'=>'return isNumber(event,this)']) !!}
+                <?php echo Form::label('subtotal', __('fleet.sumtotal'), ['class' => 'form-label']); ?>
+
+                <?php echo Form::text('subtotal', Helper::properDecimals($data->sub_total),['class' => 'form-control subtotal','readonly','onkeypress'=>'return isNumber(event,this)']); ?>
+
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']) !!}
-                {!! Form::text('cash_payment', $data->cash_amount,['class' => 'form-control cash_payment','onkeypress'=>'return isNumber(event,this)']) !!}
+                <?php echo Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']); ?>
+
+                <?php echo Form::text('cash_payment', $data->cash_amount,['class' => 'form-control cash_payment','onkeypress'=>'return isNumber(event,this)']); ?>
+
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('cheque_draft', __('fleet.cheque_draft'), ['class' => 'form-label']) !!}
-                {!! Form::text('cheque_draft', $data->chq_draft_number,['class' => 'form-control cheque_draft']) !!}
+                <?php echo Form::label('cheque_draft', __('fleet.cheque_draft'), ['class' => 'form-label']); ?>
+
+                <?php echo Form::text('cheque_draft', $data->chq_draft_number,['class' => 'form-control cheque_draft']); ?>
+
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                    {!! Form::label('cheque_draft_amount', __('fleet.cheque_draft_amount'), ['class' => 'form-label']) !!}
-                    {!! Form::text('cheque_draft_amount', $data->chq_draft_amount,['class' => 'form-control cheque_draft_amount','onkeypress'=>'return isNumber(event,this)']) !!}
+                    <?php echo Form::label('cheque_draft_amount', __('fleet.cheque_draft_amount'), ['class' => 'form-label']); ?>
+
+                    <?php echo Form::text('cheque_draft_amount', $data->chq_draft_amount,['class' => 'form-control cheque_draft_amount','onkeypress'=>'return isNumber(event,this)']); ?>
+
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('cheque_draft_date',__('fleet.cheque_draft_date'), ['class' => 'form-label']) !!}
-                {!! Form::text('cheque_draft_date',$data->chq_draft_date,['class'=>'form-control cheque_draft_date']) !!}
+                <?php echo Form::label('cheque_draft_date',__('fleet.cheque_draft_date'), ['class' => 'form-label']); ?>
+
+                <?php echo Form::text('cheque_draft_date',$data->chq_draft_date,['class'=>'form-control cheque_draft_date']); ?>
+
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                {!! Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']) !!}
+                <?php echo Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']); ?>
+
                 <div class='input-group mb-3 date'>
                   <div class="input-group-prepend">
                     <span class="input-group-text">
                       <span class="fa fa-calendar"></span>
                     </span>
                   </div>
-                  {!! Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']) !!}
+                  <?php echo Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']); ?>
+
                 </div>
               </div>
             </div>
             <div class="col-md-12">
               <div class="text-right">
-                <button class="btn btn-primary addmore" type="button" id="button_addform" name="button">{{ __('Add More') }}</button>
+                <button class="btn btn-primary addmore" type="button" id="button_addform" name="button"><?php echo e(__('Add More')); ?></button>
               </div>
             </div>
           </div>
@@ -210,39 +249,51 @@
                   <div class="col-md-4">
                     <div class="row">
                       <div class="col-md-6">
-                        @php
+                        <?php
                           $isGSTReq = $data->is_gst==1 ? 'required' : 'readonly';
-                        @endphp
-                        {!! Form::label('Is GST?',__('fleet.isGst'), ['class' => 'form-label']) !!}
-                        {!! Form::select('is_gst',$is_gst,$data->is_gst,['class'=>'form-control','id'=>'is_gst','placeholder'=>'Select','required']) !!}
+                        ?>
+                        <?php echo Form::label('Is GST?',__('fleet.isGst'), ['class' => 'form-label']); ?>
+
+                        <?php echo Form::select('is_gst',$is_gst,$data->is_gst,['class'=>'form-control','id'=>'is_gst','placeholder'=>'Select','required']); ?>
+
                       </div>
                       <div class="col-md-6">
-                        {!! Form::label('cgst',__('fleet.cgst')." %", ['class' => 'form-label']) !!}
-                        {!! Form::text('cgst',$data->cgst,['class'=>'form-control','id'=>'cgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',"$isGSTReq"]) !!}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="row">
-                      <div class="col-md-6">
-                        {!! Form::label('cgst_amt',__('fleet.cgst_amt'), ['class' => 'form-label']) !!}
-                        {!! Form::text('cgst_amt',$data->cgst_amt,['class'=>'form-control','id'=>'cgst_amt','readonly']) !!}
-                      </div>
-                      <div class="col-md-6">
-                        {!! Form::label('sgst',__('fleet.sgst')." %", ['class' => 'form-label']) !!}
-                        {!! Form::text('sgst',$data->sgst,['class'=>'form-control','id'=>'sgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',"$isGSTReq"]) !!}
+                        <?php echo Form::label('cgst',__('fleet.cgst')." %", ['class' => 'form-label']); ?>
+
+                        <?php echo Form::text('cgst',$data->cgst,['class'=>'form-control','id'=>'cgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',"$isGSTReq"]); ?>
+
                       </div>
                     </div>
                   </div>
                   <div class="col-md-4">
                     <div class="row">
                       <div class="col-md-6">
-                        {!! Form::label('sgst_amt',__('fleet.sgst_amt'), ['class' => 'form-label']) !!}
-                        {!! Form::text('sgst_amt',$data->sgst_amt,['class'=>'form-control','id'=>'sgst_amt','readonly']) !!}
+                        <?php echo Form::label('cgst_amt',__('fleet.cgst_amt'), ['class' => 'form-label']); ?>
+
+                        <?php echo Form::text('cgst_amt',$data->cgst_amt,['class'=>'form-control','id'=>'cgst_amt','readonly']); ?>
+
                       </div>
                       <div class="col-md-6">
-                        {!! Form::label('total_amount',__('fleet.total_amount'), ['class' => 'form-label']) !!}
-                        {!! Form::text('total_amount',$data->grand_total,['class'=>'form-control','id'=>'total_amount','readonly']) !!}
+                        <?php echo Form::label('sgst',__('fleet.sgst')." %", ['class' => 'form-label']); ?>
+
+                        <?php echo Form::text('sgst',$data->sgst,['class'=>'form-control','id'=>'sgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',"$isGSTReq"]); ?>
+
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <?php echo Form::label('sgst_amt',__('fleet.sgst_amt'), ['class' => 'form-label']); ?>
+
+                        <?php echo Form::text('sgst_amt',$data->sgst_amt,['class'=>'form-control','id'=>'sgst_amt','readonly']); ?>
+
+                      </div>
+                      <div class="col-md-6">
+                        <?php echo Form::label('total_amount',__('fleet.total_amount'), ['class' => 'form-label']); ?>
+
+                        <?php echo Form::text('total_amount',$data->grand_total,['class'=>'form-control','id'=>'total_amount','readonly']); ?>
+
                       </div>
                     </div>
                   </div>
@@ -253,20 +304,22 @@
         </div>
         <div class="row">
           <div class="col-md-12">
-              {!! Form::submit(__('fleet.savePartInv'), ['class' => 'btn btn-warning','id'=>'savebtn']) !!}
+              <?php echo Form::submit(__('fleet.savePartInv'), ['class' => 'btn btn-warning','id'=>'savebtn']); ?>
+
             </div>
         </div> 
-        {!! Form::close() !!}
+        <?php echo Form::close(); ?>
+
       </div>
     </div>
   </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('script')
-<script src="{{ asset('assets/js/moment.js') }}"></script>
-<script src="{{ asset('assets/js/datetimepicker.js') }}"></script>
+<?php $__env->startSection('script'); ?>
+<script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/js/datetimepicker.js')); ?>"></script>
 <script type="text/javascript">
   // Check Number and Decimal
   function isNumber(evt, element) {
@@ -280,7 +333,7 @@
   $(function(){
       //add more
       $('#button_addform').click(function(){
-        $.post('{{ url("admin/parts-invoice/getparts_form")}}',{_token:"{{csrf_token()}}"},function(result){
+        $.post('<?php echo e(url("admin/parts-invoice/getparts_form")); ?>',{_token:"<?php echo e(csrf_token()); ?>"},function(result){
           console.log(result)
           $(".more_less").append(result);
           $(".item:last").select2();
@@ -312,7 +365,7 @@
           
       })
 
-      $("#vendor_id").select2({placeholder:"@lang('fleet.select_vendor')"});
+      $("#vendor_id").select2({placeholder:"<?php echo app('translator')->getFromJson('fleet.select_vendor'); ?>"});
       $(".item").select2();
       
         // $("body").on("click",".dateofpurchase",function(){
@@ -459,8 +512,8 @@
           var sgst = $("#sgst").val();
           // var sgst_amt = $("#sgst_amt").val();
           
-          var sendData = {_token:"{{csrf_token()}}",price:price,cgst:cgst,sgst:sgst};
-          $.post("{{route('work_order.wo_gstcalculate')}}",sendData).done(function(data){
+          var sendData = {_token:"<?php echo e(csrf_token()); ?>",price:price,cgst:cgst,sgst:sgst};
+          $.post("<?php echo e(route('work_order.wo_gstcalculate')); ?>",sendData).done(function(data){
             // console.log(data)
             console.table(data)
             // if(!isNaN(data.total) && data.total!=0){
@@ -532,4 +585,5 @@
   })
   
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/parts_invoice/edit.blade.php ENDPATH**/ ?>

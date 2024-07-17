@@ -31,6 +31,14 @@
 
         </div>
       </div>
+      <div class="col-md-4">
+        <div class="form-group">
+          <?php echo Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']); ?>
+
+          <?php echo Form::text('tyre_number[]', null, ['class' => 'form-control tyre_number', 'disabled' => 'disabled', 'placeholder' => 'Enter comma-separated tyre numbers']); ?>
+
+        </div>
+      </div>
       <div class="col-md-4">  
         <div class="form-group">   
           <?php echo Form::label('total', __('fleet.total'), ['class' => 'form-label']); ?>

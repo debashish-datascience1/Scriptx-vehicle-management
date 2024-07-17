@@ -36,7 +36,23 @@
 
         <?php echo Form::hidden('type','Created'); ?>
 
+        <div class= "row">
+          <div class ="col-md-6"></div>
+          <div class ="col-md-6">
+          <div class="form-group">
+              <?php echo Form::label('required_by', "Date", ['class' => 'form-label']); ?>
+
+              <div class="input-group date">
+              <div class="input-group-prepend"><span class="input-group-text"><span class="fa fa-calendar"></span></div>
+              <?php echo Form::text('required_by',null,['class'=>'form-control','required','readonly']); ?>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="row">
+          
           <div class="col-md-6">
             <div class="form-group">
               <?php echo Form::label('bill_image', "Bill/bill", ['class' => 'form-label']); ?>
@@ -54,7 +70,7 @@
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </select>
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group">
               <?php echo Form::label('required_by', "Date", ['class' => 'form-label']); ?>
 
               <div class="input-group date">
@@ -62,7 +78,7 @@
               <?php echo Form::text('required_by',null,['class'=>'form-control','required','readonly']); ?>
 
               </div>
-            </div>
+            </div> -->
             <div class="form-group">
               <?php echo Form::label('meter',Hyvikk::get('dis_format')." ".__('fleet.reading'), ['class' => 'form-label']); ?>
 
@@ -88,6 +104,14 @@
               <?php echo Form::text('bill_no',null,['class'=>'form-control bill_no','id'=>'bill_no','placeholder'=>'Enter Bill No...']); ?>
 
             </div>
+         
+            <!-- <div class="form-group">
+                <?php echo Form::label('is_own',"Own Stock ?", ['class' => 'form-label']); ?>
+
+                <?php echo Form::select('is_own[]',[2=>'No',1=>'Yes'],null,['class'=>'form-control is_own','id'=>'is_own','required']); ?>
+
+            </div> -->
+        
             <div class="form-group">
               <?php echo Form::label('vendor_id',__('fleet.vendor'), ['class' => 'form-label']); ?>
 

@@ -34,7 +34,21 @@
         {!! Form::open(['route' => 'work_order.store','method'=>'post','files'=>true]) !!}
         {!! Form::hidden('user_id',Auth::user()->id)!!}
         {!! Form::hidden('type','Created')!!}
+        <div class= "row">
+          <div class ="col-md-6"></div>
+          <div class ="col-md-6">
+          <div class="form-group">
+              {!! Form::label('required_by', "Date", ['class' => 'form-label']) !!}
+              <div class="input-group date">
+              <div class="input-group-prepend"><span class="input-group-text"><span class="fa fa-calendar"></span></div>
+              {!! Form::text('required_by',null,['class'=>'form-control','required','readonly']) !!}
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="row">
+          
           <div class="col-md-6">
             <div class="form-group">
               {!! Form::label('bill_image', "Bill/bill", ['class' => 'form-label']) !!}
@@ -49,13 +63,13 @@
                 @endforeach
               </select>
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group">
               {!! Form::label('required_by', "Date", ['class' => 'form-label']) !!}
               <div class="input-group date">
               <div class="input-group-prepend"><span class="input-group-text"><span class="fa fa-calendar"></span></div>
               {!! Form::text('required_by',null,['class'=>'form-control','required','readonly']) !!}
               </div>
-            </div>
+            </div> -->
             <div class="form-group">
               {!! Form::label('meter',Hyvikk::get('dis_format')." ".__('fleet.reading'), ['class' => 'form-label']) !!}
               <div class="input-group mb-3">
@@ -75,6 +89,12 @@
               {!! Form::label('bill_no',"Bill No", ['class' => 'form-label']) !!}
               {!! Form::text('bill_no',null,['class'=>'form-control bill_no','id'=>'bill_no','placeholder'=>'Enter Bill No...']) !!}
             </div>
+         
+            <!-- <div class="form-group">
+                {!! Form::label('is_own',"Own Stock ?", ['class' => 'form-label']) !!}
+                {!! Form::select('is_own[]',[2=>'No',1=>'Yes'],null,['class'=>'form-control is_own','id'=>'is_own','required']) !!}
+            </div> -->
+        
             <div class="form-group">
               {!! Form::label('vendor_id',__('fleet.vendor'), ['class' => 'form-label']) !!}
               <select id="vendor_id" name="vendor_id" class="form-control" required>

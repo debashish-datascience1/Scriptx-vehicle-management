@@ -162,27 +162,46 @@ class WorkOrdersController extends Controller
             // 'price' => $grandtotal,
             'type' => "Created",
         ]);
-
-
-
-        //Reworked
         if ($request->is_addParts == 1) {
             foreach ($request->parts_id as $key => $part) {
-                $qty = $request->qty[$key];
-                $unit_cost = $request->unit_cost[$key];
-                $total = $qty * $unit_cost;
-                $tyre_used = $request->tyre_numbers[$key] ?? null;  // Get the selected tyre number
-
-                //check for gst
-                if ($request->is_own[$key] == 2) { //not from own inventory
+                $qty = $request->qty[$key] ?? null;
+                $unit_cost = $request->unit_cost[$key] ?? null;
+                $total = $qty * $unit_cost;                
+                // Handle tyre numbers
+                $tyre_numbers = $request->tyre_numbers ?? [];
+                $tyre_used = implode(',', $tyre_numbers);        
+                // Use $tyre_used in your PartsUsedModel::create() call
+                if ($request->is_own[$key] == 2) { // not from own inventory
                     $cgst_amt = ($request->cgst[$key] / 100) * $total;
                     $sgst_amt = ($request->sgst[$key] / 100) * $total;
                     $grand_total = $total + $cgst_amt + $sgst_amt;
-                    PartsUsedModel::create(['work_id' => $order->id, 'part_id' => $part, 'qty' => $qty, 'price' => $unit_cost, 'total' => $total, 'is_own' => $request->is_own[$key], 'cgst' => $request->cgst[$key], 'cgst_amt' => $cgst_amt, 'sgst' => $request->sgst[$key], 'sgst_amt' => $sgst_amt, 'grand_total' => $grand_total,'tyre_used' => $tyre_used]); //from vendor's inventory
+                    PartsUsedModel::create([
+                        'work_id' => $order->id,
+                        'part_id' => $part,
+                        'qty' => $qty,
+                        'price' => $unit_cost,
+                        'total' => $total,
+                        'is_own' => $request->is_own[$key],
+                        'cgst' => $request->cgst[$key],
+                        'cgst_amt' => $cgst_amt,
+                        'sgst' => $request->sgst[$key],
+                        'sgst_amt' => $sgst_amt,
+                        'grand_total' => $grand_total,
+                        'tyre_used' => $tyre_used
+                    ]);
                 } else {
-                    PartsUsedModel::create(['work_id' => $order->id, 'part_id' => $part, 'qty' => $qty, 'price' => $unit_cost, 'total' => $total, 'is_own' => $request->is_own[$key], 'grand_total' => $total,'tyre_used' => $tyre_used]); //from owner's inventory
-
-                    //owner inventory manage
+                    PartsUsedModel::create([
+                        'work_id' => $order->id,
+                        'part_id' => $part,
+                        'qty' => $qty,
+                        'price' => $unit_cost,
+                        'total' => $total,
+                        'is_own' => $request->is_own[$key],
+                        'grand_total' => $total,
+                        'tyre_used' => $tyre_used
+                    ]);
+        
+                    // owner inventory manage
                     $update_stock = PartsModel::find($part);
                     $update_stock->stock = $update_stock->stock - $qty;
                     $update_stock->save();
@@ -241,6 +260,8 @@ class WorkOrdersController extends Controller
         $index['orderHeads'] = WorkOrderCategory::active()->pluck('name', 'id');
         $index['is_gst'] = [1 => 'Yes', 2 => 'No'];
         $index['options'] = $options;
+        $index['partsWithStock'] = PartsModel::pluck('stock', 'id')->toJson();
+
         // dd($index);
         return view('work_orders.edit', $index);
     }
@@ -317,11 +338,16 @@ class WorkOrdersController extends Controller
         //Reworked
         if ($request->is_addParts == 1) {
             foreach ($request->parts_id as $key => $part) {
-                $qty = $request->qty[$key];
-                $unit_cost = $request->unit_cost[$key];
+                // $qty = $request->qty[$key];
+                // $unit_cost = $request->unit_cost[$key];
+                $qty = $request->qty[$key] ?? null;
+                $unit_cost = $request->unit_cost[$key] ?? null;
+                $is_own = $request->is_own[$key] ?? null;
+                $tyre_numbers = $request->tyre_numbers ?? [];
+                $tyre_used = implode(',', $tyre_numbers); 
+        
                 $total = $qty * $unit_cost;
-                $tyre_used = $request->tyre_numbers[$key] ?? null;  // Get the selected tyre number
-
+        
                 //check for gst
                 if ($request->is_own[$key] == 2) { //not from own inventory
                     $cgst_amt = ($request->cgst[$key] / 100) * $total;
@@ -455,20 +481,32 @@ class WorkOrdersController extends Controller
         return view('work_orders.view_event', $data);
     }
 
+    // public function add_parts(Request $request)
+    // {
+    //     // dd($request->all());
+    //     $count = $request->count;
+    //     // $availableParts = !empty(Helper::getAllParts(false)) ? Helper::getAllParts(false)->where('stock','>','0') : null;
+    //     // if(!empty($availableParts)){
+    //     //     foreach($availableParts as $p){
+    //     //         $options[$p->id] = $p->item." ".$p->catname." (".$p->manufac.")";
+    //     //     }
+    //     // }
+    //     $options = Helper::getAllParts();
+    //     $options['add_new'] = "Add New";
+    //     return view("work_orders.add_parts", compact('count', 'options'));
+    // }
+
     public function add_parts(Request $request)
-    {
-        // dd($request->all());
-        $count = $request->count;
-        // $availableParts = !empty(Helper::getAllParts(false)) ? Helper::getAllParts(false)->where('stock','>','0') : null;
-        // if(!empty($availableParts)){
-        //     foreach($availableParts as $p){
-        //         $options[$p->id] = $p->item." ".$p->catname." (".$p->manufac.")";
-        //     }
-        // }
-        $options = Helper::getAllParts();
-        $options['add_new'] = "Add New";
-        return view("work_orders.add_parts", compact('count', 'options'));
-    }
+{
+    $count = $request->count;
+    $options = Helper::getAllParts();
+    $options['add_new'] = "Add New";
+    
+    // Fetch all parts with their stock
+    $partsWithStock = DB::table('parts')->pluck('stock', 'id')->toJson();
+    
+    return view("work_orders.add_parts", compact('count', 'options', 'partsWithStock'));
+}
 
     public function getTyreNumbers(Request $request)
     {

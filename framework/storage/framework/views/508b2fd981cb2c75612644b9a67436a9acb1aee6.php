@@ -28,6 +28,24 @@
 
           <?php echo Form::hidden("user_id",Auth::user()->id); ?>
 
+          <div class="row">
+             <div class="col-md-8"></div>
+             <div class="col-md-4">
+             <div class="form-group">
+              <?php echo Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']); ?>
+
+              <div class='input-group mb-3 date'>
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <span class="fa fa-calendar"></span>
+                  </span>
+                </div>
+                <?php echo Form::text('dateofpurchase',date("d-m-Y"),['class'=>'form-control dateofpurchase','required']); ?>
+
+              </div>
+            </div>
+             </div>
+          </div>
             <div class="row">
               <div class="col-md-4">
                 <div class="form-group">
@@ -116,39 +134,39 @@
 
             </div>
           </div>
-          <div class="col-md-4">
+          <!-- <div class="col-md-4">
             <div class="form-group">
               <?php echo Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']); ?>
 
               <?php echo Form::text('cash_payment', null,['class' => 'form-control cash_payment','onkeypress'=>'return isNumber(event,this)']); ?>
 
             </div>
-          </div>
-          <div class="col-md-4">
+          </div> -->
+          <!-- <div class="col-md-4">
             <div class="form-group">
               <?php echo Form::label('cheque_draft', __('fleet.cheque_draft'), ['class' => 'form-label']); ?>
 
               <?php echo Form::text('cheque_draft', null,['class' => 'form-control cheque_draft']); ?>
 
             </div>
-          </div>
-          <div class="col-md-4">
+          </div> -->
+          <!-- <div class="col-md-4">
             <div class="form-group">
                   <?php echo Form::label('cheque_draft_amount', __('fleet.cheque_draft_amount'), ['class' => 'form-label']); ?>
 
                   <?php echo Form::text('cheque_draft_amount', null,['class' => 'form-control cheque_draft_amount','onkeypress'=>'return isNumber(event,this)']); ?>
 
             </div>
-          </div>
-          <div class="col-md-4">
+          </div> -->
+          <!-- <div class="col-md-4">
             <div class="form-group">
               <?php echo Form::label('cheque_draft_date',__('fleet.cheque_draft_date'), ['class' => 'form-label']); ?>
 
               <?php echo Form::text('cheque_draft_date',null,['class'=>'form-control cheque_draft_date']); ?>
 
             </div>
-          </div>
-          <div class="col-md-4">
+          </div> -->
+          <!-- <div class="col-md-4">
             <div class="form-group">
               <?php echo Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']); ?>
 
@@ -162,7 +180,7 @@
 
               </div>
             </div>
-          </div>
+          </div> -->
           <div class="col-md-12">
             <div class="text-right">
               <button class="btn btn-primary addmore" type="button" id="button_addform" name="button"><?php echo e(__('Add More')); ?></button>
@@ -361,40 +379,41 @@ $("document").ready(function(){
     //       $("#cgst").keyup()
     //     }
     // });
-    $("body").on("keyup", ".total, .stock", function() {
-    var stock = $(this).closest('.cal_div').find('.stock').val();
-    var total = $(this).closest('.cal_div').find('.total').val();
+    $("body").on("keyup", ".unit_cost, .stock", function() {
+  var stock = $(this).closest('.cal_div').find('.stock').val();
+  var unit_cost = $(this).closest('.cal_div').find('.unit_cost').val();
 
-    if (stock && total && !isNaN(stock) && !isNaN(total)) {
-      var ucost = parseFloat(total) / parseFloat(stock);
-      $(this).closest('.cal_div').find('.unit_cost').val(parseFloat(ucost).toFixed(2));
+  if (stock && unit_cost && !isNaN(stock) && !isNaN(unit_cost)) {
+    var total = parseFloat(stock) * parseFloat(unit_cost);
+    $(this).closest('.cal_div').find('.total').val(parseFloat(total).toFixed(2));
 
-      updateSubtotal();
-    }
-});
-  $("body").on("keyup", ".unit_cost, .stock", function() {
-    var stock = $(this).closest('.cal_div').find('.stock').val();
-    var unit_cost = $(this).closest('.cal_div').find('.unit_cost').val();
-
-    if (stock && unit_cost && !isNaN(stock) && !isNaN(unit_cost)) {
-      var total = parseFloat(stock) * parseFloat(unit_cost);
-      $(this).closest('.cal_div').find('.total').val(parseFloat(total).toFixed(2));
-
-      updateSubtotal();
-    }
-});
-
-  function updateSubtotal() {
-    var sumtotal = 0;
-    $(".total").each(function(i, e) {
-      var thisval = $(this).val();
-      if (thisval && !isNaN(thisval)) {
-        sumtotal += parseFloat(thisval);
-      }
-    });
-    $(".subtotal").val(sumtotal.toFixed(2));
-    $("#cgst").keyup();
+    updateSubtotal();
   }
+});
+
+$("body").on("keyup", ".total", function() {
+  var stock = $(this).closest('.cal_div').find('.stock').val();
+  var total = $(this).val();
+
+  if (stock && total && !isNaN(stock) && !isNaN(total)) {
+    var ucost = parseFloat(total) / parseFloat(stock);
+    $(this).closest('.cal_div').find('.unit_cost').val(parseFloat(ucost).toFixed(2));
+
+    updateSubtotal();
+  }
+});
+
+function updateSubtotal() {
+  var sumtotal = 0;
+  $(".total").each(function(i, e) {
+    var thisval = $(this).val();
+    if (thisval && !isNaN(thisval)) {
+      sumtotal += parseFloat(thisval);
+    }
+  });
+  $(".subtotal").val(sumtotal.toFixed(2));
+  $("#cgst").keyup();
+}
 
   $("body").on("keyup", ".stock", function() {
   var stock = $(this).val();

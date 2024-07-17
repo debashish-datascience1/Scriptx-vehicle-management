@@ -59,15 +59,26 @@
                       <th>Unit Cost</th>
                       <th>Quantity</th>
                       <th>Amount</th>
+                      <th>Tyre No.</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach($row->partsDetails as $dat)
+                  @foreach($row->partsDetails as $dat)
                     <tr>
-                      <td>{{$dat->parts_zero->item}} {{$dat->parts_zero->category->name}} ({{$dat->parts_zero->manufacturer_details->name}})</td>
+                      <td>
+                        @if($dat->parts_zero)
+                          {{$dat->parts_zero->item ?? 'N/A'}} 
+                          {{$dat->parts_zero->category->name ?? 'N/A'}} 
+                          ({{$dat->parts_zero->manufacturer_details->name ?? 'N/A'}})
+                          
+                        @else
+                          N/A
+                        @endif
+                      </td>
                       <td>{{Hyvikk::get('currency')." ". $dat->unit_cost}}</td>
                       <td>{{$dat->quantity}}</td>
                       <td>{{Hyvikk::get('currency')." ". $dat->total}}</td>
+                      <td>{{ $dat->tyre_numbers}}</td>
                     </tr>
                     @endforeach
                     <tr>

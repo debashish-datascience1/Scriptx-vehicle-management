@@ -30,6 +30,12 @@
           {!! Form::text('stock[]', null,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']) !!}
         </div>
       </div>
+      <div class="col-md-4">
+        <div class="form-group">
+          {!! Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']) !!}
+          {!! Form::text('tyre_number[]', null, ['class' => 'form-control tyre_number', 'disabled' => 'disabled', 'placeholder' => 'Enter comma-separated tyre numbers']) !!}
+        </div>
+      </div>
       <div class="col-md-4">  
         <div class="form-group">   
           {!! Form::label('total', __('fleet.total'), ['class' => 'form-label']) !!}
