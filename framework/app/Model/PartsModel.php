@@ -10,7 +10,7 @@ class PartsModel extends Model {
 	protected $dates = ['deleted_at'];
 	protected $table = 'parts';
 	protected $fillable = [
-		'item','category_id','manufacturer','description','unit','hsn','amount','min_stock','stock'
+		'item','category_id','manufacturer','description','unit','hsn','amount','min_stock','stock','tyre_numbers','tyres_used'
 	];
 
 	function unit_details() {

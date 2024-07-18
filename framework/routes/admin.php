@@ -161,6 +161,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('/work_order/wo_calcgst', 'WorkOrdersController@wo_calcgst')->name('work_order.wo_calcgst')->middleware('userpermission:3');
         Route::post('/work_order/othercalc', 'WorkOrdersController@othercalc')->name('work_order.othercalc')->middleware('userpermission:3');
         Route::get('/get-tyre-numbers', 'WorkOrdersController@getTyreNumbers')->name('get.tyre.numbers')->middleware('userpermission:7');
+        Route::get('/get-edit-tyre-numbers', 'WorkOrdersController@getEditTyreNumbers')->name('get.edit.tyre.numbers')->middleware('userpermission:7');
         Route::resource('/work_order', 'WorkOrdersController')->middleware('userpermission:7');
         Route::resource('/work-order-category', 'WorkOrderCategoryController')->middleware('userpermission:7');
 

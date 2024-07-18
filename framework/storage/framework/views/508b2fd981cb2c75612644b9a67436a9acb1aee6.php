@@ -317,68 +317,6 @@ $("document").ready(function(){
       checkboxClass: 'icheckbox_flat-green',
       radioClass   : 'iradio_flat-green'
     });
-
-    // $("body").on("keyup",".unit_cost,.stock",function(){
-    //   // alert($(this).closest('.cal_div').attr("class"));return false;
-    //    var stock  = $(this).closest('.cal_div').find('.stock').val();
-    //    // var stock  = $(this).parent().parent().find('.stock ').val();
-    //    var unit_cost  = $(this).closest('.cal_div').find('.unit_cost ').val();
-    //    var cash_payment=$('#cash_payment').val();
-    //     //var unit_cost  = $(this).parent().parent().find('.unit_cost ').val();
-    //     var total=parseFloat(stock)*parseFloat(unit_cost);
-    //     var totalamnt  = $(this).closest('.cal_div').find('.total').val(parseFloat(total).toFixed(2));
-    //     console.log(stock+" "+unit_cost+" "+total);
-    //     var sumtotal=0;
-    //     if(stock!="" && unit_cost!="")
-    //     {
-    //       $(".total").each(function(i,e){
-    //         var thisval = $(this).val();
-    //         if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-    //           thisval=0.00;
-    //         }
-             
-    //         thisval = parseFloat(thisval);
-            
-    //         if(thisval!="")
-    //           sumtotal= parseFloat(sumtotal)+thisval;
-          
-    //       })
-    //     }
-    //     $(".subtotal").val(sumtotal.toFixed(2));
-    //     $("#cgst").keyup()
-    // });
-
-    // $("body").on("keyup",".total,.stock",function(){
-    //   // alert($(this).closest('.cal_div').attr("class"));return false;
-    //    var stock  = $(this).closest('.cal_div').find('.stock').val();
-    //    // var stock  = $(this).parent().parent().find('.stock ').val();
-    //    var total  = $(this).closest('.cal_div').find('.total ').val();
-    //   //  var cash_payment=$('#cash_payment').val();
-    //     // var total  = $(this).parent().parent().find('.total ').val();
-    //     console.log(stock+" "+total);
-    //     if(total!=null && stock!=null){
-    //       var ucost=parseFloat(total)/parseFloat(stock);
-    //        $(this).closest('.cal_div').find('.unit_cost').val(parseFloat(ucost).toFixed(2));
-    //       //console.log(stock+" "+ucost+" "+total);
-    //       var sumtotal=0;
-    //       if(stock!="" && total!="")
-    //       {
-    //         $(".total").each(function(i,e){
-    //           var thisval = $(this).val();
-    //           if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-    //             thisval=0.00;
-    //           }
-              
-    //           thisval = parseFloat(thisval);
-              
-    //           if(thisval!="")
-    //             sumtotal= parseFloat(sumtotal)+thisval;
-    //         })
-    //       }
-    //       $(".subtotal").val(sumtotal.toFixed(2));
-    //       $("#cgst").keyup()
-    //     }
-    // });
     $("body").on("keyup", ".unit_cost, .stock", function() {
   var stock = $(this).closest('.cal_div').find('.stock').val();
   var unit_cost = $(this).closest('.cal_div').find('.unit_cost').val();
@@ -414,43 +352,40 @@ function updateSubtotal() {
   $(".subtotal").val(sumtotal.toFixed(2));
   $("#cgst").keyup();
 }
-
-  $("body").on("keyup", ".stock", function() {
-  var stock = $(this).val();
-  var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
-  
-  if (stock && !isNaN(stock) && parseInt(stock) > 0) {
-    tyreNumberField.prop('disabled', false);
-    tyreNumberField.attr('placeholder', 'Enter ' + stock + ' tyre numbers, comma-separated');
-  } else {
-    tyreNumberField.prop('disabled', true);
-    tyreNumberField.val('');
-    tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
-  }
-});
-
-$("#savebtn").click(function(e) {
-  var isValid = true;
-  
-  $(".stock").each(function() {
-    var stock = parseInt($(this).val());
-    var tyreNumbers = $(this).closest('.cal_div').find('.tyre_number').val();
+$("body").on("keyup", ".stock", function() {
+        var stock = parseInt($(this).val());
+        var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
+        
+        if (stock && !isNaN(stock) && stock > 0) {
+            tyreNumberField.prop('disabled', false);
+            tyreNumberField.attr('placeholder', 'Enter tyre numbers, comma-separated');
+        } else {
+            tyreNumberField.prop('disabled', true);
+            tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
+        }
+    });
+    $("#savebtn").click(function(e) {
+        var isValid = true;
+        
+        $(".stock").each(function() {
+            var stock = parseInt($(this).val());
+            var tyreNumbers = $(this).closest('.cal_div').find('.tyre_number').val();
+            
+            if (stock > 0) {
+                var tyreNumbersArray = tyreNumbers.split(',').map(item => item.trim()).filter(item => item !== '');
+                
+                if (tyreNumbersArray.length !== stock) {
+                    alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + '). Please adjust either the stock or the tyre numbers.');
+                    isValid = false;
+                    return false;
+                }
+            }
+        });
     
-    if (stock > 0) {
-      var tyreNumbersArray = tyreNumbers.split(',').map(item => item.trim()).filter(item => item !== '');
-      
-      if (tyreNumbersArray.length !== stock) {
-        alert('Please enter exactly ' + stock + ' tyre numbers for each item.');
-        isValid = false;
-        return false;
-      }
-    }
-  });
-  
-  if (!isValid) {
-    e.preventDefault();
-  }
-});
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
 
     $("#is_gst").change(function(){
       var is_gst = $("#is_gst").val();
@@ -481,14 +416,7 @@ $("#savebtn").click(function(e) {
       $.post("<?php echo e(route('parts-invoice.pi_gstcalculate')); ?>",sendData).done(function(data){
         // console.log(data)
         console.table(data)
-        // if(!isNaN(data.total) && data.total!=0){
-        //   $(".smallfuel").show()
-        //   $(".fueltot").html(data.total)
-        // }else{
-        //   $(".smallfuel").hide()
-        //   $(".fueltot").html('')
-        // }
-
+       
         if(!isNaN(data.cgstval) && data.cgstval!=0){
           $("#cgst_amt").val(data.cgstval)
         }else{
@@ -510,108 +438,6 @@ $("#savebtn").click(function(e) {
           
       })
     })
-
-    // $(function(){
-    //   $("body").on("click","#savebtn",function(){
-    //     //e.preventDefault();
-    //    var blankTest = /\S/;
-    //    var billno = $('.billno').val();
-    //    var vendor_id = $('.vendor_id').val();
-    //    var title = $('.title');
-    //    var number = $('.number');
-    //    var category_id = $('.category_id');
-    //    var manufacturer = $('.manufacturer');
-    //    var unit_cost = $('.unit_cost');
-    //    var stock = $('.stock');
-    //    $(".more").remove();
-    //    var returnval = true;
-    //    console.log(billno);
-    //    console.log(title.val());
-
-    //    if(!blankTest.test(billno)){
-    //     $('.billno').css('border','1px solid red').focus();
-    //     alert("Bill No cannot be empty");
-    //     return false;
-    //    }else{ 
-    //      $('.billno').css('border',''); 
-    //      }
-
-    //      if(!blankTest.test(vendor_id)){
-    //         $('.vendor_id').css('border','1px solid red').focus();
-    //         alert("Vendor name cannot be empty");
-    //         return false;
-    //       }else{ 
-    //         $('.vendor_id').css('border',''); 
-    //       }
-
-    //    if(title.length>0){
-    //     $('.title').each(function(){
-    //       console.log($(this).val());
-    //       if(!blankTest.test($(this).val())){
-    //         $(this).css('border','1px solid red').focus();
-    //         alert("Title cannot be empty");
-    //         //i.preventDefault();
-    //         returnval =  false;
-    //       }else{ $(this).css('border',''); }
-    //       })
-    //       if(returnval===false) return returnval;
-    //    }
-
-    //    if(number.length>0){
-    //     $('.number').each(function(){
-    //       if(!blankTest.test($(this).val())){
-    //         $(this).css('border','1px solid red').focus();
-    //         alert("Number cannot be empty");
-    //         returnval =  false;
-    //     }else{ $(this).css('border',''); }
-    //     })
-    //     if(returnval===false) return returnval;
-    //    }
-
-    //    if(category_id.length>0){
-    //     $('.category_id').each(function(e){
-    //       if(!blankTest.test($(this).val())){
-    //       $(this).css('border','1px solid red').focus();
-    //       alert("Category cannot be empty");
-    //       returnval =  false;
-    //     }else{ $(this).css('border',''); }
-    //     })
-    //     if(returnval===false) return returnval;
-    //    }
-
-    //    if(manufacturer.length>0){
-    //     $('.manufacturer').each(function(e){
-    //       if(!blankTest.test($(this).val())){
-    //       $(this).css('border','1px solid red').focus();
-    //       alert("manufacturer cannot be empty");
-    //       returnval =  false;
-    //     }else{ $(this).css('border',''); }
-    //     })
-    //     if(returnval===false) return returnval;
-    //    }
-    //    if(unit_cost.length>0){
-    //     $('.unit_cost').each(function(e){
-    //       if(!blankTest.test($(this).val())){
-    //       $(this).css('border','1px solid red').focus();
-    //       alert("Unit cost cannot be empty");
-    //       returnval =  false;
-    //     }else{ $(this).css('border',''); }
-    //     })
-    //     if(returnval===false) return returnval;
-    //    }
-    //    if(stock.length>0){
-    //     $('.stock').each(function(e){
-    //       if(!blankTest.test($(this).val())){
-    //       $(this).css('border','1px solid red').focus();
-    //       alert("Stock cannot be empty");
-    //       returnval =  false;
-    //     }else{ $(this).css('border',''); }
-    //     })
-    //     if(returnval===false) return returnval;
-    //    }
-    //   // return false;
-    //  })
-    // })
 })
 
  

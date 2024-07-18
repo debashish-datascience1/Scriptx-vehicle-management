@@ -201,53 +201,6 @@
 
               </div>
             </div>
-            <!-- <div class="col-md-4">
-              <div class="form-group">
-                <?php echo Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']); ?>
-
-                <?php echo Form::text('cash_payment', $data->cash_amount,['class' => 'form-control cash_payment','onkeypress'=>'return isNumber(event,this)']); ?>
-
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <?php echo Form::label('cheque_draft', __('fleet.cheque_draft'), ['class' => 'form-label']); ?>
-
-                <?php echo Form::text('cheque_draft', $data->chq_draft_number,['class' => 'form-control cheque_draft']); ?>
-
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                    <?php echo Form::label('cheque_draft_amount', __('fleet.cheque_draft_amount'), ['class' => 'form-label']); ?>
-
-                    <?php echo Form::text('cheque_draft_amount', $data->chq_draft_amount,['class' => 'form-control cheque_draft_amount','onkeypress'=>'return isNumber(event,this)']); ?>
-
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <?php echo Form::label('cheque_draft_date',__('fleet.cheque_draft_date'), ['class' => 'form-label']); ?>
-
-                <?php echo Form::text('cheque_draft_date',$data->chq_draft_date,['class'=>'form-control cheque_draft_date']); ?>
-
-              </div>
-            </div> -->
-            <!-- <div class="col-md-4">
-              <div class="form-group">
-                <?php echo Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']); ?>
-
-                <div class='input-group mb-3 date'>
-                  <div class="input-group-prepend">
-                    <span class="input-group-text">
-                      <span class="fa fa-calendar"></span>
-                    </span>
-                  </div>
-                  <?php echo Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']); ?>
-
-                </div>
-              </div>
-            </div> -->
             <div class="col-md-12">
               <div class="text-right">
                 <button class="btn btn-primary addmore" type="button" id="button_addform" name="button"><?php echo e(__('Add More')); ?></button>
@@ -363,24 +316,6 @@
           $(this).closest(".addmore_cont").remove();
           $(".unit_cost:first").keyup();
           $("#cgst").keyup();
-          // //After Removal set the Grand Total
-          // var sumtotal=0;
-          
-          // $(".total").each(function(i,e){
-          //   var thisval = $(this).val();
-          //   if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-          //     thisval=0.00;
-          //   }
-            
-          //   thisval = parseFloat(thisval);
-            
-          //   if(thisval!="")
-          //     sumtotal= parseFloat(sumtotal)+thisval;
-          
-          // })
-
-          // $(".subtotal").val(sumtotal.toFixed(2));
-          
       })
 
       $("#vendor_id").select2({placeholder:"<?php echo app('translator')->getFromJson('fleet.select_vendor'); ?>"});
@@ -407,36 +342,6 @@
           radioClass   : 'iradio_flat-green'
         });
 
-        // $("body").on("keyup",".unit_cost,.stock",function(){
-        //   // alert($(this).closest('.cal_div').attr("class"));return false;
-        //   var stock  = $(this).closest('.cal_div').find('.stock').val();
-        //   // var stock  = $(this).parent().parent().find('.stock ').val();
-        //   var unit_cost  = $(this).closest('.cal_div').find('.unit_cost ').val();
-        //   var cash_payment=$('#cash_payment').val();
-        //     //var unit_cost  = $sss(this).parent().parent().find('.unit_cost ').val();
-        //     var total=parseFloat(stock)*parseFloat(unit_cost);
-        //     var totalamnt  = $(this).closest('.cal_div').find('.total').val(parseFloat(total).toFixed(2));
-        //     console.log(stock+" "+unit_cost+" "+total);
-        //     var sumtotal=0;
-        //     if(stock!="" && unit_cost!="")
-        //     {
-        //       $(".total").each(function(i,e){
-        //         var thisval = $(this).val();
-        //         if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-        //           thisval=0.00;
-        //         }
-                
-        //         thisval = parseFloat(thisval);
-                
-        //         if(thisval!="")
-        //           sumtotal= parseFloat(sumtotal)+thisval;
-              
-        //       })
-
-        //       $(".subtotal").val(sumtotal.toFixed(2));
-        //       $("#cgst").keyup()
-        //     }
-        // });
         $("body").on("keyup", ".unit_cost, .stock", function() {
     var stock = $(this).closest('.cal_div').find('.stock').val();
     var unit_cost = $(this).closest('.cal_div').find('.unit_cost').val();
@@ -473,38 +378,6 @@
     $("#cgst").keyup();
   }
 
-
-    //     $("body").on("keyup",".total,.stock",function(){
-    //   // alert($(this).closest('.cal_div').attr("class"));return false;
-    //    var stock  = $(this).closest('.cal_div').find('.stock').val();
-    //    // var stock  = $(this).parent().parent().find('.stock ').val();
-    //    var total  = $(this).closest('.cal_div').find('.total ').val();
-    //   //  var cash_payment=$('#cash_payment').val();
-    //     // var total  = $(this).parent().parent().find('.total ').val();
-    //     if(total!=null && stock!=null){
-    //       var ucost=parseFloat(total)/parseFloat(stock);
-    //        $(this).closest('.cal_div').find('.unit_cost').val(parseFloat(ucost).toFixed(2));
-    //       console.log(stock+" "+ucost+" "+total);
-    //       var sumtotal=0;
-    //       if(stock!="" && total!="")
-    //       {
-    //         $(".total").each(function(i,e){
-    //           var thisval = $(this).val();
-    //           if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-    //             thisval=0.00;
-    //           }
-              
-    //           thisval = parseFloat(thisval);
-              
-    //           if(thisval!="")
-    //             sumtotal= parseFloat(sumtotal)+thisval;
-    //         })
-    //       }
-    //       $(".subtotal").val(sumtotal.toFixed(2));
-    //       $("#cgst").keyup()
-    //     }
-    // });
-
         $("#is_gst").change(function(){
           var is_gst = $("#is_gst").val();
           var cgst = $("#cgst")
@@ -534,13 +407,6 @@
           $.post("<?php echo e(route('work_order.wo_gstcalculate')); ?>",sendData).done(function(data){
             // console.log(data)
             console.table(data)
-            // if(!isNaN(data.total) && data.total!=0){
-            //   $(".smallfuel").show()
-            //   $(".fueltot").html(data.total)
-            // }else{
-            //   $(".smallfuel").hide()
-            //   $(".fueltot").html('')
-            // }
 
             if(!isNaN(data.cgstval) && data.cgstval!=0){
               $("#cgst_amt").val(data.cgstval)
@@ -564,19 +430,17 @@
           })
         })
         $("body").on("keyup", ".stock", function() {
-        var stock = $(this).val();
+        var stock = parseInt($(this).val());
         var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
         
-        if (stock && !isNaN(stock) && parseInt(stock) > 0) {
+        if (stock && !isNaN(stock) && stock > 0) {
             tyreNumberField.prop('disabled', false);
-            tyreNumberField.attr('placeholder', 'Enter ' + stock + ' tyre numbers, comma-separated');
+            tyreNumberField.attr('placeholder', 'Enter tyre numbers, comma-separated');
         } else {
             tyreNumberField.prop('disabled', true);
-            tyreNumberField.val('');
             tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
         }
     });
-
     $("#savebtn").click(function(e) {
         var isValid = true;
         
@@ -588,13 +452,13 @@
                 var tyreNumbersArray = tyreNumbers.split(',').map(item => item.trim()).filter(item => item !== '');
                 
                 if (tyreNumbersArray.length !== stock) {
-                    alert('Please enter exactly ' + stock + ' tyre numbers for each item.');
+                    alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + '). Please adjust either the stock or the tyre numbers.');
                     isValid = false;
                     return false;
                 }
             }
         });
-        
+    
         if (!isValid) {
             e.preventDefault();
         }

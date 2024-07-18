@@ -571,134 +571,54 @@ $(document).ready(function() {
       $("#total_amount").val('');
     }
   })
-
-  // $("#price").keyup(function(){
-  //   console.log($(this).val())
-  //   var price = $(this).val();
-  //   $("#total_amount").val(parseFloat(price).toFixed(2));
-  // })
-  // $(document).on('keyup','#price,#cgst,#sgst',function(){
-  //   var price = $("#price").val();
-  //   var cgst = $("#cgst").val();
-  //   // var cgst_amt = $("#cgst_amt").val();
-  //   var sgst = $("#sgst").val();
-  //   // var sgst_amt = $("#sgst_amt").val();
-    
-  //   var sendData = {_token:"<?php echo e(csrf_token()); ?>",price:price,cgst:cgst,sgst:sgst};
-  //   $.post("<?php echo e(route('work_order.wo_gstcalculate')); ?>",sendData).done(function(data){
-  //     // console.log(data)
-  //     console.table(data)
-  //     // if(!isNaN(data.total) && data.total!=0){
-  //     //   $(".smallfuel").show()
-  //     //   $(".fueltot").html(data.total)
-  //     // }else{
-  //     //   $(".smallfuel").hide()
-  //     //   $(".fueltot").html('')
-  //     // }
-
-  //     if(!isNaN(data.cgstval) && data.cgstval!=0){
-  //       $("#cgst_amt").val(data.cgstval)
-  //     }else{
-  //       $("#cgst_amt").val('')
-  //     }
-
-  //     if(!isNaN(data.sgstval) && data.sgstval!=0){
-  //       $("#sgst_amt").val(data.sgstval)
-  //     }else{
-  //       $("#sgst_amt").val('')
-  //     }
-
-  //     if(!isNaN(data.grandtotal) && data.grandtotal!=0){
-  //       $("#total_amount").val(data.grandtotal)
-  //     }else{
-  //       $("#total_amount").val('')
-  //     }
-
-        
-  //   })
-  // })
-
-  //Flat green color scheme for iCheck
-  // $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
-  //   checkboxClass: 'icheckbox_flat-green',
-  //   radioClass   : 'iradio_flat-green'
-  // });
-
-  // $('.attach').on('click',function(){
-  //   var field = $('#select_part').val();
-  //   if(field == "" || field == null){
-  //     alert('Select Part');
-  //   }
-  //   else{
-  //     var qty=$('#select_part option:selected').attr('qty');
-  //     var title=$('#select_part option:selected').attr('title');
-  //     var price=$('#select_part option:selected').attr('price');
-  //     // alert($('#select_part option:selected').attr('title'));
-  //     // alert($('#select_part option:selected').attr('qty'));
-  //     $(".parts").append('<div class="row col-md-12"><div class="col-md-4">  <div class="form-group"> <label class="form-label"><?php echo app('translator')->getFromJson('fleet.selectPart'); ?></label> <select  class="form-control" disabled>  <option value="'+field+'" selected >'+title+'</option> </select> </div></div> <div class="col-md-2">  <div class="form-group"> <label class="form-label"><?php echo app('translator')->getFromJson('fleet.qty'); ?></label> <input type="number" name="parts['+field+']" min="1" value="1" class="form-control calc" max='+qty+' required> </div></div><div class="col-md-2">  <div class="form-group"> <label class="form-label"><?php echo app('translator')->getFromJson('fleet.unit_cost'); ?></label> <input type="number" value="'+price+'" class="form-control" disabled> </div></div><div class="col-md-2">  <div class="form-group"> <label class="form-label"><?php echo app('translator')->getFromJson('fleet.total_cost'); ?></label> <input type="number" value="'+price+'" class="form-control total_cost" disabled id="'+field+'"> </div></div> <div class="col-md-2"> <div class="form-group" style="margin-top: 30px"><button class="btn btn-danger" type="button" onclick="this.parentElement.parentElement.parentElement.remove();">Remove</button> </div></div></div>');
-  //     $('#select_part').val('').change();
-  //     $('.calc').on('change',function(){
-  //       // alert($(this).val()*price);
-  //       $('#'+field).val($(this).val()*price);
-  //     });
-  //   }
-  // });
-//   $(document).ready(function() {
-//     function populateTyreNumbers(partId, tyreNumbersSelect) {
-//     var selectedTyreNumber = tyreNumbersSelect.data('selected');
-    
-//     if (partId) {
-//         $.ajax({
-//             url: '<?php echo e(route("get.tyre.numbers")); ?>',
-//             type: 'GET',
-//             data: { part_id: partId },
-//             success: function(data) {
-//                 tyreNumbersSelect.empty();
-//                 tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
-//                 $.each(data, function(key, value) {
-//                     var selected = (value == selectedTyreNumber) ? 'selected' : '';
-//                     tyreNumbersSelect.append('<option value="' + value + '" ' + selected + '>' + value + '</option>');
-//                 });
-//             }
-//         });
-//     } else {
-//         tyreNumbersSelect.empty();
-//         tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
-//     }
-// }
-//     $(document).on('change', '.parts_id', function() {
-//         var partId = $(this).val();
-//         var tyreNumbersSelect = $(this).closest('.row').find('.tyre_numbers');
-//         populateTyreNumbers(partId, tyreNumbersSelect);
-//     });
-
-//     // Populate tyre numbers for existing parts on page load
-//     $('.parts_id').each(function() {
-//         var partId = $(this).val();
-//         var tyreNumbersSelect = $(this).closest('.row').find('.tyre_numbers');
-//         populateTyreNumbers(partId, tyreNumbersSelect);
-//     });
-// });
-
 $(document).ready(function() {
     function initializePartRow(row) {
         var stockData = JSON.parse(row.attr('data-stock'));
         var tyreNumbersSelect = row.find('.tyre_numbers');
         var selectedTyreNumber = tyreNumbersSelect.data('selected');
 
+        // function populateTyreNumbers(partId, tyreNumbersSelect) {
+        //     if (partId && partId !== 'add_new') {
+        //         $.ajax({
+        //             url: '<?php echo e(route("get.edit.tyre.numbers")); ?>',
+        //             type: 'GET',
+        //             data: { part_id: partId },
+        //             success: function(data) {
+        //                 tyreNumbersSelect.empty();
+        //                 tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+        //                 $.each(data, function(key, value) {
+        //                     var selected = (value == selectedTyreNumber) ? 'selected' : '';
+        //                     tyreNumbersSelect.append('<option value="' + value + '" ' + selected + '>' + value + '</option>');
+        //                 });
+        //             },
+        //             error: function(xhr, status, error) {
+        //                 console.error('AJAX Error:', status, error);
+        //             }
+        //         });
+        //     } else {
+        //         tyreNumbersSelect.empty();
+        //         tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+        //     }
+        // }
         function populateTyreNumbers(partId, tyreNumbersSelect) {
             if (partId && partId !== 'add_new') {
                 $.ajax({
-                    url: '<?php echo e(route("get.tyre.numbers")); ?>',
+                    url: '<?php echo e(route("get.edit.tyre.numbers")); ?>',
                     type: 'GET',
                     data: { part_id: partId },
                     success: function(data) {
                         tyreNumbersSelect.empty();
                         tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+                        
+                        var selectedTyreNumbers = tyreNumbersSelect.data('selected').toString().split(',');
+                        
                         $.each(data, function(key, value) {
-                            var selected = (value == selectedTyreNumber) ? 'selected' : '';
+                            var selected = (selectedTyreNumbers.indexOf(value.toString()) !== -1) ? 'selected' : '';
                             tyreNumbersSelect.append('<option value="' + value + '" ' + selected + '>' + value + '</option>');
                         });
+                        
+                        // If you're using a select2 plugin, reinitialize it here
+                        // tyreNumbersSelect.select2();
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX Error:', status, error);
@@ -708,7 +628,7 @@ $(document).ready(function() {
                 tyreNumbersSelect.empty();
                 tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
             }
-        }
+      }
 
         function updatePartDetails(row) {
             var partId = row.find('.parts_id').val();
@@ -725,6 +645,7 @@ $(document).ready(function() {
             }
             
             populateTyreNumbers(partId, tyreNumbersSelect);
+            
             updateQuantityStatus(row);
         }
         function updateQuantityStatus(row) {

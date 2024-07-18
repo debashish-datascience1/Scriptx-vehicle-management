@@ -81,17 +81,20 @@
                       <td><?php echo e($dat->quantity); ?></td>
                       <td><?php echo e(Hyvikk::get('currency')." ". $dat->total); ?></td>
                       <!-- <td><?php echo e($dat->tyre_numbers); ?></td> -->
-                      <td><?php
-                     $tyre_numbers = $dat->tyre_numbers;
-                     $numbers_array = explode(',', $tyre_numbers);
-                     $formatted_numbers = [];
-    
-                      foreach (array_chunk($numbers_array, 4) as $chunk) {
-                         $formatted_numbers[] = implode(', ', $chunk);
-                      }
-     
-                     echo nl2br(implode("\n", $formatted_numbers));
-                   ?></td>
+                      <td>
+                        <?php
+                          $partsModel = App\Model\PartsModel::find($dat->parts_id);
+                          $tyre_numbers = $partsModel ? $partsModel->tyre_numbers : '';
+                          $numbers_array = explode(',', $tyre_numbers);
+                          $formatted_numbers = [];
+
+                          foreach (array_chunk($numbers_array, 4) as $chunk) {
+                            $formatted_numbers[] = implode(', ', $chunk);
+                          }
+
+                          echo nl2br(implode("\n", $formatted_numbers));
+                        ?>
+                      </td>
                     </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     <tr>
