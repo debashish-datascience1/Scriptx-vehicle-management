@@ -43,7 +43,10 @@
               <td>
                 <input type="checkbox" name="ids[]" value="{{ $row->id }}" class="checkbox" id="chk{{ $row->id }}" onclick='checkcheckbox();'>
               </td>
-              <td> {{$row->billno}}
+              <td>
+                 {{$row->billno}}
+              <br>
+              {{$row->date_of_purchase}}
               </td>
               <td>{{$row->vendor->name}}
               <br>
@@ -60,6 +63,7 @@
                       <th>Quantity</th>
                       <th>Amount</th>
                       <th>Tyre No.</th>
+                      <th>Tyres Instock</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -78,19 +82,26 @@
                       <td>{{Hyvikk::get('currency')." ". $dat->unit_cost}}</td>
                       <td>{{$dat->quantity}}</td>
                       <td>{{Hyvikk::get('currency')." ". $dat->total}}</td>
-                      <!-- <td>{{ $dat->tyre_numbers}}</td> -->
+                      <td>{{ $dat->tyre_numbers}}</td>
                       <td>
                         @php
                           $partsModel = App\Model\PartsModel::find($dat->parts_id);
-                          $tyre_numbers = $partsModel ? $partsModel->tyre_numbers : '';
-                          $numbers_array = explode(',', $tyre_numbers);
-                          $formatted_numbers = [];
+                          $tyre_numbers = $partsModel ? $partsModel->tyres_used : '';
+                          
+                          if (!empty($tyre_numbers)) {
+                              $numbers_array = explode(',', $tyre_numbers);
+                              $formatted_numbers = [];
 
-                          foreach (array_chunk($numbers_array, 4) as $chunk) {
-                            $formatted_numbers[] = implode(', ', $chunk);
+                              foreach (array_chunk($numbers_array, 4) as $chunk) {
+                                  $formatted_numbers[] = implode(', ', $chunk);
+                              }
+
+                              $output = nl2br(implode("\n", $formatted_numbers));
+                          } else {
+                              $output = 'N/A';
                           }
 
-                          echo nl2br(implode("\n", $formatted_numbers));
+                          echo $output;
                         @endphp
                       </td>
                     </tr>
@@ -126,10 +137,10 @@
                   <span class="sr-only">Toggle Dropdown</span>
                 </button>
                 <div class="dropdown-menu custom" role="menu">
-                  <a class="dropdown-item vview" data-id="{{$row->id}}" data-toggle="modal" data-target="#PartsDetailsModal"> <span aria-hidden="true" class="fa fa-eye" style="color: green"></span> View</a>
+                  <a class="dropdown-item vview" data-id="{{$row->id}}" data-toggle="modal" data-target="#PartsDetailsModal" style = " cursor: pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: green"></span> View</a>
                   @if(Helper::isEligible($row->id,26))
                   <a class="dropdown-item" href="{{ url("admin/parts-invoice/".$row->id."/edit")}}"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')</a>
-                  <a class="dropdown-item" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal"> <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> @lang('fleet.delete')</a>
+                  <a class="dropdown-item" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal" style = " cursor: pointer;"> <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39 "></span> @lang('fleet.delete')</a>
                  @endif
                 </div>
               </div>

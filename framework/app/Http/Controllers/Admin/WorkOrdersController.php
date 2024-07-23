@@ -198,7 +198,10 @@ class WorkOrdersController extends Controller
             foreach ($request->parts_id as $key => $part) {
                 $qty = $request->qty[$key] ?? null;
                 $unit_cost = $request->unit_cost[$key] ?? null;
-                $total = $qty * $unit_cost;                
+                $total = $qty * $unit_cost;   
+                $order->is_own = $request->is_own[$key]; 
+                $order->quantity = $qty;
+                
                 
                 // Handle tyre numbers
                 $tyre_numbers = $request->tyre_numbers ?? [];
@@ -224,6 +227,10 @@ class WorkOrdersController extends Controller
                     $cgst_amt = ($request->cgst[$key] / 100) * $total;
                     $sgst_amt = ($request->sgst[$key] / 100) * $total;
                     $grand_total = $total + $cgst_amt + $sgst_amt;
+                    $order->cgst = $request->cgst[$key];
+                    $order->sgst = $request->sgst[$key];
+                    $order->cgst_amt = $cgst_amt;
+                    $order->sgst_amt = $sgst_amt;
                     PartsUsedModel::create([
                         'work_id' => $order->id,
                         'part_id' => $part,
@@ -427,7 +434,7 @@ class WorkOrdersController extends Controller
                 \Log::info('Requested Part ID: ' . $tyre_used1);
                 // Get the current tyres_used from PartsModel
                 $parts_model = PartsModel::find($part);
-                $current_tyres = array_filter(explode(',', $parts_model->tyres_used));
+                $current_tyres = array_filter(explode(',', $parts_model->tyre_numbers));
                 
                 // Convert tyre_numbers to array
                 $tyre_numbers_array = array_filter(explode(',', $tyre_used1));
@@ -435,6 +442,7 @@ class WorkOrdersController extends Controller
                 // Remove the tyre numbers from PartsModel
                 $remaining_tyres = array_diff($current_tyres, $tyre_numbers_array);
                 $parts_model->tyres_used = implode(',', $remaining_tyres);
+                $parts_model->tyre_numbers = implode(',', $remaining_tyres);
                 $parts_model->save();
                 
                 // Use the removed tyre numbers for PartsUsedModel

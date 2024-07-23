@@ -1028,8 +1028,19 @@ class ReportsController extends Controller
 		$data['date1'] = null;
 		$data['date2'] = null;
 		$data['request'] = null;
+		$data['options'] = Helper::getAllParts();
+
 
 		return view("reports.booking", $data);
+	}
+	public function stock()
+	{
+		$data['vendors'] = Vendor::pluck('name', 'id');
+		$data['date1'] = null;
+		$data['date2'] = null;
+		$data['request'] = null;
+
+		return view("reports.stock", $data);
 	}
 
 	public function booking_post(Request $request)
@@ -1100,6 +1111,36 @@ class ReportsController extends Controller
 // 		dd($index);
 		return view("reports.booking", $index);
 	}
+
+	public function stock_post(Request $request)
+{
+    $vendor_id = $request->vendor_id;
+    $from_date = $request->date1;
+    $to_date = $request->date2;
+
+    $from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
+    $to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+
+    // $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
+	$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+
+    if (!empty($vendor_id)) {
+        $query->where('vendor_id', $vendor_id);
+    }
+
+    $invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+
+    $total_sub_total = $invoices->sum('sub_total');
+    $total_grand_total = $invoices->sum('grand_total');
+
+    $index['vendors'] = Vendor::pluck('name', 'id');
+    $index['invoices'] = $invoices;
+    $index['total_sub_total'] = round($total_sub_total, 2);
+    $index['total_grand_total'] = round($total_grand_total, 2);
+    $index['request'] = $request->all();
+
+    return view("reports.stock", $index);
+}
 
 	public function view_booking_details($arr)
 	{
@@ -2018,6 +2059,41 @@ class ReportsController extends Controller
 		$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
 		// dd($index);
 		return view('reports.print_bookings', $index);
+	}
+
+	public function print_stock(Request $request)
+	{
+		$vendor_id = $request->vendor_id;
+		$from_date = $request->date1;
+		$to_date = $request->date2;
+
+		$from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
+		$to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+
+		if (strtotime($from_date) == strtotime($to_date)) {
+			$from_date = $from_date . " 00:00:00";
+			$to_date = $to_date . " 23:59:59";
+		}
+
+		// $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
+		$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+
+		if (!empty($vendor_id)) {
+			$query->where('vendor_id', $vendor_id);
+		}
+
+		$invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+
+		$total_sub_total = $invoices->sum('sub_total');
+		$total_grand_total = $invoices->sum('grand_total');
+
+		$index['invoices'] = $invoices;
+		$index['total_sub_total'] = bcdiv($total_sub_total, 1, 2);
+		$index['total_grand_total'] = bcdiv($total_grand_total, 1, 2);
+		$index['vendors'] = Vendor::pluck('name', 'id');
+		$index['request'] = $request->all();
+
+		return view('reports.print_stock', $index);
 	}
 
 	public function print_fuel(Request $request)

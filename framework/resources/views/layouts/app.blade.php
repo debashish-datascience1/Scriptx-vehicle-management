@@ -837,6 +837,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="{{ route('reports.stock') }}" class="nav-link @if(Request::is('admin/reports/stock')) active @endif">
+                  <i class="fa fa-book nav-icon"></i>
+                  <p>Stock Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="{{ route('reports.customerPayment') }}" class="nav-link @if(Request::is('admin/reports/customer-payment')) active @endif">
                   <i class="fa fa-book nav-icon"></i>
                   <p>@lang('menu.customerPayment')</p>

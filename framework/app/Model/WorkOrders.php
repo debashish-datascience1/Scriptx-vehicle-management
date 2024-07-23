@@ -10,7 +10,7 @@ class WorkOrders extends Model
 	use SoftDeletes;
 	protected $dates = ['deleted_at'];
 	protected $table = 'work_orders';
-	protected $fillable = ['vehicle_id', 'category_id', 'vendor_id', 'required_by', 'status', 'description', 'meter', 'note', 'reference', 'price', 'bill_image', 'bill_no'];
+	protected $fillable = ['vehicle_id', 'category_id', 'vendor_id', 'required_by', 'status', 'description', 'meter', 'note', 'reference', 'price', 'bill_image', 'bill_no','quantity'];
 
 	function vehicle()
 	{

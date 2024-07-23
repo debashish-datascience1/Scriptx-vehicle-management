@@ -303,13 +303,20 @@
   }
   $(function(){
       //add more
-      $('#button_addform').click(function(){
-        $.post('<?php echo e(url("admin/parts-invoice/getparts_form")); ?>',{_token:"<?php echo e(csrf_token()); ?>"},function(result){
-          console.log(result)
-          $(".more_less").append(result);
-          $(".item:last").select2();
-        });
-      });
+      // $('#button_addform').click(function(){
+      //   $.post('<?php echo e(url("admin/parts-invoice/getparts_form")); ?>',{_token:"<?php echo e(csrf_token()); ?>"},function(result){
+      //     console.log(result)
+      //     $(".more_less").append(result);
+      //     $(".item:last").select2();
+      //   });
+      // });
+
+      function initializeFormItems() {
+          $(".cal_div").each(function() {
+              var itemField = $(this).find('.item');
+              itemField.trigger('change');
+          });
+      }
 
       $("body").on("click",".remove",function(){
         if(confirm("Are you sure ?"))
@@ -432,37 +439,99 @@
         $("body").on("keyup", ".stock", function() {
         var stock = parseInt($(this).val());
         var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
+        var itemField = $(this).closest('.cal_div').find('.item');
         
-        if (stock && !isNaN(stock) && stock > 0) {
-            tyreNumberField.prop('disabled', false);
-            tyreNumberField.attr('placeholder', 'Enter tyre numbers, comma-separated');
-        } else {
-            tyreNumberField.prop('disabled', true);
-            tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
-        }
+        // Trigger the change event on the item field to re-evaluate the category
+        itemField.trigger('change');
     });
-    $("#savebtn").click(function(e) {
-        var isValid = true;
-        
-        $(".stock").each(function() {
-            var stock = parseInt($(this).val());
-            var tyreNumbers = $(this).closest('.cal_div').find('.tyre_number').val();
-            
-            if (stock > 0) {
-                var tyreNumbersArray = tyreNumbers.split(',').map(item => item.trim()).filter(item => item !== '');
-                
-                if (tyreNumbersArray.length !== stock) {
-                    alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + '). Please adjust either the stock or the tyre numbers.');
-                    isValid = false;
-                    return false;
+
+
+$("body").on("change", ".item", function() {
+    var itemId = $(this).val();
+    var calDiv = $(this).closest('.cal_div');
+    var tyreNumberField = calDiv.find('.tyre_number');
+    var stockField = calDiv.find('.stock');
+
+    if (itemId) {
+        $.ajax({
+            url: '<?php echo e(route("get.category.info")); ?>',
+            type: 'GET',
+            data: { item_id: itemId },
+            success: function(response) {
+                if (response.category_name.toLowerCase().includes('tyre')) {
+                    tyreNumberField.prop('disabled', false);
+                    updateTyreNumberPlaceholder(stockField, tyreNumberField);
+                } else {
+                    tyreNumberField.prop('disabled', true);
+                    tyreNumberField.val('');
+                    tyreNumberField.attr('placeholder', 'Not applicable for this item');
                 }
+            },
+            error: function() {
+                console.log('Error fetching category info');
             }
         });
+    } else {
+        tyreNumberField.prop('disabled', true);
+        tyreNumberField.val('');
+        tyreNumberField.attr('placeholder', 'Select an item first');
+    }
+});
+
+$("body").on("keyup", ".stock", function() {
+    var calDiv = $(this).closest('.cal_div');
+    var tyreNumberField = calDiv.find('.tyre_number');
     
-        if (!isValid) {
-            e.preventDefault();
+    if (!tyreNumberField.prop('disabled')) {
+        updateTyreNumberPlaceholder($(this), tyreNumberField);
+    }
+});
+
+function updateTyreNumberPlaceholder(stockField, tyreNumberField) {
+    var stock = parseInt(stockField.val());
+    if (stock && !isNaN(stock) && stock > 0) {
+        tyreNumberField.attr('placeholder', 'Enter ' + stock + ' tyre numbers, comma-separated');
+    } else {
+        tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
+    }
+}
+
+$("#savebtn").click(function(e) {
+    var isValid = true;
+    
+    $(".cal_div").each(function() {
+        var stockField = $(this).find('.stock');
+        var tyreNumberField = $(this).find('.tyre_number');
+        var itemField = $(this).find('.item');
+        var stock = parseInt(stockField.val());
+        var itemId = itemField.val();
+        
+        if (!tyreNumberField.prop('disabled') && stock > 0) {
+            var tyreNumbersArray = tyreNumberField.val().split(',').map(item => item.trim()).filter(item => item !== '');
+            
+            if (tyreNumbersArray.length !== stock) {
+                alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + ') for one of the tyre items. Please adjust either the stock or the tyre numbers.');
+                isValid = false;
+                return false;
+            }
+            
+            tyreNumberField.attr('name', 'tyre_number[' + itemId + ']');
         }
     });
+
+    if (!isValid) {
+        e.preventDefault();
+    }
+});
+initializeFormItems();
+
+$('#button_addform').click(function(){
+    $.post('<?php echo e(url("admin/parts-invoice/getparts_form")); ?>', {_token:"<?php echo e(csrf_token()); ?>"}, function(result){
+        $(".more_less").append(result);
+        $(".more_less .cal_div:last").find(".item").select2().trigger('change');  // Initialize Select2 for the new item only
+    });
+});
+
     
   })
   
