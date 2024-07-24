@@ -1033,15 +1033,26 @@ class ReportsController extends Controller
 
 		return view("reports.booking", $data);
 	}
-	public function stock()
-	{
-		$data['vendors'] = Vendor::pluck('name', 'id');
-		$data['date1'] = null;
-		$data['date2'] = null;
-		$data['request'] = null;
+	// public function stock()
+	// {
+	// 	$data['vendors'] = Vendor::pluck('name', 'id');
+	// 	$data['options'] = Helper::getAllParts();
+	// 	$data['date1'] = null;
+	// 	$data['date2'] = null;
+	// 	$data['request'] = null;
 
-		return view("reports.stock", $data);
-	}
+	// 	return view("reports.stock", $data);
+	// }
+	public function stock()
+{
+    $allParts = Helper::getAllParts();
+    $data['options'] = ['all' => 'All'] + $allParts; // Add 'All' option at the beginning
+    $data['date1'] = null;
+    $data['date2'] = null;
+    $data['request'] = null;
+
+    return view("reports.stock", $data);
+}
 
 	public function booking_post(Request $request)
 	{
@@ -1112,31 +1123,123 @@ class ReportsController extends Controller
 		return view("reports.booking", $index);
 	}
 
-	public function stock_post(Request $request)
+// 	public function stock_post(Request $request)
+// {
+//     $vendor_id = $request->vendor_id;
+//     $from_date = $request->date1;
+//     $to_date = $request->date2;
+
+//     $from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
+//     $to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+
+//     // $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
+// 	$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+
+//     if (!empty($vendor_id)) {
+//         $query->where('vendor_id', $vendor_id);
+//     }
+
+//     $invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+
+//     $total_sub_total = $invoices->sum('sub_total');
+//     $total_grand_total = $invoices->sum('grand_total');
+
+//     $index['vendors'] = Vendor::pluck('name', 'id');
+//     $index['invoices'] = $invoices;
+//     $index['total_sub_total'] = round($total_sub_total, 2);
+//     $index['total_grand_total'] = round($total_grand_total, 2);
+//     $index['request'] = $request->all();
+
+//     return view("reports.stock", $index);
+// }
+	// public function stock_post(Request $request)
+	// {
+	// 	$parts_ids = $request->parts_id;
+	// 	$from_date = $request->date1;
+	// 	$to_date = $request->date2;
+
+	// 	$from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
+	// 	$to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
+
+	// 	$query = PartsModel::query();
+
+	// 	if (!empty($parts_ids)) {
+	// 		$query->whereIn('id', $parts_ids);
+	// 	}
+
+	// 	$parts = $query->get();
+
+	// 	$index['options'] = Helper::getAllParts();
+	// 	$index['parts'] = $parts;
+	// 	$index['request'] = $request->all();
+
+	// 	return view("reports.stock", $index);
+	// }
+// 	public function stock_post(Request $request)
+// {
+//     $parts_ids = $request->parts_id;
+//     $from_date = $request->date1;
+//     $to_date = $request->date2;
+
+//     $from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
+//     $to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
+
+//     $query = PartsModel::query();
+
+//     if (!empty($parts_ids)) {
+//         $query->whereIn('id', $parts_ids);
+//     }
+
+//     $parts = $query->get();
+
+//     // Fetch tyres used data
+//     $tyres_used = DB::table('parts_used')
+//         ->whereIn('part_id', $parts_ids)
+//         ->whereNull('deleted_at')
+//         ->select('part_id', DB::raw('SUM(qty) as total_used'))
+//         ->groupBy('part_id')
+//         ->get()
+//         ->keyBy('part_id');
+
+//     $index['options'] = Helper::getAllParts();
+//     $index['parts'] = $parts;
+//     $index['tyres_used'] = $tyres_used;
+//     $index['request'] = $request->all();
+
+//     return view("reports.stock", $index);
+// }
+public function stock_post(Request $request)
 {
-    $vendor_id = $request->vendor_id;
+    $parts_ids = $request->parts_id;
     $from_date = $request->date1;
     $to_date = $request->date2;
 
-    $from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
-    $to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+    $from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
+    $to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
 
-    // $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
-	$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+    $query = PartsModel::query();
 
-    if (!empty($vendor_id)) {
-        $query->where('vendor_id', $vendor_id);
+    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+        $query->whereIn('id', $parts_ids);
     }
 
-    $invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+    $parts = $query->get();
 
-    $total_sub_total = $invoices->sum('sub_total');
-    $total_grand_total = $invoices->sum('grand_total');
+    // Fetch tyres used data
+    $tyres_used_query = DB::table('parts_used')
+        ->whereNull('deleted_at')
+        ->select('part_id', DB::raw('SUM(qty) as total_used'))
+        ->groupBy('part_id');
 
-    $index['vendors'] = Vendor::pluck('name', 'id');
-    $index['invoices'] = $invoices;
-    $index['total_sub_total'] = round($total_sub_total, 2);
-    $index['total_grand_total'] = round($total_grand_total, 2);
+    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+        $tyres_used_query->whereIn('part_id', $parts_ids);
+    }
+
+    $tyres_used = $tyres_used_query->get()->keyBy('part_id');
+
+    $index['options'] = ['all' => 'All'] + Helper::getAllParts();
+    $index['parts'] = $parts;
+    $index['tyres_used'] = $tyres_used;
     $index['request'] = $request->all();
 
     return view("reports.stock", $index);
@@ -2061,40 +2164,75 @@ class ReportsController extends Controller
 		return view('reports.print_bookings', $index);
 	}
 
+	// public function print_stock(Request $request)
+	// {
+	// 	$vendor_id = $request->vendor_id;
+	// 	$from_date = $request->date1;
+	// 	$to_date = $request->date2;
+
+	// 	$from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
+	// 	$to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+
+	// 	if (strtotime($from_date) == strtotime($to_date)) {
+	// 		$from_date = $from_date . " 00:00:00";
+	// 		$to_date = $to_date . " 23:59:59";
+	// 	}
+
+	// 	// $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
+	// 	$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+
+	// 	if (!empty($vendor_id)) {
+	// 		$query->where('vendor_id', $vendor_id);
+	// 	}
+
+	// 	$invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+
+	// 	$total_sub_total = $invoices->sum('sub_total');
+	// 	$total_grand_total = $invoices->sum('grand_total');
+
+	// 	$index['invoices'] = $invoices;
+	// 	$index['total_sub_total'] = bcdiv($total_sub_total, 1, 2);
+	// 	$index['total_grand_total'] = bcdiv($total_grand_total, 1, 2);
+	// 	$index['vendors'] = Vendor::pluck('name', 'id');
+	// 	$index['request'] = $request->all();
+
+	// 	return view('reports.print_stock', $index);
+	// }
 	public function print_stock(Request $request)
-	{
-		$vendor_id = $request->vendor_id;
-		$from_date = $request->date1;
-		$to_date = $request->date2;
+{
+    $parts_ids = $request->parts_id;
+    $from_date = $request->date1;
+    $to_date = $request->date2;
 
-		$from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
-		$to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+    $from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
+    $to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
 
-		if (strtotime($from_date) == strtotime($to_date)) {
-			$from_date = $from_date . " 00:00:00";
-			$to_date = $to_date . " 23:59:59";
-		}
+    $query = PartsModel::query();
 
-		// $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
-		$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+        $query->whereIn('id', $parts_ids);
+    }
 
-		if (!empty($vendor_id)) {
-			$query->where('vendor_id', $vendor_id);
-		}
+    $parts = $query->get();
 
-		$invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+    // Fetch tyres used data
+    $tyres_used_query = DB::table('parts_used')
+        ->whereNull('deleted_at')
+        ->select('part_id', DB::raw('SUM(qty) as total_used'))
+        ->groupBy('part_id');
 
-		$total_sub_total = $invoices->sum('sub_total');
-		$total_grand_total = $invoices->sum('grand_total');
+    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+        $tyres_used_query->whereIn('part_id', $parts_ids);
+    }
 
-		$index['invoices'] = $invoices;
-		$index['total_sub_total'] = bcdiv($total_sub_total, 1, 2);
-		$index['total_grand_total'] = bcdiv($total_grand_total, 1, 2);
-		$index['vendors'] = Vendor::pluck('name', 'id');
-		$index['request'] = $request->all();
+    $tyres_used = $tyres_used_query->get()->keyBy('part_id');
 
-		return view('reports.print_stock', $index);
-	}
+    $index['parts'] = $parts;
+    $index['tyres_used'] = $tyres_used;
+    $index['request'] = $request->all();
+
+    return view('reports.print_stock', $index);
+}
 
 	public function print_fuel(Request $request)
 	{

@@ -2,9 +2,9 @@
 <?php $__env->startSection('extra_css'); ?>
 <link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
 <style>
-	.fullsize{width: 100% !important;}
-	.newrow{margin: 0 auto;width: 100%;margin-bottom: 15px;}
-	.dateShow{padding-right: 13px;}
+    .fullsize{width: 100% !important;}
+    .newrow{margin: 0 auto;width: 100%;margin-bottom: 15px;}
+    .dateShow{padding-right: 13px;}
 </style>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection("breadcrumb"); ?>
@@ -13,69 +13,69 @@
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('content'); ?>
 <div class="row">
-	<div class="col-md-12">
-		<div class="card card-info">
-			<div class="card-header">
-				<h3 class="card-title"><?php echo app('translator')->getFromJson('fleet.stock_report'); ?>
-        </h3>
-			</div>
+    <div class="col-md-12">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title"><?php echo app('translator')->getFromJson('fleet.stock_report'); ?></h3>
+            </div>
 
-			<div class="card-body">
-				<?php echo Form::open(['route' => 'reports.stock','method'=>'post','class'=>'form-block']); ?>
+            <div class="card-body">
+                <?php echo Form::open(['route' => 'reports.stock','method'=>'post','class'=>'form-block']); ?>
 
-				<div class="row newrow">
-					<div class="col-md-6">
+                <div class="row newrow">
+                    <div class="col-md-6">
                         <div class="form-group">
-                            <?php echo Form::label('vendor_id',__('fleet.vendor'), ['class' => 'form-label']); ?>
+                            <?php echo Form::label('parts_id',__('fleet.selectPart'), ['class' => 'form-label']); ?>
 
-                            <?php echo Form::select("vendor_id",$vendors,null,['class'=>'form-control vendor_id','id'=>'vendor_id','placeholder'=>'Select Vendor','required']); ?>
+                            <?php echo Form::select('parts_id[]',$options,'all',['class'=>'form-control parts_id','id'=>'parts_id','multiple'=>'multiple','required']); ?>
 
                         </div>
-					</div>
-					<div class="col-md-3">
-						<div class="form-group">
-							<?php echo Form::label('date1','From',['class' => 'form-label dateShow']); ?>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <?php echo Form::label('date1','From',['class' => 'form-label dateShow']); ?>
 
-							<div class="input-group">
-								<div class="input-group-prepend">
-								<span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-								<?php echo Form::text('date1', isset($request['date1']) ? Helper::indianDateFormat($request['date1']) : null,['class' => 'form-control','placeholder'=>'From Date','readonly']); ?>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                                <?php echo Form::text('date1', isset($request['date1']) ? Helper::indianDateFormat($request['date1']) : null,['class' => 'form-control','placeholder'=>'From Date','readonly']); ?>
 
-							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="form-group">
-							<?php echo Form::label('date2','To',['class' => 'form-label dateShow']); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <?php echo Form::label('date2','To',['class' => 'form-label dateShow']); ?>
 
-							<div class="input-group">
-							  <div class="input-group-prepend">
-							  <span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-							  <?php echo Form::text('date2', isset($request['date2']) ? Helper::indianDateFormat($request['date2']) : null,['class' => 'form-control','placeholder'=>'To Date','readonly']); ?>
+                            <div class="input-group">
+                              <div class="input-group-prepend">
+                              <span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
+                              <?php echo Form::text('date2', isset($request['date2']) ? Helper::indianDateFormat($request['date2']) : null,['class' => 'form-control','placeholder'=>'To Date','readonly']); ?>
 
-							</div>
-						</div>
-					</div>
-				</div>	
-				<div class="row newrow">
-					<div class="col-md-12">
-						<button type="submit" class="btn btn-info" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
-						<button type="submit" formaction="<?php echo e(url('admin/print-stock-report')); ?>" formtarget="_blank" class="btn btn-danger"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>
-					</div>
-				</div>
-				<?php echo Form::close(); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>    
+                <div class="row newrow">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-info" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
+                        <button type="submit" formaction="<?php echo e(url('admin/print-stock-report')); ?>" formtarget="_blank" class="btn btn-danger"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>
+                    </div>
+                </div>
+                <?php echo Form::close(); ?>
 
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
-<?php if(isset($invoices)): ?>
+
+<?php if(isset($parts)): ?>
 <div class="row">
     <div class="col-md-12">
         <div class="card card-info">
             <div class="card-header">
                 <h3 class="card-title">
-                    Parts Invoices
+                    Parts Stock Report
                 </h3>
             </div>
             <div class="card-body table-responsive">
@@ -83,86 +83,103 @@
                     <thead>
                         <tr>
                             <th>SL#</th>
-                            <th>Vendor</th>
-                            <th>Bill No</th>
-                            <th>Date of Purchase</th>
-							<th>Parts</th>
-                            <th>Tyre Numbers</th>
-                            <th>Sub Total</th>
-                            <th>Grand Total</th>
+                            <th>Part Name</th>
+                            <th>Category</th>
+                            <th>Manufacturer</th>
+                            <th>Stock</th>
+                            <th>Tyres Used</th>
+                            <th>Tyres InStock</th>
                         </tr>
                     </thead>
                     <tbody>
-                    <?php $__currentLoopData = $invoices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$invoice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php $__currentLoopData = $parts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$part): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr>
                             <td><?php echo e($k+1); ?></td>
-                            <td><?php echo e($invoice->vendor->name); ?></td>
-                            <td><?php echo e($invoice->billno); ?></td>
-                            <td><?php echo e($invoice->date_of_purchase); ?></td>
-							<td>
-                                <?php $__currentLoopData = $invoice->partsDetails; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <?php if($detail->parts_zero): ?>
-                                        <?php echo e($detail->parts_zero->item ?? 'N/A'); ?> 
-                                        <?php echo e($detail->parts_zero->category->name ?? 'N/A'); ?> 
-                                        (<?php echo e($detail->parts_zero->manufacturer_details->name ?? 'N/A'); ?>)
-                                    <?php else: ?>
-                                        N/A
-                                    <?php endif; ?>
-                                    <br>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </td>
-							<td>
-								<?php $__currentLoopData = $invoice->partsDetails; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-									<?php
-										$partsModel = App\Model\PartsModel::find($dat->parts_id);
-										$tyre_numbers = $partsModel ? $partsModel->tyres_used : '';
+                            <td><?php echo e($part->item ?? 'N/A'); ?></td>
+                            <td><?php echo e($part->category->name ?? 'N/A'); ?></td>
+                            <td><?php echo e($part->manufacturer_details->name ?? 'N/A'); ?></td>
+                            <td><?php echo e($part->stock ?? 'N/A'); ?></td>
+                            <td><?php echo e($tyres_used[$part->id]->total_used ?? 0); ?></td>
+                            <!-- <td>
+								<?php
+									$tyre_numbers = $part->tyres_used ?? '';
+									if (!empty($tyre_numbers)) {
 										$numbers_array = explode(',', $tyre_numbers);
-										$formatted_numbers = [];
-
-										foreach (array_chunk($numbers_array, 4) as $chunk) {
-											$formatted_numbers[] = implode(', ', $chunk);
+										$display_numbers = array_slice($numbers_array, 0, 2);
+										$output = implode(', ', $display_numbers);
+										if (count($numbers_array) > 2) {
+											$output .= ', ...';
 										}
+									} else {
+										$output = 'N/A';
+									}
+								?>
+								<?php echo e($output); ?>
 
-										echo nl2br(implode("\n", $formatted_numbers));
-									?>
-								<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+								<?php if(count($numbers_array ?? []) > 2): ?>
+									<button class="btn btn-sm btn-info show-tyres" data-part-id="<?php echo e($part->id); ?>" data-part-name="<?php echo e($part->item); ?>">Show</button>
+								<?php endif; ?>
+							</td> -->
+							<td>
+								<?php
+									$tyre_numbers = $part->tyres_used ?? '';
+									if (!empty($tyre_numbers)) {
+										$numbers_array = explode(',', $tyre_numbers);
+										$display_numbers = array_slice($numbers_array, 0, 2);
+										$output = implode(', ', $display_numbers);
+										if (count($numbers_array) > 2) {
+											$output .= ', ...';
+										}
+									} else {
+										$output = 'N/A';
+										$numbers_array = [];
+									}
+								?>
+								<?php echo e($output); ?>
+
+								<?php if(!empty($tyre_numbers) && count($numbers_array) > 2): ?>
+									<button class="btn btn-sm btn-info show-tyres" data-part-id="<?php echo e($part->id); ?>" data-part-name="<?php echo e($part->item); ?>">Show</button>
+								<?php endif; ?>
 							</td>
-                            <td><?php echo e($invoice->sub_total); ?></td>
-                            <td><?php echo e($invoice->grand_total); ?></td>
                         </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                     <tfoot>
                         <tr>
                             <th>SL#</th>
-                            <th>Vendor</th>
-                            <th>Bill No</th>
-                            <th>Date of Purchase</th>
-							<th>Parts</th>
+                            <th>Part Name</th>
+                            <th>Category</th>
+                            <th>Manufacturer</th>
+                            <th>Stock</th>
+                            <th>Tyres Used</th>
                             <th>Tyre Numbers</th>
-                            <th>Sub Total</th>
-                            <th>Grand Total</th>
                         </tr>
                     </tfoot>
-                </table>
-                <br>
-            
-                <table class="table">
-                    <tr>
-                        <th style="float:right">Total Sub Total: <?php echo e(Hyvikk::get('currency')); ?> <?php echo e($total_sub_total); ?></th>
-                        <th style="float:right">Total Grand Total: <?php echo e(Hyvikk::get('currency')); ?> <?php echo e($total_grand_total); ?></th>
-                    </tr>
                 </table>
             </div>
         </div>
     </div>
 </div>
 <?php endif; ?>
+<!-- Modal -->
+<div class="modal fade" id="tyreModal" tabindex="-1" role="dialog" aria-labelledby="tyreModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tyreModalLabel">Tyre Numbers</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="tyreModalBody">
+            </div>
+        </div>
+    </div>
+</div>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection("script"); ?>
 <script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
-<!-- bootstrap datepicker -->
 <script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
 <script type="text/javascript">
   $(document).ready(function() {
@@ -170,49 +187,65 @@
         autoclose: true,
         format: 'dd-mm-yyyy'
     });
-  });
-</script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/jszip.min.js')); ?>"></script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/pdfmake.min.js')); ?>"></script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/vfs_fonts.js')); ?>"></script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/buttons.html5.min.js')); ?>"></script>
-<script type="text/javascript">
-	$(document).ready(function() {
-		// $("#vehicle_id,#customer_id").select2();
-        $("#vendor_id").select2();
+    
+    $('#parts_id').select2({
+        placeholder: 'Select Parts'
+    });
 
-		$('#myTable tfoot th').each( function () {
-	      var title = $(this).text();
-	      $(this).html( '<input type="text" placeholder="'+title+'" />' );
-	    });
-	    var myTable = $('#myTable').DataTable( {
-	        // dom: 'Bfrtip',
-	        buttons: [{
-	             extend: 'collection',
-	                text: 'Export',
-	                buttons: [
-	                    'copy',
-	                    'excel',
-	                    'csv',
-	                    'pdf',
-	                ]}
-	        ],
+    // Set 'All' as default selection
+    $('#parts_id').val(['all']).trigger('change');
 
-	        "language": {
-	                 "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
-	              },
-	        "initComplete": function() {
-	                myTable.columns().every(function () {
-	                  var that = this;
-	                  $('input', this.footer()).on('keyup change', function () {
-	                      that.search(this.value).draw();
-	                  });
-	                });
-	              }
-	    });
-	});
+    // Setup - add a text input to each footer cell
+    $('#myTable tfoot th').each(function () {
+        var title = $(this).text();
+        $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+    });
 
-	
+    // DataTable
+    var table = $('#myTable').DataTable({
+        "language": {
+            "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
+        },
+        initComplete: function () {
+            // Apply the search
+            this.api().columns().every(function () {
+                var that = this;
+                $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that
+                            .search(this.value)
+                            .draw();
+                    }
+                });
+            });
+        }
+    });
+	$(document).on('click', '.show-tyres', function() {
+        var partId = $(this).data('part-id');
+        var partName = $(this).data('part-name');
+
+        // AJAX call to get tyre numbers
+        $.ajax({
+            url: '<?php echo e(route("get.tyre.numbers")); ?>',
+            method: 'GET',
+            data: { part_id: partId },
+            success: function(response) {
+                var modalContent = '<h6>' + partName + '</h6><hr>';
+                if (response && response.length > 0) {
+                    modalContent += '<p>' + response.join(', ') + '</p>';
+                } else {
+                    modalContent += '<p>No tyre numbers available</p>';
+                }
+                $('#tyreModalBody').html(modalContent);
+                $('#tyreModal').modal('show');
+            },
+            error: function() {
+                alert('Error fetching tyre numbers');
+            }
+        });
+    });
+});
+  
 </script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/reports/stock.blade.php ENDPATH**/ ?>

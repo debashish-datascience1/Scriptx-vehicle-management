@@ -36,14 +36,11 @@
       
       <div class="row">
         <div class="col-md-12 text-center">
-          <h3>Parts Invoice Report</h3>
+          <h3>Parts Stock Report</h3>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-          <?php if(isset($request['vendor_id']) && $request['vendor_id']): ?>
-            <p><strong>Vendor:</strong> <?php echo e($vendors[$request['vendor_id']]); ?></p>
-          <?php endif; ?>
           <p><strong>Date Range:</strong> <?php echo e($request['date1'] ?? 'N/A'); ?> to <?php echo e($request['date2'] ?? 'N/A'); ?></p>
         </div>
       </div>
@@ -54,69 +51,47 @@
             <thead class="thead-inverse">
               <tr>
                 <th>SL#</th>
-                <th>Vendor</th>
-                <th>Bill No</th>
-                <th>Date of Purchase</th>
-                <th>Parts</th>
+                <th>Part Name</th>
+                <th>Category</th>
+                <th>Manufacturer</th>
+                <th>Stock</th>
+                <th>Tyres Used</th>
                 <th>Tyre Numbers</th>
-                <th>Sub Total</th>
-                <th>Grand Total</th>
               </tr>
             </thead>
             <tbody>
-              <?php $__currentLoopData = $invoices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$invoice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+              <?php $__currentLoopData = $parts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$part): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
                   <td><?php echo e($k+1); ?></td>
-                  <td><?php echo e($invoice->vendor->name); ?></td>
-                  <td><?php echo e($invoice->billno); ?></td>
-                  <td><?php echo e(date($date_format_setting, strtotime($invoice->date_of_purchase))); ?></td>
+                  <td><?php echo e($part->item ?? 'N/A'); ?></td>
+                  <td><?php echo e($part->category->name ?? 'N/A'); ?></td>
+                  <td><?php echo e($part->manufacturer_details->name ?? 'N/A'); ?></td>
+                  <td><?php echo e($part->stock ?? 'N/A'); ?></td>
+                  <td><?php echo e($tyres_used[$part->id]->total_used ?? 0); ?></td>
                   <td>
-                    <?php $__currentLoopData = $invoice->partsDetails; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                      <?php if($detail->parts_zero): ?>
-                        <?php echo e($detail->parts_zero->item ?? 'N/A'); ?> 
-                        <?php echo e($detail->parts_zero->category->name ?? 'N/A'); ?> 
-                        (<?php echo e($detail->parts_zero->manufacturer_details->name ?? 'N/A'); ?>)
-                      <?php else: ?>
-                        N/A
-                      <?php endif; ?>
-                      <br>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                  </td>
-                  <td>
-                    <?php $__currentLoopData = $invoice->partsDetails; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                      <?php
-                        $partsModel = App\Model\PartsModel::find($detail->parts_id);
-                        $tyre_numbers = $partsModel ? $partsModel->tyres_used : '';
+                    <?php
+                      $tyre_numbers = $part->tyres_used ?? '';
+                      if (!empty($tyre_numbers)) {
                         $numbers_array = explode(',', $tyre_numbers);
                         $formatted_numbers = [];
                         foreach (array_chunk($numbers_array, 4) as $chunk) {
                           $formatted_numbers[] = implode(', ', $chunk);
                         }
                         echo nl2br(implode("\n", $formatted_numbers));
-                      ?>
-                      <br>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                      } else {
+                        echo 'N/A';
+                      }
+                    ?>
                   </td>
-                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($invoice->sub_total, 2)); ?></td>
-                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($invoice->grand_total, 2)); ?></td>
                 </tr>
               <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </tbody>
-          </table>
-          
-          <table class="table table-bordered">
-            <tr>
-              <th>Total Sub Total</th>
-              <th>Total Grand Total</th>
-            </tr>
-            <tr>
-              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_sub_total, 2)); ?></td>
-              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_grand_total, 2)); ?></td>
-            </tr>
           </table>
         </div>
       </div>
     </section>
   </div>
 </body>
-</html><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/reports/print_stock.blade.php ENDPATH**/ ?>
+</html>
+
+<?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/reports/print_stock.blade.php ENDPATH**/ ?>

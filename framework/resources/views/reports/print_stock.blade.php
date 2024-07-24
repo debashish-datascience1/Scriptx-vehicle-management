@@ -35,14 +35,11 @@
       
       <div class="row">
         <div class="col-md-12 text-center">
-          <h3>Parts Invoice Report</h3>
+          <h3>Parts Stock Report</h3>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-          @if(isset($request['vendor_id']) && $request['vendor_id'])
-            <p><strong>Vendor:</strong> {{ $vendors[$request['vendor_id']] }}</p>
-          @endif
           <p><strong>Date Range:</strong> {{ $request['date1'] ?? 'N/A' }} to {{ $request['date2'] ?? 'N/A' }}</p>
         </div>
       </div>
@@ -53,65 +50,41 @@
             <thead class="thead-inverse">
               <tr>
                 <th>SL#</th>
-                <th>Vendor</th>
-                <th>Bill No</th>
-                <th>Date of Purchase</th>
-                <th>Parts</th>
+                <th>Part Name</th>
+                <th>Category</th>
+                <th>Manufacturer</th>
+                <th>Stock</th>
+                <th>Tyres Used</th>
                 <th>Tyre Numbers</th>
-                <th>Sub Total</th>
-                <th>Grand Total</th>
               </tr>
             </thead>
             <tbody>
-              @foreach($invoices as $k=>$invoice)
+              @foreach($parts as $k=>$part)
                 <tr>
                   <td>{{$k+1}}</td>
-                  <td>{{$invoice->vendor->name}}</td>
-                  <td>{{$invoice->billno}}</td>
-                  <td>{{date($date_format_setting, strtotime($invoice->date_of_purchase))}}</td>
+                  <td>{{$part->item ?? 'N/A'}}</td>
+                  <td>{{$part->category->name ?? 'N/A'}}</td>
+                  <td>{{$part->manufacturer_details->name ?? 'N/A'}}</td>
+                  <td>{{$part->stock ?? 'N/A'}}</td>
+                  <td>{{$tyres_used[$part->id]->total_used ?? 0}}</td>
                   <td>
-                    @foreach($invoice->partsDetails as $detail)
-                      @if($detail->parts_zero)
-                        {{$detail->parts_zero->item ?? 'N/A'}} 
-                        {{$detail->parts_zero->category->name ?? 'N/A'}} 
-                        ({{$detail->parts_zero->manufacturer_details->name ?? 'N/A'}})
-                      @else
-                        N/A
-                      @endif
-                      <br>
-                    @endforeach
-                  </td>
-                  <td>
-                    @foreach($invoice->partsDetails as $detail)
-                      @php
-                        $partsModel = App\Model\PartsModel::find($detail->parts_id);
-                        $tyre_numbers = $partsModel ? $partsModel->tyres_used : '';
+                    @php
+                      $tyre_numbers = $part->tyres_used ?? '';
+                      if (!empty($tyre_numbers)) {
                         $numbers_array = explode(',', $tyre_numbers);
                         $formatted_numbers = [];
                         foreach (array_chunk($numbers_array, 4) as $chunk) {
                           $formatted_numbers[] = implode(', ', $chunk);
                         }
                         echo nl2br(implode("\n", $formatted_numbers));
-                      @endphp
-                      <br>
-                    @endforeach
+                      } else {
+                        echo 'N/A';
+                      }
+                    @endphp
                   </td>
-                  <td>{{Hyvikk::get('currency')}} {{number_format($invoice->sub_total, 2)}}</td>
-                  <td>{{Hyvikk::get('currency')}} {{number_format($invoice->grand_total, 2)}}</td>
                 </tr>
               @endforeach
             </tbody>
-          </table>
-          
-          <table class="table table-bordered">
-            <tr>
-              <th>Total Sub Total</th>
-              <th>Total Grand Total</th>
-            </tr>
-            <tr>
-              <td>{{Hyvikk::get('currency')}} {{number_format($total_sub_total, 2)}}</td>
-              <td>{{Hyvikk::get('currency')}} {{number_format($total_grand_total, 2)}}</td>
-            </tr>
           </table>
         </div>
       </div>
@@ -119,3 +92,4 @@
   </div>
 </body>
 </html>
+

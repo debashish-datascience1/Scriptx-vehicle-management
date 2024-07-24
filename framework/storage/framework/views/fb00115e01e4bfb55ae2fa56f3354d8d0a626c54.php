@@ -85,7 +85,25 @@
                       <td><?php echo e(Hyvikk::get('currency')." ". $dat->unit_cost); ?></td>
                       <td><?php echo e($dat->quantity); ?></td>
                       <td><?php echo e(Hyvikk::get('currency')." ". $dat->total); ?></td>
-                      <td><?php echo e($dat->tyre_numbers); ?></td>
+                      <td>
+                      <?php
+                          $tyres = $dat->tyre_numbers;
+                          if (!empty($tyres)) {
+                              $numbers_array = explode(',', $tyres);
+                              $formatted_numbers = [];
+
+                              foreach (array_chunk($numbers_array, 4) as $chunk) {
+                                  $formatted_numbers[] = implode(', ', $chunk);
+                              }
+
+                              $output = nl2br(implode("\n", $formatted_numbers));
+                          } else {
+                              $output = 'N/A';
+                          }
+
+                          echo $output;
+                      ?>
+                      </td>
                       <td>
                         <?php
                           $partsModel = App\Model\PartsModel::find($dat->parts_id);
