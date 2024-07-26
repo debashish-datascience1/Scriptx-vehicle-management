@@ -60,7 +60,15 @@
               </tr>
             </thead>
             <tbody>
+              <?php
+                  $total_stock = 0;
+                  $total_tyres_used = 0;
+              ?>
               <?php $__currentLoopData = $parts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$part): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <?php
+                    $total_stock += $part->stock ?? 0;
+                    $total_tyres_used += $tyres_used[$part->id]->total_used ?? 0;
+                  ?>
                 <tr>
                   <td><?php echo e($k+1); ?></td>
                   <td><?php echo e($part->item ?? 'N/A'); ?></td>
@@ -86,6 +94,16 @@
                 </tr>
               <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </tbody>
+          </table>
+          <table class="table table-bordered">
+            <tr>
+              <th>Total Stock</th>
+              <th>Total Tyres Stock</th>
+            </tr>
+            <tr>
+              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_stock, 2)); ?></td>
+              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_tyres_used, 2)); ?></td>
+            </tr>
           </table>
         </div>
       </div>

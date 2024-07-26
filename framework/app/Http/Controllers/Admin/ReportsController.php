@@ -9,6 +9,7 @@ use App\Model\Bookings;
 use App\Model\ExpCats;
 use App\Model\Expense;
 use App\Model\PartsModel;
+use App\Model\PartsCategoryModel;
 use App\Model\FuelModel;
 use App\Model\IncCats;
 use App\Model\IncomeModel;
@@ -1033,26 +1034,18 @@ class ReportsController extends Controller
 
 		return view("reports.booking", $data);
 	}
-	// public function stock()
-	// {
-	// 	$data['vendors'] = Vendor::pluck('name', 'id');
-	// 	$data['options'] = Helper::getAllParts();
-	// 	$data['date1'] = null;
-	// 	$data['date2'] = null;
-	// 	$data['request'] = null;
 
-	// 	return view("reports.stock", $data);
-	// }
-	public function stock()
-{
-    $allParts = Helper::getAllParts();
-    $data['options'] = ['all' => 'All'] + $allParts; // Add 'All' option at the beginning
-    $data['date1'] = null;
-    $data['date2'] = null;
-    $data['request'] = null;
+	public function stock(Request $request)
+	{
+		$allParts = Helper::getAllParts();
+		$data['options'] = ['all' => 'All'] + $allParts; 
+		$data['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+		$data['date1'] = $request->date1 ?? null;
+		$data['date2'] = $request->date2 ?? null;
+		$data['request'] = $request->all();
 
-    return view("reports.stock", $data);
-}
+		return view("reports.stock", $data);
+	}
 
 	public function booking_post(Request $request)
 	{
@@ -1122,128 +1115,74 @@ class ReportsController extends Controller
 // 		dd($index);
 		return view("reports.booking", $index);
 	}
+	
+	public function stock_post(Request $request)
+	{
+		$parts_ids = $request->parts_id;
+		$category_id = $request->category_id;
+		$from_date = $request->date1;
+		$to_date = $request->date2;
 
-// 	public function stock_post(Request $request)
-// {
-//     $vendor_id = $request->vendor_id;
-//     $from_date = $request->date1;
-//     $to_date = $request->date2;
+		$from_date = !empty($from_date) ? Helper::ymd($from_date) : null;
+		$to_date = !empty($to_date) ? Helper::ymd($to_date) : null;
 
-//     $from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
-//     $to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+		$query = PartsModel::query();
 
-//     // $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
-// 	$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+		// Only join with parts_details if any date is provided
+		if ($from_date || $to_date) {
+			$query->leftJoin('parts_details', 'parts.id', '=', 'parts_details.parts_id')
+				->whereNull('parts_details.deleted_at');
+		}
 
-//     if (!empty($vendor_id)) {
-//         $query->where('vendor_id', $vendor_id);
-//     }
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$query->whereIn('parts.id', $parts_ids);
+		}
 
-//     $invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+		if (!empty($category_id) && $category_id != 'all') {
+			if ($from_date || $to_date) {
+				$query->where('parts_details.parts_category', $category_id);
+			} else {
+				$query->where('parts.category_id', $category_id);
+			}
+		}
 
-//     $total_sub_total = $invoices->sum('sub_total');
-//     $total_grand_total = $invoices->sum('grand_total');
+		// Apply date filter only if at least one date is provided
+		if ($from_date && $to_date) {
+			$query->whereBetween('parts_details.date_of_purchase', [$from_date, $to_date]);
+		} elseif ($from_date) {
+			$query->where('parts_details.date_of_purchase', '>=', $from_date);
+		} elseif ($to_date) {
+			$query->where('parts_details.date_of_purchase', '<=', $to_date);
+		}
 
-//     $index['vendors'] = Vendor::pluck('name', 'id');
-//     $index['invoices'] = $invoices;
-//     $index['total_sub_total'] = round($total_sub_total, 2);
-//     $index['total_grand_total'] = round($total_grand_total, 2);
-//     $index['request'] = $request->all();
+		// Select and get parts
+		if ($from_date || $to_date) {
+			$parts = $query->select('parts.*')->distinct()->get();
+		} else {
+			$parts = $query->get();
+		}
 
-//     return view("reports.stock", $index);
-// }
-	// public function stock_post(Request $request)
-	// {
-	// 	$parts_ids = $request->parts_id;
-	// 	$from_date = $request->date1;
-	// 	$to_date = $request->date2;
+		// Fetch tyres used data
+		$tyres_used_query = DB::table('parts_used')
+			->whereNull('deleted_at')
+			->select('part_id', DB::raw('SUM(qty) as total_used'))
+			->groupBy('part_id');
 
-	// 	$from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
-	// 	$to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$tyres_used_query->whereIn('part_id', $parts_ids);
+		}
 
-	// 	$query = PartsModel::query();
+		$tyres_used = $tyres_used_query->get()->keyBy('part_id');
 
-	// 	if (!empty($parts_ids)) {
-	// 		$query->whereIn('id', $parts_ids);
-	// 	}
+		$index['options'] = ['all' => 'All'] + Helper::getAllParts();
+		$index['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+		$index['parts'] = $parts;
+		$index['tyres_used'] = $tyres_used;
+		$index['request'] = $request->all();
 
-	// 	$parts = $query->get();
-
-	// 	$index['options'] = Helper::getAllParts();
-	// 	$index['parts'] = $parts;
-	// 	$index['request'] = $request->all();
-
-	// 	return view("reports.stock", $index);
-	// }
-// 	public function stock_post(Request $request)
-// {
-//     $parts_ids = $request->parts_id;
-//     $from_date = $request->date1;
-//     $to_date = $request->date2;
-
-//     $from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
-//     $to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
-
-//     $query = PartsModel::query();
-
-//     if (!empty($parts_ids)) {
-//         $query->whereIn('id', $parts_ids);
-//     }
-
-//     $parts = $query->get();
-
-//     // Fetch tyres used data
-//     $tyres_used = DB::table('parts_used')
-//         ->whereIn('part_id', $parts_ids)
-//         ->whereNull('deleted_at')
-//         ->select('part_id', DB::raw('SUM(qty) as total_used'))
-//         ->groupBy('part_id')
-//         ->get()
-//         ->keyBy('part_id');
-
-//     $index['options'] = Helper::getAllParts();
-//     $index['parts'] = $parts;
-//     $index['tyres_used'] = $tyres_used;
-//     $index['request'] = $request->all();
-
-//     return view("reports.stock", $index);
-// }
-public function stock_post(Request $request)
-{
-    $parts_ids = $request->parts_id;
-    $from_date = $request->date1;
-    $to_date = $request->date2;
-
-    $from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
-    $to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
-
-    $query = PartsModel::query();
-
-    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
-        $query->whereIn('id', $parts_ids);
-    }
-
-    $parts = $query->get();
-
-    // Fetch tyres used data
-    $tyres_used_query = DB::table('parts_used')
-        ->whereNull('deleted_at')
-        ->select('part_id', DB::raw('SUM(qty) as total_used'))
-        ->groupBy('part_id');
-
-    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
-        $tyres_used_query->whereIn('part_id', $parts_ids);
-    }
-
-    $tyres_used = $tyres_used_query->get()->keyBy('part_id');
-
-    $index['options'] = ['all' => 'All'] + Helper::getAllParts();
-    $index['parts'] = $parts;
-    $index['tyres_used'] = $tyres_used;
-    $index['request'] = $request->all();
-
-    return view("reports.stock", $index);
-}
+		return view("reports.stock", $index);
+	}
+	
 
 	public function view_booking_details($arr)
 	{
@@ -2163,76 +2102,115 @@ public function stock_post(Request $request)
 		// dd($index);
 		return view('reports.print_bookings', $index);
 	}
-
 	// public function print_stock(Request $request)
 	// {
-	// 	$vendor_id = $request->vendor_id;
-	// 	$from_date = $request->date1;
-	// 	$to_date = $request->date2;
+	// 	$parts_ids = $request->parts_id;
+	// 		$category_id = $request->category_id;
+	// 		$from_date = $request->date1;
+	// 		$to_date = $request->date2;
 
-	// 	$from_date = empty($from_date) ? PartsInvoice::orderBy('date_of_purchase', 'asc')->first()->date_of_purchase : Helper::ymd($from_date);
-	// 	$to_date = empty($to_date) ? PartsInvoice::orderBy('date_of_purchase', 'desc')->first()->date_of_purchase : Helper::ymd($to_date);
+	// 		$from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
+	// 		$to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
 
-	// 	if (strtotime($from_date) == strtotime($to_date)) {
-	// 		$from_date = $from_date . " 00:00:00";
-	// 		$to_date = $to_date . " 23:59:59";
-	// 	}
+	// 		$query = PartsModel::query();
 
-	// 	// $query = PartsInvoice::whereBetween('date_of_purchase', [$from_date, $to_date]);
-	// 	$query = PartsInvoice::with('partsDetails.parts_zero')->whereBetween('date_of_purchase', [$from_date, $to_date]);
+	// 		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+	// 			$query->whereIn('id', $parts_ids);
+	// 		}
 
-	// 	if (!empty($vendor_id)) {
-	// 		$query->where('vendor_id', $vendor_id);
-	// 	}
+	// 		if (!empty($category_id) && $category_id != 'all') {
+	// 			$query->where('category_id', $category_id);
+	// 		}
 
-	// 	$invoices = $query->orderBy('date_of_purchase', 'ASC')->get();
+	// 		$parts = $query->get();
 
-	// 	$total_sub_total = $invoices->sum('sub_total');
-	// 	$total_grand_total = $invoices->sum('grand_total');
+	// 		// Fetch tyres used data
+	// 		$tyres_used_query = DB::table('parts_used')
+	// 			->whereNull('deleted_at')
+	// 			->select('part_id', DB::raw('SUM(qty) as total_used'))
+	// 			->groupBy('part_id');
 
-	// 	$index['invoices'] = $invoices;
-	// 	$index['total_sub_total'] = bcdiv($total_sub_total, 1, 2);
-	// 	$index['total_grand_total'] = bcdiv($total_grand_total, 1, 2);
-	// 	$index['vendors'] = Vendor::pluck('name', 'id');
-	// 	$index['request'] = $request->all();
+	// 		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+	// 			$tyres_used_query->whereIn('part_id', $parts_ids);
+	// 		}
 
-	// 	return view('reports.print_stock', $index);
+	// 		$tyres_used = $tyres_used_query->get()->keyBy('part_id');
+
+	// 		$index['options'] = ['all' => 'All'] + Helper::getAllParts();
+	// 		$index['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+	// 		$index['parts'] = $parts;
+	// 		$index['tyres_used'] = $tyres_used;
+	// 		$index['request'] = $request->all();
+
+	// 		return view("reports.print_stock", $index);
 	// }
 	public function print_stock(Request $request)
-{
-    $parts_ids = $request->parts_id;
-    $from_date = $request->date1;
-    $to_date = $request->date2;
+	{
+		$parts_ids = $request->parts_id;
+		$category_id = $request->category_id;
+		$from_date = $request->date1;
+		$to_date = $request->date2;
 
-    $from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
-    $to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
+		$from_date = !empty($from_date) ? Helper::ymd($from_date) : null;
+		$to_date = !empty($to_date) ? Helper::ymd($to_date) : null;
 
-    $query = PartsModel::query();
+		$query = PartsModel::query();
 
-    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
-        $query->whereIn('id', $parts_ids);
-    }
+		// Only join with parts_details if any date is provided
+		if ($from_date || $to_date) {
+			$query->leftJoin('parts_details', 'parts.id', '=', 'parts_details.parts_id')
+				->whereNull('parts_details.deleted_at');
+		}
 
-    $parts = $query->get();
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$query->whereIn('parts.id', $parts_ids);
+		}
 
-    // Fetch tyres used data
-    $tyres_used_query = DB::table('parts_used')
-        ->whereNull('deleted_at')
-        ->select('part_id', DB::raw('SUM(qty) as total_used'))
-        ->groupBy('part_id');
+		if (!empty($category_id) && $category_id != 'all') {
+			if ($from_date || $to_date) {
+				$query->where('parts_details.parts_category', $category_id);
+			} else {
+				$query->where('parts.category_id', $category_id);
+			}
+		}
 
-    if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
-        $tyres_used_query->whereIn('part_id', $parts_ids);
-    }
+		// Apply date filter only if at least one date is provided
+		if ($from_date && $to_date) {
+			$query->whereBetween('parts_details.date_of_purchase', [$from_date, $to_date]);
+		} elseif ($from_date) {
+			$query->where('parts_details.date_of_purchase', '>=', $from_date);
+		} elseif ($to_date) {
+			$query->where('parts_details.date_of_purchase', '<=', $to_date);
+		}
 
-    $tyres_used = $tyres_used_query->get()->keyBy('part_id');
+		// Select and get parts
+		if ($from_date || $to_date) {
+			$parts = $query->select('parts.*')->distinct()->get();
+		} else {
+			$parts = $query->get();
+		}
 
-    $index['parts'] = $parts;
-    $index['tyres_used'] = $tyres_used;
-    $index['request'] = $request->all();
+		// Fetch tyres used data
+		$tyres_used_query = DB::table('parts_used')
+			->whereNull('deleted_at')
+			->select('part_id', DB::raw('SUM(qty) as total_used'))
+			->groupBy('part_id');
 
-    return view('reports.print_stock', $index);
-}
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$tyres_used_query->whereIn('part_id', $parts_ids);
+		}
+
+		$tyres_used = $tyres_used_query->get()->keyBy('part_id');
+
+		$index['options'] = ['all' => 'All'] + Helper::getAllParts();
+		$index['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+		$index['parts'] = $parts;
+		$index['tyres_used'] = $tyres_used;
+		$index['request'] = $request->all();
+
+		return view("reports.print_stock", $index);
+	}
+	
 
 	public function print_fuel(Request $request)
 	{

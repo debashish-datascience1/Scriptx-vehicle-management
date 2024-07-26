@@ -42,7 +42,7 @@
                       <span class="fa fa-calendar"></span>
                     </span>
                   </div>
-                  <?php echo Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']); ?>
+                  <?php echo Form::text('dateofpurchase',$data->date_of_purchase,['class'=>'form-control dateofpurchase','required']); ?>
 
                 </div>
               </div>
@@ -329,14 +329,14 @@
       $(".item").select2();
       
         // $("body").on("click",".dateofpurchase",function(){
-          $(".dateofpurchase").datetimepicker({format: 'DD-MM-YYYY',sideBySide: true,icons: {
+          $(".dateofpurchase").datetimepicker({format: 'YYYY-MM-DD',sideBySide: true,icons: {
                 previous: 'fa fa-arrow-left',
                 next: 'fa fa-arrow-right',
                 up: "fa fa-arrow-up",
                 down: "fa fa-arrow-down"
           }});
         // })
-        $(".cheque_draft_date").datetimepicker({format: 'DD-MM-YYYY',sideBySide: true,icons: {
+        $(".cheque_draft_date").datetimepicker({format: 'YYYY-MM-DD',sideBySide: true,icons: {
                 previous: 'fa fa-arrow-left',
                 next: 'fa fa-arrow-right',
                 up: "fa fa-arrow-up",

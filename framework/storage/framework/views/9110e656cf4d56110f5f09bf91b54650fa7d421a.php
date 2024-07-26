@@ -1,5 +1,7 @@
-<?php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')?>
 <?php $__env->startSection('extra_css'); ?>
+<?php
+$date_format_setting = (Hyvikk::get('date_format')) ? Hyvikk::get('date_format') : 'd-m-Y';
+?>
 <link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
 <style>
     .fullsize{width: 100% !important;}
@@ -9,7 +11,7 @@
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#"><?php echo app('translator')->getFromJson('menu.reports'); ?></a></li>
-<li class="breadcrumb-item active"><?php echo app('translator')->getFromJson('fleet.booking_report'); ?></li>
+<li class="breadcrumb-item active"><?php echo app('translator')->getFromJson('fleet.stock_report'); ?></li>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('content'); ?>
 <div class="row">
@@ -23,15 +25,23 @@
                 <?php echo Form::open(['route' => 'reports.stock','method'=>'post','class'=>'form-block']); ?>
 
                 <div class="row newrow">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <?php echo Form::label('parts_id',__('fleet.selectPart'), ['class' => 'form-label']); ?>
 
-                            <?php echo Form::select('parts_id[]',$options,'all',['class'=>'form-control parts_id','id'=>'parts_id','multiple'=>'multiple','required']); ?>
+                            <?php echo Form::select('parts_id[]',$options,'all',['class'=>'form-control parts_id','id'=>'parts_id']); ?>
 
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <?php echo Form::label('category_id', __('fleet.selectCategory'), ['class' => 'form-label']); ?>
+
+                            <?php echo Form::select('category_id', $categories, 'all', ['class' => 'form-control category_id', 'id' => 'category_id']); ?>
+
+                        </div>
+                    </div>
+                    <div class="col-md-2">
                         <div class="form-group">
                             <?php echo Form::label('date1','From',['class' => 'form-label dateShow']); ?>
 
@@ -43,7 +53,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <?php echo Form::label('date2','To',['class' => 'form-label dateShow']); ?>
 
@@ -92,7 +102,15 @@
                         </tr>
                     </thead>
                     <tbody>
+                    <?php
+                        $total_stock = 0;
+                        $total_tyres_used = 0;
+                    ?>
                     <?php $__currentLoopData = $parts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$part): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
+                            $total_stock += $part->stock ?? 0;
+                            $total_tyres_used += $tyres_used[$part->id]->total_used ?? 0;
+                        ?>
                         <tr>
                             <td><?php echo e($k+1); ?></td>
                             <td><?php echo e($part->item ?? 'N/A'); ?></td>
@@ -100,26 +118,6 @@
                             <td><?php echo e($part->manufacturer_details->name ?? 'N/A'); ?></td>
                             <td><?php echo e($part->stock ?? 'N/A'); ?></td>
                             <td><?php echo e($tyres_used[$part->id]->total_used ?? 0); ?></td>
-                            <!-- <td>
-								<?php
-									$tyre_numbers = $part->tyres_used ?? '';
-									if (!empty($tyre_numbers)) {
-										$numbers_array = explode(',', $tyre_numbers);
-										$display_numbers = array_slice($numbers_array, 0, 2);
-										$output = implode(', ', $display_numbers);
-										if (count($numbers_array) > 2) {
-											$output .= ', ...';
-										}
-									} else {
-										$output = 'N/A';
-									}
-								?>
-								<?php echo e($output); ?>
-
-								<?php if(count($numbers_array ?? []) > 2): ?>
-									<button class="btn btn-sm btn-info show-tyres" data-part-id="<?php echo e($part->id); ?>" data-part-name="<?php echo e($part->item); ?>">Show</button>
-								<?php endif; ?>
-							</td> -->
 							<td>
 								<?php
 									$tyre_numbers = $part->tyres_used ?? '';
@@ -155,6 +153,13 @@
                             <th>Tyre Numbers</th>
                         </tr>
                     </tfoot>
+                </table>
+                <br>
+                <table class="table">
+                    <tr>
+                        <th style="float:right">Total Tyres Used: <?php echo e(Hyvikk::get('currency')); ?> <?php echo e($total_tyres_used); ?></th>
+                        <th style="float:right">Total Stock: <?php echo e(Hyvikk::get('currency')); ?> <?php echo e($total_stock); ?></th>
+                    </tr>
                 </table>
             </div>
         </div>
@@ -192,8 +197,14 @@
         placeholder: 'Select Parts'
     });
 
+    $('#category_id').select2({
+        placeholder: 'Select Category'
+    });
+
     // Set 'All' as default selection
     $('#parts_id').val(['all']).trigger('change');
+    $('#category_id').val('all').trigger('change');
+
 
     // Setup - add a text input to each footer cell
     $('#myTable tfoot th').each(function () {
@@ -248,4 +259,6 @@
   
 </script>
 <?php $__env->stopSection(); ?>
+
+
 <?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/reports/stock.blade.php ENDPATH**/ ?>

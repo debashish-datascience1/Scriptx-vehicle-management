@@ -239,6 +239,7 @@ class PartsInvoiceController extends Controller
                 // Remove tyre numbers
                 $currentTyreNumbers = explode(',', $part->tyre_numbers);
                 $tyreNumbersToRemove = explode(',', $dt->tyre_numbers);
+                
                 $updatedTyreNumbers = array_diff($currentTyreNumbers, $tyreNumbersToRemove);
                 
                 $currentTyresUsed = explode(',', $part->tyres_used);
@@ -355,15 +356,31 @@ class PartsInvoiceController extends Controller
                 $tyreNumbers = explode(',', $request->tyre_number[$val]);
                 $tyreNumbers = array_map('trim', $tyreNumbers);
                 $tyreNumbers = array_filter($tyreNumbers);
-        
+
+                $tyreMumbers = PartsDetails::where('parts_id', $val)
+                ->where('parts_category', $partsModel->category_id)
+                ->whereNull('deleted_at')
+                ->pluck('tyre_numbers')
+                ->filter()
+                ->flatMap(function ($numbers) {
+                    return explode(',', $numbers);
+                })
+                ->unique()
+                ->values()
+                ->toArray();
+
+                $allTyreNumbers = array_unique(array_merge($tyreNumbers, $tyreMumbers));
+                $allTyreNumbers = array_filter($allTyreNumbers, 'strlen');
+                $uniqueTyreNumbers = implode(',', $allTyreNumbers);
+
         
                 if (count($tyreNumbers) != $request->stock[$key]) {
                     return redirect()->back()->withInput()->withErrors(['tyre_number' => 'The number of tyre numbers must match the quantity for tyre items.']);
                 }
         
                 $details_data['tyre_numbers'] = implode(',', $tyreNumbers);
-                $partsModel->tyre_numbers = implode(',', $tyreNumbers);
-                $partsModel->tyres_used = implode(',', $tyreNumbers);
+                $partsModel->tyre_numbers = $uniqueTyreNumbers;
+                $partsModel->tyres_used = $uniqueTyreNumbers;
             } else {
                 $partsModel->tyre_numbers = null;
                 $partsModel->tyres_used = null;
@@ -433,6 +450,8 @@ class PartsInvoiceController extends Controller
             'chq_draft_number' => $cheque_draft,
             'chq_draft_amount' => $cheque_draft_amount,
             'chq_draft_date' => empty($cheque_draft_date) ? null : date('Y-m-d', strtotime($cheque_draft_date)),
+            'date_of_purchase' => $dateofpurchase, // Add this line
+
         ];
         PartsInvoice::where('id', $part_id)->update($partmod);
 

@@ -59,7 +59,15 @@
               </tr>
             </thead>
             <tbody>
+              @php
+                  $total_stock = 0;
+                  $total_tyres_used = 0;
+              @endphp
               @foreach($parts as $k=>$part)
+                  @php
+                    $total_stock += $part->stock ?? 0;
+                    $total_tyres_used += $tyres_used[$part->id]->total_used ?? 0;
+                  @endphp
                 <tr>
                   <td>{{$k+1}}</td>
                   <td>{{$part->item ?? 'N/A'}}</td>
@@ -85,6 +93,16 @@
                 </tr>
               @endforeach
             </tbody>
+          </table>
+          <table class="table table-bordered">
+            <tr>
+              <th>Total Stock</th>
+              <th>Total Tyres Used</th>
+            </tr>
+            <tr>
+              <td> {{number_format($total_stock)}}</td>
+              <td> {{number_format($total_tyres_used)}}</td>
+            </tr>
           </table>
         </div>
       </div>

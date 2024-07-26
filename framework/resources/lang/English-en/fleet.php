@@ -730,6 +730,7 @@ return [
     'partName' => 'Part Name',
     'add' => 'Add',
     'selectPart' => "Select Part",
+    'selectCategory' => "Select Category",
     'todayTransactions' => "Today's Transactions",
     'quantity' => 'Quantity',
     'tyre_number'=> 'Tyre Number',

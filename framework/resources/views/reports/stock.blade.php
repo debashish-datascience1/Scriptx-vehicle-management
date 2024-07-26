@@ -1,6 +1,8 @@
 @extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')@endphp
 @section('extra_css')
+@php
+$date_format_setting = (Hyvikk::get('date_format')) ? Hyvikk::get('date_format') : 'd-m-Y';
+@endphp
 <link rel="stylesheet" href="{{asset('assets/css/bootstrap-datepicker.min.css')}}">
 <style>
     .fullsize{width: 100% !important;}
@@ -10,7 +12,7 @@
 @endsection
 @section("breadcrumb")
 <li class="breadcrumb-item"><a href="#">@lang('menu.reports')</a></li>
-<li class="breadcrumb-item active">@lang('fleet.booking_report')</li>
+<li class="breadcrumb-item active">@lang('fleet.stock_report')</li>
 @endsection
 @section('content')
 <div class="row">
@@ -23,13 +25,19 @@
             <div class="card-body">
                 {!! Form::open(['route' => 'reports.stock','method'=>'post','class'=>'form-block']) !!}
                 <div class="row newrow">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             {!! Form::label('parts_id',__('fleet.selectPart'), ['class' => 'form-label']) !!}
-                            {!! Form::select('parts_id[]',$options,'all',['class'=>'form-control parts_id','id'=>'parts_id','multiple'=>'multiple','required']) !!}
+                            {!! Form::select('parts_id[]',$options,'all',['class'=>'form-control parts_id','id'=>'parts_id']) !!}
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {!! Form::label('category_id', __('fleet.selectCategory'), ['class' => 'form-label']) !!}
+                            {!! Form::select('category_id', $categories, 'all', ['class' => 'form-control category_id', 'id' => 'category_id']) !!}
+                        </div>
+                    </div>
+                    <div class="col-md-2">
                         <div class="form-group">
                             {!! Form::label('date1','From',['class' => 'form-label dateShow']) !!}
                             <div class="input-group">
@@ -39,7 +47,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             {!! Form::label('date2','To',['class' => 'form-label dateShow']) !!}
                             <div class="input-group">
@@ -85,7 +93,15 @@
                         </tr>
                     </thead>
                     <tbody>
+                    @php
+                        $total_stock = 0;
+                        $total_tyres_used = 0;
+                    @endphp
                     @foreach($parts as $k=>$part)
+                        @php
+                            $total_stock += $part->stock ?? 0;
+                            $total_tyres_used += $tyres_used[$part->id]->total_used ?? 0;
+                        @endphp
                         <tr>
                             <td>{{$k+1}}</td>
                             <td>{{$part->item ?? 'N/A'}}</td>
@@ -93,25 +109,6 @@
                             <td>{{$part->manufacturer_details->name ?? 'N/A'}}</td>
                             <td>{{$part->stock ?? 'N/A'}}</td>
                             <td>{{$tyres_used[$part->id]->total_used ?? 0}}</td>
-                            <!-- <td>
-								@php
-									$tyre_numbers = $part->tyres_used ?? '';
-									if (!empty($tyre_numbers)) {
-										$numbers_array = explode(',', $tyre_numbers);
-										$display_numbers = array_slice($numbers_array, 0, 2);
-										$output = implode(', ', $display_numbers);
-										if (count($numbers_array) > 2) {
-											$output .= ', ...';
-										}
-									} else {
-										$output = 'N/A';
-									}
-								@endphp
-								{{ $output }}
-								@if (count($numbers_array ?? []) > 2)
-									<button class="btn btn-sm btn-info show-tyres" data-part-id="{{ $part->id }}" data-part-name="{{ $part->item }}">Show</button>
-								@endif
-							</td> -->
 							<td>
 								@php
 									$tyre_numbers = $part->tyres_used ?? '';
@@ -146,6 +143,13 @@
                             <th>Tyre Numbers</th>
                         </tr>
                     </tfoot>
+                </table>
+                <br>
+                <table class="table">
+                    <tr>
+                        <th style="float:right">Total Tyres Used: {{Hyvikk::get('currency')}} {{$total_tyres_used }}</th>
+                        <th style="float:right">Total Stock: {{Hyvikk::get('currency')}} {{$total_stock }}</th>
+                    </tr>
                 </table>
             </div>
         </div>
@@ -183,8 +187,14 @@
         placeholder: 'Select Parts'
     });
 
+    $('#category_id').select2({
+        placeholder: 'Select Category'
+    });
+
     // Set 'All' as default selection
     $('#parts_id').val(['all']).trigger('change');
+    $('#category_id').val('all').trigger('change');
+
 
     // Setup - add a text input to each footer cell
     $('#myTable tfoot th').each(function () {
@@ -239,3 +249,4 @@
   
 </script>
 @endsection
+
