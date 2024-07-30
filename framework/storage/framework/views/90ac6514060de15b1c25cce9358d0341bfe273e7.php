@@ -71,33 +71,44 @@
               <?php endif; ?>
               <th>Vehicle</th>
               <th>Type</th>
-              <th width="15%">Description</th>
+              <!-- <th width="15%">Description</th> -->
               <th>Status</th>
               <th>Amount</th>
+              <th>Parts Details</th>
             </thead>
 
             <tbody>
-              <?php $__currentLoopData = $workOrder; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+              <?php $__currentLoopData = $processedData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
                     <td><?php echo e($k+1); ?></td>
-                    <td nowrap><?php echo e(Helper::getCanonicalDate($row->required_by,'default')); ?></td>
+                    <td nowrap><?php echo e(Helper::getCanonicalDate($row['required_by'],'default')); ?></td>
                     <?php if($is_vendor!=true): ?>
-                    <td><?php echo e($row->vendor->name); ?></td>
+                    <td><?php echo e($row['vendor']->name); ?></td>
                     <?php endif; ?>
-                    <td><strong><?php echo e(strtoupper($row->vehicle->license_plate)); ?></strong></td>
-                    <td><?php echo e($row->vendor->type); ?></td>
-                    <td><?php echo e($row->description); ?></td>
-                    <td><?php echo e($row->status); ?></td>
-                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($row->price,2)); ?></td>
+                    <td><strong><?php echo e(strtoupper($row['vehicle']->license_plate)); ?></strong></td>
+                    <td><?php echo e($row['vendor']->type); ?></td>
+                    <!-- <td><?php echo e($row['description']); ?></td> -->
+                    <td><?php echo e($row['status']); ?></td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($row['price'],2)); ?></td>
+                    <td>
+                      <?php $__currentLoopData = $row['parts']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $partName => $partData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="parts-details">
+                          <strong><?php echo e($partName); ?></strong><br>
+                          Qty: <?php echo e($partData['qty']); ?><br>
+                          Tyres: <?php echo e(implode(', ', $partData['tyres'])); ?><br>
+                          Source: <?php echo e($partData['is_own'] ? 'Own Inventory' : 'Vendor'); ?>
+
+                        </div>
+                      <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </td>
                 </tr>
               <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <tr>
-                  <th colspan="<?php echo e($is_vendor ? 5 : 6); ?>"></th>
+                  <th colspan="<?php echo e($is_vendor ? 6 : 7); ?>"></th>
                   <th>Grand Total</th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($gtotal,1,2)); ?></th>
                 </tr>
             </tbody>
-            <tfoot>
           </table>
         </div>
       </div>

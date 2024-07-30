@@ -36,6 +36,7 @@
               <th><?php echo app('translator')->getFromJson('fleet.vehicle'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.description'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.part'); ?></th>
+              <th><?php echo app('translator')->getFromJson('fleet.tyre_used'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.qty'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.unit_cost'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.part_price'); ?></th>
@@ -55,6 +56,7 @@
 
                 <?php endif; ?>
               </td>
+              <td><?php echo e($row->tyre_used); ?></td>
               <td><?php echo e($row->qty); ?></td>
               <td><?php echo e(Hyvikk::get('currency')." ". $row->price); ?></td>
               <td><?php echo e(Hyvikk::get('currency')." ". $row->total); ?></td>
@@ -81,6 +83,7 @@
               <th><?php echo app('translator')->getFromJson('fleet.vehicle'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.description'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.part'); ?></th>
+              <th><?php echo app('translator')->getFromJson('fleet.tyre_used'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.qty'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.unit_cost'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.part_price'); ?></th>
@@ -104,6 +107,7 @@
 
                 <?php endif; ?>
               </td>
+              <td> <?php echo e($row->non_stock_tyre_numbers); ?></td>
               <td><?php echo e($row->qty); ?></td>
               <td><?php echo e(Hyvikk::get('currency')." ". $row->price); ?></td>
               <td><?php echo e(Hyvikk::get('currency')." ". $row->total); ?></td>

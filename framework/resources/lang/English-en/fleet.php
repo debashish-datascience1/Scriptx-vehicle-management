@@ -734,6 +734,7 @@ return [
     'todayTransactions' => "Today's Transactions",
     'quantity' => 'Quantity',
     'tyre_number'=> 'Tyre Number',
+    'tyre_used'=> 'Tyres Used',
     'parts'=>'Parts',
     'total' => 'Total',
     'serialNumber' => 'Serial Number',

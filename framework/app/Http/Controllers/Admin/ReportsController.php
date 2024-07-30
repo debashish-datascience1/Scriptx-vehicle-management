@@ -2102,48 +2102,7 @@ class ReportsController extends Controller
 		// dd($index);
 		return view('reports.print_bookings', $index);
 	}
-	// public function print_stock(Request $request)
-	// {
-	// 	$parts_ids = $request->parts_id;
-	// 		$category_id = $request->category_id;
-	// 		$from_date = $request->date1;
-	// 		$to_date = $request->date2;
-
-	// 		$from_date = empty($from_date) ? date('Y-m-d') : Helper::ymd($from_date);
-	// 		$to_date = empty($to_date) ? date('Y-m-d') : Helper::ymd($to_date);
-
-	// 		$query = PartsModel::query();
-
-	// 		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
-	// 			$query->whereIn('id', $parts_ids);
-	// 		}
-
-	// 		if (!empty($category_id) && $category_id != 'all') {
-	// 			$query->where('category_id', $category_id);
-	// 		}
-
-	// 		$parts = $query->get();
-
-	// 		// Fetch tyres used data
-	// 		$tyres_used_query = DB::table('parts_used')
-	// 			->whereNull('deleted_at')
-	// 			->select('part_id', DB::raw('SUM(qty) as total_used'))
-	// 			->groupBy('part_id');
-
-	// 		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
-	// 			$tyres_used_query->whereIn('part_id', $parts_ids);
-	// 		}
-
-	// 		$tyres_used = $tyres_used_query->get()->keyBy('part_id');
-
-	// 		$index['options'] = ['all' => 'All'] + Helper::getAllParts();
-	// 		$index['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
-	// 		$index['parts'] = $parts;
-	// 		$index['tyres_used'] = $tyres_used;
-	// 		$index['request'] = $request->all();
-
-	// 		return view("reports.print_stock", $index);
-	// }
+	
 	public function print_stock(Request $request)
 	{
 		$parts_ids = $request->parts_id;
@@ -5682,6 +5641,7 @@ class ReportsController extends Controller
 
 	public function workOrderReport_vendor()
 	{
+		$ids = [];
 		$workOrder = WorkOrders::orderBy('vendor_id', 'ASC')->groupBy('vendor_id')->get();
 		foreach ($workOrder as $work) {
 			$ids[] = $work->vendor_id;
@@ -5717,7 +5677,58 @@ class ReportsController extends Controller
 		foreach ($vendor_ids as $work) {
 			$ids[] = $work->vendor_id;
 		}
-		$index['workOrder'] = $workOrder->get();
+		$workOrders = $workOrder->with(['part_fromown', 'parts_fromvendor'])->get();
+
+		$processedData = [];
+	
+		foreach ($workOrders as $order) {
+			$orderData = [
+				'id' => $order->id,
+				'required_by' => $order->required_by,
+				'vendor' => $order->vendor,
+				'vehicle' => $order->vehicle,
+				'is_own' => $order->is_own,
+				'status' => $order->status,
+				'price' => $order->price,
+				'parts' => []
+			];
+	
+			// Process parts from own inventory
+			foreach ($order->part_fromown as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => true
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->tyre_used) {
+					$orderData['parts'][$partName]['tyres'][] = $part->tyre_used;
+				}
+			}
+	
+			// Process parts from vendors
+			foreach ($order->parts_fromvendor as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => false
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->non_stock_tyre_numbers) {
+					$orderData['parts'][$partName]['tyres'][] = $part->non_stock_tyre_numbers;
+				}
+			}
+	
+			$processedData[] = $orderData;
+		}
+	
+		$index['processedData'] = $processedData;
 		$index['vendors'] = Vendor::whereIn('id', $ids)->pluck('name', 'id');
 		$index['status'] = WorkOrders::groupBy('status')->pluck('status', 'status');
 		$index['is_vendor'] = !empty($vendor) ? true : false;
@@ -5748,13 +5759,67 @@ class ReportsController extends Controller
 			$workOrder = WorkOrders::where(['vendor_id' => $vendor, 'status' => $status])->whereBetween('required_by', [$from_date, $to_date]);
 
 
-		// dd($ids);
-		$index['workOrder'] = $workOrder->get();
+		$workOrders = $workOrder->with(['part_fromown', 'parts_fromvendor'])->get();
+
+		$processedData = [];
+		
+		foreach ($workOrders as $order) {
+			$orderData = [
+				'id' => $order->id,
+				'required_by' => $order->required_by,
+				'vendor' => $order->vendor,
+				'vehicle' => $order->vehicle,
+				'description' => $order->description,
+				'status' => $order->status,
+				'price' => $order->price,
+				'parts' => []
+			];
+		
+				// Process parts from own inventory
+			foreach ($order->part_fromown as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => true
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->tyre_used) {
+					$orderData['parts'][$partName]['tyres'][] = $part->tyre_used;
+				}
+			}
+		
+				// Process parts from vendors
+			foreach ($order->parts_fromvendor as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => false
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->non_stock_tyre_numbers) {
+					$orderData['parts'][$partName]['tyres'][] = $part->non_stock_tyre_numbers;
+				}
+			}
+		
+			$processedData[] = $orderData;
+		}
+		
+		$index['processedData'] = $processedData;
 		$index['is_vendor'] = !empty($vendor) ? true : false;
 		$index['vendorName'] = Vendor::where('id', $vendor)->exists() ? Vendor::where('id', $vendor)->first()->name : "";
 		$index['gtotal'] = $workOrder->sum('price');
 		$index['date'] = collect(['from_date' => $from_date, 'to_date' => $to_date]);
 		$index['result'] = "";
+
+
+		// dd($ids);
+		
 		// dd($index);
 		return view('work_orders.report-print', $index);
 	}

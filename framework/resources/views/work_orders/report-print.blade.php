@@ -70,33 +70,43 @@
               @endif
               <th>Vehicle</th>
               <th>Type</th>
-              <th width="15%">Description</th>
+              <!-- <th width="15%">Description</th> -->
               <th>Status</th>
               <th>Amount</th>
+              <th>Parts Details</th>
             </thead>
 
             <tbody>
-              @foreach($workOrder as $k=>$row)
+              @foreach($processedData as $k=>$row)
                 <tr>
                     <td>{{$k+1}}</td>
-                    <td nowrap>{{Helper::getCanonicalDate($row->required_by,'default')}}</td>
+                    <td nowrap>{{Helper::getCanonicalDate($row['required_by'],'default')}}</td>
                     @if($is_vendor!=true)
-                    <td>{{$row->vendor->name}}</td>
+                    <td>{{$row['vendor']->name}}</td>
                     @endif
-                    <td><strong>{{strtoupper($row->vehicle->license_plate)}}</strong></td>
-                    <td>{{$row->vendor->type}}</td>
-                    <td>{{$row->description}}</td>
-                    <td>{{$row->status}}</td>
-                    <td>{{Hyvikk::get('currency')}} {{number_format($row->price,2)}}</td>
+                    <td><strong>{{strtoupper($row['vehicle']->license_plate)}}</strong></td>
+                    <td>{{$row['vendor']->type}}</td>
+                    <!-- <td>{{$row['description']}}</td> -->
+                    <td>{{$row['status']}}</td>
+                    <td>{{Hyvikk::get('currency')}} {{number_format($row['price'],2)}}</td>
+                    <td>
+                      @foreach($row['parts'] as $partName => $partData)
+                        <div class="parts-details">
+                          <strong>{{$partName}}</strong><br>
+                          Qty: {{$partData['qty']}}<br>
+                          Tyres: {{implode(', ', $partData['tyres'])}}<br>
+                          Source: {{$partData['is_own'] ? 'Own Inventory' : 'Vendor'}}
+                        </div>
+                      @endforeach
+                    </td>
                 </tr>
               @endforeach
                 <tr>
-                  <th colspan="{{$is_vendor ? 5 : 6}}"></th>
+                  <th colspan="{{$is_vendor ? 6 : 7}}"></th>
                   <th>Grand Total</th>
                   <th>{{Hyvikk::get('currency')}} {{bcdiv($gtotal,1,2)}}</th>
                 </tr>
             </tbody>
-            <tfoot>
           </table>
         </div>
       </div>

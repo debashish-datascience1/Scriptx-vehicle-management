@@ -1,4 +1,6 @@
-<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+?>
 
 <?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -88,8 +90,8 @@
 
       <div class="card-body table-responsive">
         <table class="table table-bordered table-striped table-hover"  id="myTable">
-          <thead>
-            <tr>
+        <thead>
+        <tr>
               <th>SL#</th>
               <th width="10%">Date</th>
               <?php if($is_vendor!=true): ?>
@@ -97,25 +99,44 @@
               <?php endif; ?>
               <th>Vehicle</th>
               <th>Type</th>
-              <th width="15%">Description</th>
+              <th>Is Own</th>
               <th>Status</th>
               <th>Amount</th>
+              <th>Part Name</th>
+              <th>Quantity</th>
+              <th>Tyres Used</th>
+              <th>Source</th>
             </tr>
           </thead>
           <tbody>
-            <?php $__currentLoopData = $workOrder; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-            <tr>
-              <td><?php echo e($k+1); ?></td>
-              <td><?php echo e(Helper::getCanonicalDate($row->required_by,'default')); ?></td>
-              <?php if($is_vendor!=true): ?>
-              <td><?php echo e($row->vendor->name); ?></td>
-              <?php endif; ?>
-              <td><strong><?php echo e(strtoupper($row->vehicle->license_plate)); ?></strong></td>
-              <td><?php echo e($row->vendor->type); ?></td>
-              <td><?php echo e($row->description); ?></td>
-              <td><?php echo e($row->status); ?></td>
-              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($row->price,2)); ?></td>
-            </tr>
+            <?php $slNo = 1; ?>
+            <?php $__currentLoopData = $processedData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+              <?php $__currentLoopData = $order['parts']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $partName => $partData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <tr>
+                  <td><?php echo e($slNo++); ?></td>
+                  <td><?php echo e(Helper::getCanonicalDate($order['required_by'],'default')); ?></td>
+                  <?php if($is_vendor!=true): ?>
+                  <td><?php echo e($order['vendor']->name); ?></td>
+                  <?php endif; ?>
+                  <td><strong><?php echo e(strtoupper($order['vehicle']->license_plate)); ?></strong></td>
+                  <td><?php echo e($order['vendor']->type); ?></td>
+                  <td>
+                      <?php if($order['is_own'] == 1): ?>
+                          Yes
+                      <?php elseif($order['is_own'] == 2): ?>
+                          No
+                      <?php else: ?>
+                          Unknown
+                      <?php endif; ?>
+                  </td>
+                  <td><?php echo e($order['status']); ?></td>
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($order['price'],2)); ?></td>
+                  <td><?php echo e($partName); ?></td>
+                  <td><?php echo e($partData['qty']); ?></td>
+                  <td><?php echo e(implode(', ', $partData['tyres'])); ?></td>
+                  <td><?php echo e($partData['is_own'] ? 'Own Inventory' : 'Vendor'); ?></td>
+                </tr>
+              <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
           </tbody>
           <tfoot>
@@ -127,9 +148,13 @@
               <?php endif; ?>
               <th>Vehicle</th>
               <th>Type</th>
-              <th>Description</th>
+              <th>Is Own</th>
               <th>Status</th>
               <th>Amount</th>
+              <th>Part Name</th>
+              <th>Quantity</th>
+              <th>Parts Used</th>
+              <th>Tyres Used</th>
             </tr>
           </tfoot>
         </table>

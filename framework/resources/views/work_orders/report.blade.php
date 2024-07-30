@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+@endphp
 
 @section("breadcrumb")
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -79,8 +81,8 @@
 
       <div class="card-body table-responsive">
         <table class="table table-bordered table-striped table-hover"  id="myTable">
-          <thead>
-            <tr>
+        <thead>
+        <tr>
               <th>SL#</th>
               <th width="10%">Date</th>
               @if($is_vendor!=true)
@@ -88,25 +90,44 @@
               @endif
               <th>Vehicle</th>
               <th>Type</th>
-              <th width="15%">Description</th>
+              <th>Is Own</th>
               <th>Status</th>
               <th>Amount</th>
+              <th>Part Name</th>
+              <th>Quantity</th>
+              <th>Tyres Used</th>
+              <th>Source</th>
             </tr>
           </thead>
           <tbody>
-            @foreach($workOrder as $k=>$row)
-            <tr>
-              <td>{{$k+1}}</td>
-              <td>{{Helper::getCanonicalDate($row->required_by,'default')}}</td>
-              @if($is_vendor!=true)
-              <td>{{$row->vendor->name}}</td>
-              @endif
-              <td><strong>{{strtoupper($row->vehicle->license_plate)}}</strong></td>
-              <td>{{$row->vendor->type}}</td>
-              <td>{{$row->description}}</td>
-              <td>{{$row->status}}</td>
-              <td>{{Hyvikk::get('currency')}} {{number_format($row->price,2)}}</td>
-            </tr>
+            @php $slNo = 1; @endphp
+            @foreach($processedData as $order)
+              @foreach($order['parts'] as $partName => $partData)
+                <tr>
+                  <td>{{$slNo++}}</td>
+                  <td>{{Helper::getCanonicalDate($order['required_by'],'default')}}</td>
+                  @if($is_vendor!=true)
+                  <td>{{$order['vendor']->name}}</td>
+                  @endif
+                  <td><strong>{{strtoupper($order['vehicle']->license_plate)}}</strong></td>
+                  <td>{{$order['vendor']->type}}</td>
+                  <td>
+                      @if($order['is_own'] == 1)
+                          Yes
+                      @elseif($order['is_own'] == 2)
+                          No
+                      @else
+                          Unknown
+                      @endif
+                  </td>
+                  <td>{{$order['status']}}</td>
+                  <td>{{Hyvikk::get('currency')}} {{number_format($order['price'],2)}}</td>
+                  <td>{{ $partName }}</td>
+                  <td>{{ $partData['qty'] }}</td>
+                  <td>{{ implode(', ', $partData['tyres']) }}</td>
+                  <td>{{ $partData['is_own'] ? 'Own Inventory' : 'Vendor' }}</td>
+                </tr>
+              @endforeach
             @endforeach
           </tbody>
           <tfoot>
@@ -118,9 +139,13 @@
               @endif
               <th>Vehicle</th>
               <th>Type</th>
-              <th>Description</th>
+              <th>Is Own</th>
               <th>Status</th>
               <th>Amount</th>
+              <th>Part Name</th>
+              <th>Quantity</th>
+              <th>Parts Used</th>
+              <th>Tyres Used</th>
             </tr>
           </tfoot>
         </table>
