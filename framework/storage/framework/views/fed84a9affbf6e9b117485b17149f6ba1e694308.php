@@ -60,10 +60,9 @@
                 <div class="dropdown-menu custom" role="menu">
                   <a class="dropdown-item vview" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#PartsDetailsModal"> <span aria-hidden="true" class="fa fa-eye" style="color: green"></span> View</a>
                   <a class="dropdown-item vstock" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#stockModal"> <span aria-hidden="true" class="fa fa-plus" style="color: green"></span> Add Stock</a>
-                  <?php if(Helper::isEligible($row->id,26)): ?>
                   <a class="dropdown-item" href="<?php echo e(url("admin/parts/".$row->id."/edit")); ?>"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
                   <a class="dropdown-item" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal"> <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?></a>
-                 <?php endif; ?>
+                 
                 </div>
               </div>
               <?php echo Form::open(['url' => 'admin/parts/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'form_'.$row->id]); ?>

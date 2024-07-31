@@ -37,7 +37,7 @@ $date_format_setting = (Hyvikk::get('date_format')) ? Hyvikk::get('date_format')
                         <div class="form-group">
                             <?php echo Form::label('category_id', __('fleet.selectCategory'), ['class' => 'form-label']); ?>
 
-                            <?php echo Form::select('category_id', $categories, 'all', ['class' => 'form-control category_id', 'id' => 'category_id']); ?>
+                            <?php echo Form::select('category_id[]', $categories, 'all', ['class' => 'form-control category_id', 'id' => 'category_id','multiple' => 'multiple']); ?>
 
                         </div>
                     </div>
@@ -197,13 +197,18 @@ $date_format_setting = (Hyvikk::get('date_format')) ? Hyvikk::get('date_format')
         placeholder: 'Select Parts'
     });
 
+    // $('#category_id').select2({
+    //     placeholder: 'Select Category'
+    // });
     $('#category_id').select2({
-        placeholder: 'Select Category'
+    placeholder: 'Select Category',
+    multiple: true,
+    allowClear: true
     });
 
     // Set 'All' as default selection
     $('#parts_id').val(['all']).trigger('change');
-    $('#category_id').val('all').trigger('change');
+    $('#category_id').val(['all']).trigger('change');
 
 
     // Setup - add a text input to each footer cell

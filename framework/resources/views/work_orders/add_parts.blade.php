@@ -199,43 +199,59 @@
             calculateAmount(row);
         });
 
+      
         function updatePartDetails(row) {
             var partId = row.find('.parts_id').val();
             var tyreNumbersSelect = row.find('.tyre_numbers');
             var manualTyreNumbers = row.find('.manual_tyre_numbers');
-            var unitCostInput = row.find('.unit_cost');
-            var qtyInput = row.find('.qty');
-            var totalCostInput = row.find('.total_cost');
             
             console.log('Selected Part ID:', partId);
-            console.log('Stock Data:', stockData);
             
             // Reset fields when changing parts
-            unitCostInput.val('');
-            qtyInput.val('');
-            totalCostInput.val('');
+            row.find('.unit_cost, .qty, .total_cost').val('');
             manualTyreNumbers.val('');
-            
+            tyreNumbersSelect.empty();
+    
             if (partId && partId !== 'add_new') {
                 $.ajax({
-                    url: '{{ route("get.tyre.numbers") }}',
+                    url: '{{ route("get.part.category") }}',
                     type: 'GET',
                     data: { part_id: partId },
-                    success: function(data) {
-                        console.log('Received tyre numbers:', data);
-                        tyreNumbersSelect.empty();
-                        tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
-                        $.each(data, function(key, value) {
-                            tyreNumbersSelect.append('<option value="' + value + '">' + value + '</option>');
-                        });
+                    success: function(categoryData) {
+                        console.log('Category Data:', categoryData);
+                        
+                        row.data('is-tyre', categoryData.is_tyre);
+                        
                         updateQuantityStatus(row);
+                        
+                        if (categoryData.is_tyre) {
+                            $.ajax({
+                                url: '{{ route("get.tyre.numbers") }}',
+                                type: 'GET',
+                                data: { part_id: partId },
+                                success: function(data) {
+                                    console.log('Received tyre numbers:', data);
+                                    tyreNumbersSelect.empty();
+                                    tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+                                    $.each(data, function(key, value) {
+                                        tyreNumbersSelect.append('<option value="' + value + '">' + value + '</option>');
+                                    });
+                                    updateQuantityStatus(row);
+                                },
+                                error: function(xhr, status, error) {
+                                    console.error('AJAX Error:', status, error);
+                                }
+                            });
+                        }
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX Error:', status, error);
+                        row.data('is-tyre', false);
+                        updateQuantityStatus(row);
                     }
                 });
             } else {
-                tyreNumbersSelect.empty();
+                row.data('is-tyre', false);
                 updateQuantityStatus(row);
             }
         }
@@ -249,63 +265,84 @@
             var gstRow = row.next('.gst-row');
             var tyreNumbersSelect = row.find('.tyre_numbers');
             var manualTyreNumbers = row.find('.manual_tyre_numbers');
+            var isTyre = row.data('is-tyre');
             
             if (partId && partId !== 'add_new') {
                 var stock = stockData[partId] !== undefined ? parseInt(stockData[partId]) : 0;
                 console.log('Stock for part ' + partId + ':', stock);
                 
-                if (isOwn == '1') { // Yes for Own Stock
-                    if (stock <= 0) {
-                        qtyInput.val('Out of Stock');
-                        qtyInput.prop('disabled', true);
-                        tyreNumbersSelect.prop('disabled', true);
-                    } else {
-                        qtyInput.val('');
-                        qtyInput.prop('disabled', false);
-                        qtyInput.attr('data-max-stock', stock);
-                        tyreNumbersSelect.prop('disabled', false);
+                if (isTyre) {
+                    if (isOwn == '1') { // Yes for Own Stock
+                        if (stock <= 0) {
+                            qtyInput.val('Out of Stock').prop('disabled', true);
+                            tyreNumbersSelect.prop('disabled', true);
+                        } else {
+                            qtyInput.val('').prop('disabled', false).attr('data-max-stock', stock);
+                            tyreNumbersSelect.prop('disabled', false);
+                        }
+                        unitCostInput.val('').prop('disabled', true);
+                        totalCostInput.val('0').prop('disabled', true);
+                        gstRow.find('input').val('').prop('disabled', true);
+                        manualTyreNumbers.val('').prop('disabled', true);
+                    } else { // No for Own Stock
+                        qtyInput.val('').prop('disabled', false).removeAttr('data-max-stock');
+                        unitCostInput.val('').prop('disabled', false);
+                        totalCostInput.prop('disabled', true);
+                        gstRow.find('input').prop('disabled', false);
+                        tyreNumbersSelect.val('').prop('disabled', true);
+                        manualTyreNumbers.prop('disabled', false);
                     }
-                    unitCostInput.val('').prop('disabled', true);
-                    totalCostInput.val('0').prop('disabled', true);
-                    gstRow.find('input').val('').prop('disabled', true);
-                    manualTyreNumbers.val('').prop('disabled', true);
-                } else { // No for Own Stock
-                    qtyInput.val('');
-                    qtyInput.prop('disabled', false);
-                    qtyInput.removeAttr('data-max-stock');
-                    unitCostInput.val('').prop('disabled', false);
-                    totalCostInput.prop('disabled', true);
-                    gstRow.find('input').prop('disabled', false);
+                } else {
+                    // Not a tyre part
+                    if (isOwn == '1') { // Yes for Own Stock
+                        if (stock <= 0) {
+                            qtyInput.val('Out of Stock').prop('disabled', true);
+                        } else {
+                            qtyInput.val('').prop('disabled', false).attr('data-max-stock', stock);
+                        }
+                        unitCostInput.val('').prop('disabled', true);
+                        totalCostInput.val('0').prop('disabled', true);
+                        gstRow.find('input').val('').prop('disabled', true);
+                    } else { // No for Own Stock
+                        qtyInput.val('').prop('disabled', false).removeAttr('data-max-stock');
+                        unitCostInput.val('').prop('disabled', false);
+                        totalCostInput.prop('disabled', true);
+                        gstRow.find('input').prop('disabled', false);
+                    }
                     tyreNumbersSelect.val('').prop('disabled', true);
-                    manualTyreNumbers.prop('disabled', false);
+                    manualTyreNumbers.val('').prop('disabled', true);
                 }
             } else {
-                qtyInput.val('');
-                qtyInput.prop('disabled', false);
-                qtyInput.removeAttr('data-max-stock');
+                qtyInput.val('').prop('disabled', false).removeAttr('data-max-stock');
                 unitCostInput.val('').prop('disabled', false);
                 totalCostInput.prop('disabled', true);
                 gstRow.find('input').prop('disabled', false);
                 tyreNumbersSelect.val('').prop('disabled', true);
-                manualTyreNumbers.val('').prop('disabled', false);
+                manualTyreNumbers.val('').prop('disabled', true);
             }
 
+            // Update event listeners
             qtyInput.off('input').on('input', function() {
-                validateTyreNumbers(row);
+                if (isTyre) validateTyreNumbers(row);
+                calculateAmount(row);
             });
             
             tyreNumbersSelect.off('change').on('change', function() {
-                validateTyreNumbers(row);
+                if (isTyre && isOwn == '1') validateTyreNumbers(row);
             });
 
             manualTyreNumbers.off('input').on('input', function() {
-                validateTyreNumbers(row);
+                if (isTyre && isOwn != '1') validateTyreNumbers(row);
+                calculateAmount(row);
             });
 
             calculateAmount(row);
         }
 
         function validateTyreNumbers(row) {
+            var isTyre = row.data('is-tyre');
+            if (!isTyre) return;
+
             var qty = parseInt(row.find('.qty').val()) || 0;
             var isOwn = row.find('.is_own').val();
             var tyreNumbersSelect = row.find('.tyre_numbers');
@@ -321,6 +358,7 @@
                     tyreNumbersSelect.removeClass('is-invalid');
                     tyreNumbersSelect.next('.invalid-feedback').remove();
                 }
+                manualTyreNumbers.removeClass('is-invalid').next('.invalid-feedback').remove();
             } else {
                 var enteredNumbers = manualTyreNumbers.val().split(',').filter(n => n.trim() !== '').length;
                 if (enteredNumbers !== qty) {
@@ -331,6 +369,7 @@
                     manualTyreNumbers.removeClass('is-invalid');
                     manualTyreNumbers.next('.invalid-feedback').remove();
                 }
+                tyreNumbersSelect.removeClass('is-invalid').next('.invalid-feedback').remove();
             }
         }
 

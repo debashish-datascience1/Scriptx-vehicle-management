@@ -619,6 +619,21 @@ class WorkOrdersController extends Controller
     return view("work_orders.add_parts", compact('count', 'options', 'partsWithStock'));
 }
 
+    public function getPartCategory(Request $request)
+    {
+        $partId = $request->input('part_id');
+        $part = PartsModel::with('category')->find($partId);
+        
+        if ($part && $part->category) {
+            return response()->json([
+                'category_name' => $part->category->name,
+                'is_tyre' => stripos($part->category->name, 'tyre') !== false
+            ]);
+        }
+        
+        return response()->json(['error' => 'Part or category not found'], 404);
+    }
+
     public function getTyreNumbers(Request $request)
     {
         $partId = $request->input('part_id');

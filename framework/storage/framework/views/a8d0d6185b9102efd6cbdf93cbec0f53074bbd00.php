@@ -98,11 +98,11 @@
           <table class="table table-bordered">
             <tr>
               <th>Total Stock</th>
-              <th>Total Tyres Stock</th>
+              <th>Total Tyres Used</th>
             </tr>
             <tr>
-              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_stock, 2)); ?></td>
-              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_tyres_used, 2)); ?></td>
+              <td> <?php echo e(number_format($total_stock)); ?></td>
+              <td> <?php echo e(number_format($total_tyres_used)); ?></td>
             </tr>
           </table>
         </div>

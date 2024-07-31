@@ -362,40 +362,6 @@ function updateSubtotal() {
   $(".subtotal").val(sumtotal.toFixed(2));
   $("#cgst").keyup();
 }
-// $("body").on("keyup", ".stock", function() {
-//         var stock = parseInt($(this).val());
-//         var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
-        
-//         if (stock && !isNaN(stock) && stock > 0) {
-//             tyreNumberField.prop('disabled', false);
-//             tyreNumberField.attr('placeholder', 'Enter tyre numbers, comma-separated');
-//         } else {
-//             tyreNumberField.prop('disabled', true);
-//             tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
-//         }
-//     });
-//     $("#savebtn").click(function(e) {
-//         var isValid = true;
-        
-//         $(".stock").each(function() {
-//             var stock = parseInt($(this).val());
-//             var tyreNumbers = $(this).closest('.cal_div').find('.tyre_number').val();
-            
-//             if (stock > 0) {
-//                 var tyreNumbersArray = tyreNumbers.split(',').map(item => item.trim()).filter(item => item !== '');
-                
-//                 if (tyreNumbersArray.length !== stock) {
-//                     alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + '). Please adjust either the stock or the tyre numbers.');
-//                     isValid = false;
-//                     return false;
-//                 }
-//             }
-//         });
-    
-//         if (!isValid) {
-//             e.preventDefault();
-//         }
-//     });
 
     $("#is_gst").change(function(){
       var is_gst = $("#is_gst").val();
@@ -449,138 +415,6 @@ function updateSubtotal() {
       })
     })
 })
-// $("body").on("change", ".item", function() {
-//     var itemId = $(this).val();
-//     var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
-//     var stockField = $(this).closest('.cal_div').find('.stock');
-
-//     $.ajax({
-//         url: '{{ route("get.category.info") }}',
-//         type: 'GET',
-//         data: { item_id: itemId },
-//         success: function(response) {
-//             if (response.category_name.toLowerCase().includes('tyre')) {
-//                 tyreNumberField.prop('disabled', false);
-//                 stockField.on('keyup', function() {
-//                     var stock = parseInt($(this).val());
-//                     if (stock && !isNaN(stock) && stock > 0) {
-//                         tyreNumberField.attr('placeholder', 'Enter ' + stock + ' tyre numbers, comma-separated');
-//                     } else {
-//                         tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
-//                     }
-//                 });
-//             } else {
-//                 tyreNumberField.prop('disabled', true);
-//                 tyreNumberField.val('');
-//                 tyreNumberField.attr('placeholder', 'Not applicable for this item');
-//             }
-//         },
-//         error: function() {
-//             console.log('Error fetching category info');
-//         }
-//     });
-// });
-// $("#savebtn").click(function(e) {
-//     var isValid = true;
-    
-//     $(".stock").each(function() {
-//         var stock = parseInt($(this).val());
-//         var tyreNumbers = $(this).closest('.cal_div').find('.tyre_number');
-        
-//         if (!tyreNumbers.prop('disabled') && stock > 0) {
-//             var tyreNumbersArray = tyreNumbers.val().split(',').map(item => item.trim()).filter(item => item !== '');
-            
-//             if (tyreNumbersArray.length !== stock) {
-//                 alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + '). Please adjust either the stock or the tyre numbers.');
-//                 isValid = false;
-//                 return false;
-//             }
-//         }
-//     });
-
-//     if (!isValid) {
-//         e.preventDefault();
-//     }
-// });
-// $("body").on("change", ".item", function() {
-//     var itemId = $(this).val();
-//     var calDiv = $(this).closest('.cal_div');
-//     var tyreNumberField = calDiv.find('.tyre_number');
-//     var stockField = calDiv.find('.stock');
-
-//     $.ajax({
-//         url: '{{ route("get.category.info") }}',
-//         type: 'GET',
-//         data: { item_id: itemId },
-//         success: function(response) {
-//             if (response.category_name.toLowerCase().includes('tyre')) {
-//                 tyreNumberField.prop('disabled', false);
-//                 updateTyreNumberPlaceholder(stockField, tyreNumberField);
-//             } else {
-//                 tyreNumberField.prop('disabled', true);
-//                 tyreNumberField.val('');
-//                 tyreNumberField.attr('placeholder', 'Not applicable for this item');
-//             }
-//         },
-//         error: function() {
-//             console.log('Error fetching category info');
-//         }
-//     });
-// });
-
-// $("body").on("keyup", ".stock", function() {
-//     var calDiv = $(this).closest('.cal_div');
-//     var tyreNumberField = calDiv.find('.tyre_number');
-    
-//     if (!tyreNumberField.prop('disabled')) {
-//         updateTyreNumberPlaceholder($(this), tyreNumberField);
-//     }
-// });
-
-// function updateTyreNumberPlaceholder(stockField, tyreNumberField) {
-//     var stock = parseInt(stockField.val());
-//     if (stock && !isNaN(stock) && stock > 0) {
-//         tyreNumberField.attr('placeholder', 'Enter ' + stock + ' tyre numbers, comma-separated');
-//     } else {
-//         tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
-//     }
-// }
-
-// $("#savebtn").click(function(e) {
-//     var isValid = true;
-    
-//     $(".cal_div").each(function() {
-//         var stockField = $(this).find('.stock');
-//         var tyreNumberField = $(this).find('.tyre_number');
-//         var itemField = $(this).find('.item');
-//         var stock = parseInt(stockField.val());
-//         var itemId = itemField.val();
-        
-//         if (!tyreNumberField.prop('disabled') && stock > 0) {
-//             var tyreNumbersArray = tyreNumberField.val().split(',').map(item => item.trim()).filter(item => item !== '');
-            
-//             if (tyreNumbersArray.length !== stock) {
-//                 alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + ') for one of the items. Please adjust either the stock or the tyre numbers.');
-//                 isValid = false;
-//                 return false;
-//             }
-            
-//             // Add this line to include tyre numbers in the form submission
-//             tyreNumberField.attr('name', 'tyre_number[' + itemId + ']');
-//         }
-//     });
-
-//     if (!isValid) {
-//         e.preventDefault();
-//     }
-// });
-
-// $('#button_addform').click(function(){
-//     $.post('{{ url("admin/parts-invoice/getparts_form")}}', {_token:"{{csrf_token()}}"}, function(result){
-//         $(".more_less").append(result);
-//         $(".item:last").select2().trigger('change');  // Trigger change event after initializing Select2
-//     });
-// });
 
 $("body").on("change", ".item", function() {
     var itemId = $(this).val();
@@ -661,7 +495,5 @@ $('#button_addform').click(function(){
         $(".more_less .cal_div:last").find(".item").select2().trigger('change');  // Initialize Select2 for the new item only
     });
 });
-
- 
 </script>
 @endsection

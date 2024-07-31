@@ -585,150 +585,6 @@ $(document).ready(function() {
       $("#total_amount").val('');
     }
   })
-// $(document).ready(function() {
-//     function initializePartRow(row) {
-//         var stockData = JSON.parse(row.attr('data-stock'));
-//         var tyreNumbersSelect = row.find('.tyre_numbers');
-//         var selectedTyreNumber = tyreNumbersSelect.data('selected');
-
-//         function populateTyreNumbers(partId, tyreNumbersSelect) {
-//             if (partId && partId !== 'add_new') {
-//                 $.ajax({
-//                     url: '<?php echo e(route("get.edit.tyre.numbers")); ?>',
-//                     type: 'GET',
-//                     data: { part_id: partId },
-//                     success: function(data) {
-//                         tyreNumbersSelect.empty();
-//                         tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
-                        
-//                         var selectedTyreNumbers = tyreNumbersSelect.data('selected').toString().split(',');
-                        
-//                         $.each(data, function(key, value) {
-//                             var selected = (selectedTyreNumbers.indexOf(value.toString()) !== -1) ? 'selected' : '';
-//                             tyreNumbersSelect.append('<option value="' + value + '" ' + selected + '>' + value + '</option>');
-//                         });
-                        
-//                     },
-//                     error: function(xhr, status, error) {
-//                         console.error('AJAX Error:', status, error);
-//                     }
-//                 });
-//             } else {
-//                 tyreNumbersSelect.empty();
-//                 tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
-//             }
-//       }
-
-//         function updatePartDetails(row) {
-//             var partId = row.find('.parts_id').val();
-//             var tyreNumbersSelect = row.find('.tyre_numbers');
-//             var unitCostInput = row.find('.unit_cost');
-//             var qtyInput = row.find('.qty');
-//             var totalCostInput = row.find('.total_cost');
-            
-//             // Reset fields when changing parts
-//             if (!partId || partId === 'add_new') {
-//                 unitCostInput.val('');
-//                 qtyInput.val('');
-//                 totalCostInput.val('');
-//             }
-            
-//             populateTyreNumbers(partId, tyreNumbersSelect);
-            
-//             updateQuantityStatus(row);
-//         }
-//         function updateQuantityStatus(row) {
-//             var partId = row.find('.parts_id').val();
-//             var isOwn = row.find('.is_own').val();
-//             var qtyInput = row.find('.qty');
-//             var totalCostInput = row.find('.total_cost');
-            
-//             if (partId && partId !== 'add_new') {
-//                 var stock = stockData[partId] !== undefined ? parseInt(stockData[partId]) : 0;
-                
-//                 if (isOwn == '1') { // Yes for Own Stock
-//                     if (stock <= 0) {
-//                         qtyInput.val('Out of Stock');
-//                         qtyInput.prop('disabled', true);
-//                     } else {
-//                         qtyInput.prop('disabled', false);
-//                         qtyInput.attr('data-max-stock', stock);
-//                     }
-//                     // Reset total cost when Own Stock is Yes
-//                     totalCostInput.val('0');
-//                 } else { // No for Own Stock
-//                     qtyInput.prop('disabled', false);
-//                     qtyInput.removeAttr('data-max-stock');
-//                 }
-//             } else {
-//                 qtyInput.prop('disabled', false);
-//                 qtyInput.removeAttr('data-max-stock');
-//             }
-//             calculateAmount(row);
-//         }
-
-//         function calculateAmount(row) {
-//             var isOwn = row.find('.is_own').val();
-//             var qty = parseFloat(row.find('.qty').val()) || 0;
-//             var unitCost = parseFloat(row.find('.unit_cost').val()) || 0;
-//             var totalCost = row.find('.total_cost');
-
-//             if (isOwn == '1') { // Yes for Own Stock
-//                 totalCost.val('0');
-//             } else {
-//                 totalCost.val((qty * unitCost).toFixed(2));
-//             }
-//         }
-
-//         row.find('.parts_id').on('change', function() {
-//             updatePartDetails(row);
-//         });
-
-//         row.find('.is_own').on('change', function() {
-//             updateQuantityStatus(row);
-//         });
-
-//         row.find('.qty, .unit_cost').on('input', function() {
-//             calculateAmount(row);
-//         });
-
-//         // Initialize the row
-//         updatePartDetails(row);
-//     }
-
-//     // Initialize existing rows
-//     $('.fullPartsRow').each(function() {
-//         initializePartRow($(this));
-//     });
-
-//     // Handle dynamically added rows
-//     $('body').on('click', '.addmore', function() {
-//         var newRow = $(this).closest('.fullPartsRow').clone(true);
-//         newRow.find('input, select').val('');
-//         $(this).closest('.fullPartsRow').after(newRow);
-//         initializePartRow(newRow);
-//     });
-
-//     // Validate quantity on form submission
-//     $('form').on('submit', function(e) {
-//         var isValid = true;
-//         $('.qty').each(function() {
-//             var row = $(this).closest('.row');
-//             var isOwn = row.find('.is_own').val();
-//             var qty = parseInt($(this).val());
-//             var maxStock = parseInt($(this).attr('data-max-stock'));
-            
-//             if (isOwn == '1' && !isNaN(maxStock) && qty > maxStock) {
-//                 alert('Input quantity (' + qty + ') is greater than the available stock (' + maxStock + ') for one or more parts.');
-//                 isValid = false;
-//                 return false;  // Break the loop
-//             }
-//         });
-//         if (!isValid) {
-//             e.preventDefault();  // Prevent form submission
-//         }
-//     });
-// });
 
 $(document).ready(function() {
     function initializePartRow(row) {
@@ -906,10 +762,6 @@ $(document).ready(function() {
         row.find('.qty, .unit_cost, .cgst, .sgst, .manual_tyre_numbers').on('input', function() {
             calculateAmount(row);
         });
-        // row.find('.qty, .manual_tyre_numbers').on('input', function() {
-        // calculateAmount(row);
-        // });
-
         updatePartDetails(row);
     }
 
@@ -923,31 +775,6 @@ $(document).ready(function() {
         $(this).closest('.fullPartsRow').after(newRow);
         initializePartRow(newRow);
     });
-
-    // $('form').on('submit', function(e) {
-    //     var isValid = true;
-    //     $('.qty').each(function() {
-    //         var row = $(this).closest('.row');
-    //         var isOwn = row.find('.is_own').val();
-    //         var qty = parseInt($(this).val());
-    //         var maxStock = parseInt($(this).attr('data-max-stock'));
-            
-    //         if (isOwn == '1' && !isNaN(maxStock) && qty > maxStock) {
-    //             alert('Input quantity (' + qty + ') is greater than the available stock (' + maxStock + ') for one or more parts.');
-    //             isValid = false;
-    //             return false;
-    //         }
-    //         if (!validateTyreNumbers(row)) {
-    //         alert('The number of tyre numbers must match the quantity for non-own stock parts.');
-    //         isValid = false;
-    //         return false;
-    //     }
-    //     });
-        
-    //     if (!isValid) {
-    //         e.preventDefault();
-    //     }
-    // });
     $('form').on('submit', function(e) {
     var isValid = true;
       $('.fullPartsRow').each(function() {

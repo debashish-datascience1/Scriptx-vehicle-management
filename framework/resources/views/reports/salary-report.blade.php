@@ -74,6 +74,7 @@
           <div class="col-md-12">
             <button type="submit" class="btn btn-info gen_report" style="margin-right: 10px">@lang('fleet.generate_report')</button>
             <button type="submit" formaction="{{url('admin/print-salary-report')}}" class="btn btn-danger print_report" formtarget="_blank"><i class="fa fa-print"></i> @lang('fleet.print')</button>
+            <button type="submit" formaction="{{ url('admin/export-salary-report') }}" class="btn btn-success export_excel"><i class="fa fa-file-excel-o"></i> Export to Excel</button>
           </div>
         </div>
           {!! Form::close() !!}

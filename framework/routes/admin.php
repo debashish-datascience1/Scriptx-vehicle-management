@@ -162,6 +162,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('/work_order/wo_calcgst', 'WorkOrdersController@wo_calcgst')->name('work_order.wo_calcgst')->middleware('userpermission:3');
         Route::post('/work_order/othercalc', 'WorkOrdersController@othercalc')->name('work_order.othercalc')->middleware('userpermission:3');
         Route::get('/get-tyre-numbers', 'WorkOrdersController@getTyreNumbers')->name('get.tyre.numbers')->middleware('userpermission:7');
+        Route::get('/get-part-category', 'WorkOrdersController@getPartCategory')->name('get.part.category')->middleware('userpermission:7');
         Route::get('/get-edit-tyre-numbers', 'WorkOrdersController@getEditTyreNumbers')->name('get.edit.tyre.numbers')->middleware('userpermission:7');
         Route::resource('/work_order', 'WorkOrdersController')->middleware('userpermission:7');
         Route::resource('/work-order-category', 'WorkOrderCategoryController')->middleware('userpermission:7');
@@ -362,6 +363,7 @@ Route::namespace('Admin')->group(function () {
         Route::get("reports/salary-report", "ReportsController@salaryReport")->name("reports.salary-report")->middleware('userpermission:4');
         Route::post("reports/salary-report", "ReportsController@salaryReport_post")->name("reports.salary-report")->middleware('userpermission:4');
         Route::post("print-salary-report", "ReportsController@salaryReport_print")->middleware('userpermission:4');
+        Route::post("export-salary-report", "ReportsController@exportReport_print")->middleware('userpermission:4');
 
         Route::get("reports/vehicle-advance/vehicle-head-advance-report/{id}", "ReportsController@vehicleHeadAdvance")->name("reports.vehicle-head-advance-report")->middleware('userpermission:4');
         Route::post("print-vehicle-head-advance-report", "ReportsController@vehicleHeadAdvance_print")->middleware('userpermission:4');

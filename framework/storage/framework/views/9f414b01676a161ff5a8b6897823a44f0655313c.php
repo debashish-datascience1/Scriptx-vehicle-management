@@ -75,6 +75,7 @@
           <div class="col-md-12">
             <button type="submit" class="btn btn-info gen_report" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
             <button type="submit" formaction="<?php echo e(url('admin/print-salary-report')); ?>" class="btn btn-danger print_report" formtarget="_blank"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>
+            <button type="submit" formaction="<?php echo e(url('admin/export-salary-report')); ?>" class="btn btn-success export_excel"><i class="fa fa-file-excel-o"></i> Export to Excel</button>
           </div>
         </div>
           <?php echo Form::close(); ?>

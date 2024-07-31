@@ -764,12 +764,6 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="<?php echo e(route('reports.stock')); ?>" class="nav-link <?php if(Request::is('admin/reports/stock')): ?> active <?php endif; ?>">
-                  <i class="fa fa-book nav-icon"></i>
-                  <p>Stock Report</p>
-                </a>
-              </li>
-              <li class="nav-item">
                 <a href="<?php echo e(route('reports.customerPayment')); ?>" class="nav-link <?php if(Request::is('admin/reports/customer-payment')): ?> active <?php endif; ?>">
                   <i class="fa fa-book nav-icon"></i>
                   <p><?php echo app('translator')->getFromJson('menu.customerPayment'); ?></p>
@@ -845,6 +839,12 @@
                 <a href="<?php echo e(route('reports.salary-report')); ?>" class="nav-link <?php if(Request::is('admin/reports/salary-report')): ?> active <?php endif; ?>">
                   <i class="fa fa-align-justify nav-icon"></i>
                   <p><?php echo app('translator')->getFromJson('menu.salary_report'); ?></p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?php echo e(route('reports.stock')); ?>" class="nav-link <?php if(Request::is('admin/reports/stock')): ?> active <?php endif; ?>">
+                  <i class="fa fa-book nav-icon"></i>
+                  <p>Stock Report</p>
                 </a>
               </li>
               <li class="nav-item">
