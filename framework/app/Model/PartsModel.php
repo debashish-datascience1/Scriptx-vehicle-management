@@ -24,4 +24,24 @@ class PartsModel extends Model {
 	function manufacturer_details() {
 		return $this->belongsTo("App\Model\Manufacturer", "manufacturer")->withTrashed();
 	}
+
+	public function isTyreCategory()
+    {
+        $category = $this->category;
+        if ($category) {
+            return stripos($category->name, 'tyre') !== false;
+        }
+        return false;
+    }
+
+    // Add a mutator for tyre_numbers and tyres_used
+    public function setTyreNumbersAttribute($value)
+    {
+        $this->attributes['tyre_numbers'] = $this->isTyreCategory() ? $value : null;
+    }
+
+    public function setTyresUsedAttribute($value)
+    {
+        $this->attributes['tyres_used'] = $this->isTyreCategory() ? $value : null;
+    }
 }

@@ -149,49 +149,50 @@ class WorkOrdersController extends Controller
         ]);
        
         \Log::info('Full Request Data:', $request->all());
-
-       
         if ($request->is_addParts == 1) {
             $parts_id = $request->parts_id;
-            $tyre_numbers = $request->tyre_numbers;
-            $manual_tyre_numbers = $request->manual_tyre_numbers;
             $tyre_index = 0;
-    
+            $not_own_index = 0;
+        
             foreach ($parts_id as $key => $part) {
+                $parts_model = PartsModel::find($part);
                 $qty = $request->qty[$key] ?? null;
-                $unit_cost = $request->unit_cost[$key] ?? null;
-                $total = $qty * $unit_cost;   
-                $order->is_own = $request->is_own[$key]; 
+                $is_own = $request->is_own[$key];
+                $tyre_numbers = $request->tyre_numbers_grouped[$key];
+                $manual_tyre_numbers = $request->manual_tyre_numbers_grouped[$key];
+                $order->is_own = $is_own;
                 $order->quantity = $qty;
-    
-                // Assign tyre numbers to this part
+                // Assign tyre numbers to this part only if it's a tyre category
                 $part_tyre_numbers = [];
-                for ($i = 0; $i < $qty; $i++) {
-                    if (isset($tyre_numbers[$tyre_index])) {
-                        $part_tyre_numbers[] = $tyre_numbers[$tyre_index];
-                        $tyre_index++;
+                if ($parts_model->isTyreCategory()) {
+                    for ($i = 0; $i < $qty; $i++) {
+                        if (isset($tyre_numbers[$tyre_index])) {
+                            $part_tyre_numbers[] = $tyre_numbers[$tyre_index];
+                            $tyre_index++;
+                        }
                     }
                 }
-    
-                $tyre_used = implode(',', $part_tyre_numbers);
-                \Log::info("Part ID: $part, Tyre Numbers: " . $tyre_used);
-    
-                // Get the current tyres_used from PartsModel
-                $parts_model = PartsModel::find($part);
-                $current_tyres = array_filter(explode(',', $parts_model->tyres_used ?? ''));
-    
-                // Remove the tyre numbers from PartsModel
-                $remaining_tyres = array_diff($current_tyres, $part_tyre_numbers);
-                $parts_model->tyres_used = implode(',', $remaining_tyres);
-                $parts_model->save();
-    
-                if ($request->is_own[$key] == 2) { // not from own inventory
-                    $non_stock_tyre_numbers = $manual_tyre_numbers[$key] ?? '';
-                    $cgst_amt = ($request->cgst[$key] / 100) * $total;
-                    $sgst_amt = ($request->sgst[$key] / 100) * $total;
+                $newArray = explode(",", $tyre_numbers);
+                // Update tyres_used only if it's a tyre category
+                if ($parts_model->isTyreCategory()) {
+                    $current_tyres = array_filter(explode(',', $parts_model->tyres_used ?? ''));
+                    $remaining_tyres = array_diff($current_tyres, $newArray);
+                    $parts_model->tyres_used = implode(',', $remaining_tyres);
+                    $parts_model->save();
+                }
+        
+                if ($is_own == 2) { // not from own inventory
+                    $unit_cost = $request->unit_cost[$not_own_index] ?? null;
+                    $cgst = $request->cgst[$not_own_index] ?? null;
+                    $sgst = $request->sgst[$not_own_index] ?? null;
+                    $total = $qty * $unit_cost;
+                    // $non_stock_tyre_numbers = $parts_model->isTyreCategory() ? ($manual_tyre_numbers[$not_own_index] ?? '') : '';
+                    $non_stock_tyre_numbers = $parts_model->isTyreCategory() ? $manual_tyre_numbers : '';
+                    $cgst_amt = ($cgst / 100) * $total;
+                    $sgst_amt = ($sgst / 100) * $total;
                     $grand_total = $total + $cgst_amt + $sgst_amt;
-                    $order->cgst = $request->cgst[$key];
-                    $order->sgst = $request->sgst[$key];
+                    $order->cgst = $cgst;
+                    $order->sgst = $sgst;
                     $order->cgst_amt = $cgst_amt;
                     $order->sgst_amt = $sgst_amt;
                     PartsUsedModel::create([
@@ -200,27 +201,25 @@ class WorkOrdersController extends Controller
                         'qty' => $qty,
                         'price' => $unit_cost,
                         'total' => $total,
-                        'is_own' => $request->is_own[$key],
-                        'cgst' => $request->cgst[$key],
+                        'is_own' => $is_own,
+                        'cgst' => $cgst,
                         'cgst_amt' => $cgst_amt,
-                        'sgst' => $request->sgst[$key],
+                        'sgst' => $sgst,
                         'sgst_amt' => $sgst_amt,
                         'grand_total' => $grand_total,
-                        'tyre_used' => $tyre_used,
-                        'non_stock_tyre_numbers' => $non_stock_tyre_numbers // New field
+                        // 'tyre_used' => $tyre_used,
+                        'non_stock_tyre_numbers' => $non_stock_tyre_numbers
                     ]);
+                    $not_own_index++;
                 } else {
                     PartsUsedModel::create([
                         'work_id' => $order->id,
                         'part_id' => $part,
                         'qty' => $qty,
-                        'price' => $unit_cost,
-                        'total' => $total,
-                        'is_own' => $request->is_own[$key],
-                        'grand_total' => $total,
-                        'tyre_used' => $tyre_used
+                        'is_own' => $is_own,
+                        'tyre_used' => $tyre_numbers
                     ]);
-    
+        
                     // owner inventory manage
                     $update_stock = PartsModel::find($part);
                     $update_stock->stock = $update_stock->stock - $qty;
@@ -266,14 +265,12 @@ class WorkOrdersController extends Controller
 
     public function edit($id)
     {
-        // dd($id);
         $index['parts'] = PartsModel::where('stock', '>', 0)->get();
         $index['data'] = WorkOrders::whereId($id)->first();
-        foreach ($index['data']->parts as $part) {
-            if ($part->is_own == 2) { // not from own stock
-                $part->non_stock_tyre_numbers = $part->non_stock_tyre_numbers;
-            }
-        }
+        $index['parts_used'] = DB::table('parts_used')
+        ->where('work_id', $id)
+        ->get();
+
         if (Auth::user()->group_id == null || Auth::user()->user_type == "S") {
             $index['vehicles'] = VehicleModel::whereIn_service("1")->get();
         } else {
@@ -287,8 +284,6 @@ class WorkOrdersController extends Controller
         $index['options'] = $options;
         $index['partsWithStock'] = PartsModel::pluck('stock', 'id')->toJson();
         
-
-        // dd($index);
         return view('work_orders.edit', $index);
     }
 
@@ -305,10 +300,6 @@ class WorkOrdersController extends Controller
         $workOrder->save();
         return redirect()->route('work_order.index');
     }
-
-
-
-    
     public function update(WorkOrderRequest $request)
     {
         $order = WorkOrders::find($request->get("id"));
@@ -355,17 +346,16 @@ class WorkOrdersController extends Controller
             'note' => $order->note,
             'type' => "Updated",
         ]);
-
+        \Log::info('Full Request Data:', $request->all());
         if ($request->is_addParts == 1) {
             $parts_id = $request->parts_id;
-            $tyre_numbers = $request->tyre_numbers;
-            $manual_tyre_numbers = $request->manual_tyre_numbers;
             $tyre_index = 0;
+            $not_own_index = 0;
 
             foreach ($parts_id as $key => $part) {
                 $qty = $request->qty[$key] ?? null;
-                $unit_cost = $request->unit_cost[$key] ?? null;
-                $total = $qty * $unit_cost;   
+                $tyre_numbers = $request->tyre_numbers_grouped[$key];
+                $manual_tyre_numbers = $request->manual_tyre_numbers_grouped[$key];  
                 $order->is_own = $request->is_own[$key]; 
                 $order->quantity = $qty;
 
@@ -378,10 +368,12 @@ class WorkOrdersController extends Controller
                     }
                 }
 
-                $tyre_used = implode(',', $part_tyre_numbers);
+                $tyre_used = explode(",", $tyre_numbers);
 
                 if ($request->is_own[$key] == 2) { // not from own inventory
-                    $non_stock_tyre_numbers = $manual_tyre_numbers[$key] ?? '';
+                    $non_stock_tyre_numbers = $manual_tyre_numbers ?? '';
+                    $unit_cost = $request->unit_cost[$not_own_index] ?? null;
+                    $total = $qty * $unit_cost; 
                     PartsUsedModel::create([
                         'work_id' => $order->id,
                         'part_id' => $part,
@@ -394,23 +386,16 @@ class WorkOrdersController extends Controller
                         'sgst' => $request->sgst[$key] ?? null,
                         'sgst_amt' => ($request->sgst[$key] / 100) * $total ?? null,
                         'grand_total' => $total + (($request->cgst[$key] / 100) * $total ?? 0) + (($request->sgst[$key] / 100) * $total ?? 0),
-                        'tyre_used' => $tyre_used,
                         'non_stock_tyre_numbers' => $non_stock_tyre_numbers
                     ]);
+                    $not_own_index++;
                 } else {
                     PartsUsedModel::create([
                         'work_id' => $order->id,
                         'part_id' => $part,
                         'qty' => $qty,
-                        'price' => $unit_cost,
-                        'total' => $total,
                         'is_own' => $request->is_own[$key],
-                        'cgst' => $request->cgst[$key] ?? null,
-                        'cgst_amt' => ($request->cgst[$key] / 100) * $total ?? null,
-                        'sgst' => $request->sgst[$key] ?? null,
-                        'sgst_amt' => ($request->sgst[$key] / 100) * $total ?? null,
-                        'grand_total' => $total + (($request->cgst[$key] / 100) * $total ?? 0) + (($request->sgst[$key] / 100) * $total ?? 0),
-                        'tyre_used' => $tyre_used
+                        'tyre_used' => $tyre_numbers
                     ]);
                 }
 
@@ -423,34 +408,20 @@ class WorkOrdersController extends Controller
                     ->value('tyre_used');
 
                 $previous_tyres = $previous_used ? explode(',', $previous_used) : [];
-                print_r($part_tyre_numbers,'\n');
-                // Get the current tyres_used from PartsModel
                 $parts_model = PartsModel::find($part);
                 $current_tyres = array_filter(explode(',', $parts_model->tyres_used ?? ''));
-                print_r($current_tyres,'\n');
-
-                // Find the intersection
-                $intersection = array_intersect($previous_tyres, $part_tyre_numbers);
-                print_r($intersection,'\n');
-
-
+                $intersection = array_intersect($previous_tyres, $tyre_used);
                 if (empty($intersection)) {
-                    // If there's no intersection, add all previous tyres to PartsModel
                     $tyres_to_add = $previous_tyres;
-                    print_r($tyres_to_add,'\n');
                 } else {
                     // If there's an intersection, add only the tyres that are not in the new selection
-                    $tyres_to_add = array_diff($previous_tyres, $part_tyre_numbers);
-                    print_r($tyres_to_add,'\n');
-
+                    $tyres_to_add = array_diff($previous_tyres, $tyre_used);
                 }
 
-                // Add the tyres to PartsModel
                 $updated_tyres = array_unique(array_merge($current_tyres, $tyres_to_add));
-                print_r($updated_tyres,'\n');
 
                 // dd($updated_tyres);
-                $final_tyres = array_diff($updated_tyres,$part_tyre_numbers);
+                $final_tyres = array_diff($updated_tyres,$tyre_used);
                 // dd($final_tyres);
                 $parts_model->tyres_used = implode(',', $final_tyres);
                 $parts_model->save();

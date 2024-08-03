@@ -22,13 +22,15 @@
         <div class="col-md-2">
             <div class="form-group">
                 {!! Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']) !!}
-                {!! Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers', 'multiple' => 'multiple', 'placeholder' => 'Select Tyre Numbers']) !!}               
+                {!! Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'multiple' => 'multiple', 'placeholder' => 'Select Tyre Numbers']) !!}
+                <input type="hidden" name="tyre_numbers_grouped[]" class="tyre_numbers_grouped">
             </div>
         </div>
         <div class="col-md-2">
             <div class="form-group">
                 {!! Form::label('manual_tyre_numbers', 'Enter Tyre Numbers', ['class' => 'form-label']) !!}
                 {!! Form::text('manual_tyre_numbers[]', null, ['class' => 'form-control manual_tyre_numbers', 'id' => 'manual_tyre_numbers', 'placeholder' => 'Enter comma-separated numbers']) !!}
+                <input type="hidden" name="manual_tyre_numbers_grouped[]" class="manual_tyre_numbers_grouped">
             </div>
         </div>
         <div class="col-md-2">
@@ -116,13 +118,15 @@
         <div class="col-md-2">
             <div class="form-group">
                 {!! Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']) !!}
-                {!! Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers', 'multiple' => 'multiple', 'placeholder' => 'Select Tyre Numbers']) !!}                
+                {!! Form::select('tyre_numbers[]', [], null, ['class' => 'form-control tyre_numbers', 'multiple' => 'multiple', 'placeholder' => 'Select Tyre Numbers']) !!}
+            <input type="hidden" name="tyre_numbers_grouped[]" class="tyre_numbers_grouped">
             </div>
         </div>
         <div class="col-md-2">
             <div class="form-group">
                 {!! Form::label('manual_tyre_numbers', 'Enter Tyre Numbers', ['class' => 'form-label']) !!}
                 {!! Form::text('manual_tyre_numbers[]', null, ['class' => 'form-control manual_tyre_numbers', 'id' => 'manual_tyre_numbers', 'placeholder' => 'Enter comma-separated numbers']) !!}
+                <input type="hidden" name="manual_tyre_numbers_grouped[]" class="manual_tyre_numbers_grouped">
             </div>
         </div>
         <div class="col-md-2">
@@ -199,6 +203,10 @@
             calculateAmount(row);
         });
 
+        function generateUniqueId() {
+            return 'id_' + Math.random().toString(36).substr(2, 9);
+        }
+
       
         function updatePartDetails(row) {
             var partId = row.find('.parts_id').val();
@@ -206,6 +214,10 @@
             var manualTyreNumbers = row.find('.manual_tyre_numbers');
             
             console.log('Selected Part ID:', partId);
+
+            if (!row.attr('id')) {
+                row.attr('id', generateUniqueId());
+            }
             
             // Reset fields when changing parts
             row.find('.unit_cost, .qty, .total_cost').val('');
@@ -237,6 +249,11 @@
                                         tyreNumbersSelect.append('<option value="' + value + '">' + value + '</option>');
                                     });
                                     updateQuantityStatus(row);
+
+                                    tyreNumbersSelect.off('change').on('change', function() {
+                                        updateGroupedTyreNumbers(row);
+                                        validateTyreNumbers(row);
+                                    });
                                 },
                                 error: function(xhr, status, error) {
                                     console.error('AJAX Error:', status, error);
@@ -254,6 +271,15 @@
                 row.data('is-tyre', false);
                 updateQuantityStatus(row);
             }
+        }
+
+        function updateGroupedTyreNumbers(row) {
+        var selectedTyreNumbers = row.find('.tyre_numbers').val() || [];
+        var groupedTyreNumbers = selectedTyreNumbers.join(',');
+        row.find('.tyre_numbers_grouped').val(groupedTyreNumbers);
+
+        var manualTyreNumbers = row.find('.manual_tyre_numbers').val();
+        row.find('.manual_tyre_numbers_grouped').val(manualTyreNumbers);
         }
 
         function updateQuantityStatus(row) {
@@ -371,6 +397,8 @@
                 }
                 tyreNumbersSelect.removeClass('is-invalid').next('.invalid-feedback').remove();
             }
+            updateGroupedTyreNumbers(row);
+
         }
 
         function calculateAmount(row) {
@@ -420,6 +448,7 @@
                     isValid = false;
                     return false;
                 }
+                updateGroupedTyreNumbers(row);
             });
 
             if (!isValid) {

@@ -112,9 +112,9 @@ $date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-
                   <td><strong>{{strtoupper($order['vehicle']->license_plate)}}</strong></td>
                   <td>{{$order['vendor']->type}}</td>
                   <td>
-                      @if($order['is_own'] == 1)
+                      @if($partData['is_own'] == 1)
                           Yes
-                      @elseif($order['is_own'] == 2)
+                      @elseif($partData['is_own'] == 0)
                           No
                       @else
                           Unknown

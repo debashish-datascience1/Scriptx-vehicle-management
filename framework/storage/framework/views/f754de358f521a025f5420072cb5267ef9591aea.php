@@ -142,14 +142,14 @@
                 <span class="sr-only">Toggle Dropdown</span>
                 </button>
                 <div class="dropdown-menu custom" role="menu">
-                  <a class="dropdown-item vview" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal2"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> <?php echo app('translator')->getFromJson('fleet.view'); ?></a>
+                  <a class="dropdown-item vview" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal2" style = " cursor: pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> <?php echo app('translator')->getFromJson('fleet.view'); ?></a>
                   <a class="dropdown-item" href='<?php echo e(url("admin/parts-used/".$row->id)); ?>'> <span aria-hidden="true" class="fa fa-wrench" style="color: green;"></span> <?php echo app('translator')->getFromJson('fleet.partsUsed'); ?></a>
                   <?php if($row->status == "Completed" && empty($row->category_id)): ?>
                   <a class="dropdown-item vorderhead" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#orderHeadModal"> <span aria-hidden="true" class="fa fa-level-down" style="color: #423091;"></span> Add Order Head</a>
                   <?php endif; ?>
                   <?php if(Helper::isEligible($row->id,28)): ?>
                   <a class="dropdown-item" href='<?php echo e(url("admin/work_order/".$row->id."/edit")); ?>'> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
-                  <a class="dropdown-item" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal"><span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?></a>
+                  <a class="dropdown-item" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal" style = " cursor: pointer;"><span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?></a>
                   <?php endif; ?>
                 </div>
               </div>

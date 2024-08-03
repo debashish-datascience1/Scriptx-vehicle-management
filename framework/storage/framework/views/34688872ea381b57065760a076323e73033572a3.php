@@ -121,9 +121,9 @@ $date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-
                   <td><strong><?php echo e(strtoupper($order['vehicle']->license_plate)); ?></strong></td>
                   <td><?php echo e($order['vendor']->type); ?></td>
                   <td>
-                      <?php if($order['is_own'] == 1): ?>
+                      <?php if($partData['is_own'] == 1): ?>
                           Yes
-                      <?php elseif($order['is_own'] == 2): ?>
+                      <?php elseif($partData['is_own'] == 0): ?>
                           No
                       <?php else: ?>
                           Unknown
