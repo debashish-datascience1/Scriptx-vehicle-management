@@ -102,9 +102,10 @@
               <th>Name</th>
               <th>Vehicle</th>
               <th>Present/Absent</th>
-              <th>Net Salary</th>
+              <th>Basic Salary</th>
               <th>Booking Adv. Salary</th>
               <th>Salary Advance</th>
+              <th>Total Advance</th> 
               <th>Absent Deduct</th>
               <th>Payable Amount</th>
             </tr>
@@ -135,6 +136,7 @@
               <td><?php echo e(bcdiv($row->gross_salary,1,2)); ?></td>
               <td><?php echo e(bcdiv($row->bookingAdvance,1,2)); ?></td>
               <td><?php echo e(bcdiv($row->salary_advance,1,2)); ?></td>
+              <td><?php echo e(bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)); ?></td> 
               <td><?php echo e(bcdiv($row->deduct_amount,1,2)); ?></td>
               <td>
                 <?php echo e(bcdiv($row->payable_salary,1,2)); ?>
@@ -152,9 +154,10 @@
               <th>Name</th>
               <th>Vehicle</th>
               <th>Present/Absent</th>
-              <th>Net Salary</th>
+              <th>Basic Salary</th>
               <th>Booking Adv. Salary</th>
               <th>Salary Advance</th>
+              <th>Total Advance</th> 
               <th>Absent Deduct</th>
               <th>Payable Amount</th>
             </tr>

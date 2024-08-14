@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')@endphp
 
 @section("breadcrumb")
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -69,11 +69,18 @@
               {!!Form::select('years',$years,$request['years'] ?? null,['class'=>'form-control fullsize','required','id'=>'years','placeholder'=>'Select Year'])!!}
             </div>
           </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              {!! Form::label('payment_type', "Type", ['class' => 'form-label']) !!}
+              {!! Form::select('payment_type', ['bank' => 'Bank', 'cash' => 'Cash'], $request['payment_type'] ?? null, ['class' => 'form-control fullsize', 'id' => 'payment_type', 'placeholder' => 'All']) !!}
+            </div>
+          </div>
         </div>
         <div class="row newrow">
           <div class="col-md-12">
             <button type="submit" class="btn btn-info gen_report" style="margin-right: 10px">@lang('fleet.generate_report')</button>
             <button type="submit" formaction="{{url('admin/print-salary-processing')}}" class="btn btn-danger print_report" formtarget="_blank"><i class="fa fa-print"></i> @lang('fleet.print')</button>
+            <button type="submit" formaction="{{ url('admin/export-salary-processing') }}" class="btn btn-success export_excel"><i class="fa fa-file-excel-o"></i> Export to Excel</button>
           </div>
         </div>
           {!! Form::close() !!}
@@ -104,6 +111,13 @@
           </thead>
           <tbody>
             @foreach($salaries as $k=>$row) 
+            @php
+              $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+              $showRow = !$request['payment_type'] || 
+                        ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                        ($request['payment_type'] == 'cash' && empty($bankInfo));
+            @endphp
+            @if($showRow)
             <tr>
               <td>{{$k+1}}</td>
               <td>
@@ -114,26 +128,27 @@
                 @endif
               </td>
               <td>
-                @if($row->is_payroll)
-                  {{$row->driver->bank}}
+                @if(!empty($bankInfo))
+                  {{$bankInfo}}
                 @else
-                  {{$row->bank}}
+                  Cash
                 @endif
               </td>
               <td>
                 @if($row->is_payroll)
-                  {{$row->driver->account_no}}
+                  {{$row->driver->account_no ?? 'N/A'}}
                 @else
-                  {{$row->account_no}}
+                  {{$row->account_no ?? 'N/A'}}
                 @endif
               </td>
               <td>
-				{{bcdiv($row->payable_salary,1,2)}}
-				@if($row->is_payroll)
-				<span title="Paid" class="check"><i class="fa fa-check"></i></span>
-				@endif
-			  </td>
+                {{bcdiv($row->payable_salary,1,2)}}
+                @if($row->is_payroll)
+                <span title="Paid" class="check"><i class="fa fa-check"></i></span>
+                @endif
+              </td>
             </tr>
+            @endif
             @endforeach
           </tbody>
            <tfoot>
@@ -147,10 +162,20 @@
           </tfoot> 
         </table>
         <br>
+          @php
+          $totalPayableSalary = $salaries->filter(function($row) use ($request) {
+            $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+            return !$request['payment_type'] || 
+                  ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                  ($request['payment_type'] == 'cash' && empty($bankInfo));
+          })->sum('payable_salary');
+        @endphp
+
         <table class="table">
-          <tr> <th style="float:right">Total Payable Salary : {{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('payable_salary'),1,2)}}</th>
+          <tr>
+            <th style="float:right">Total Payable Salary : {{Hyvikk::get('currency')}} {{bcdiv($totalPayableSalary,1,2)}}</th>
           </tr>
-      </table>
+        </table>
       </div>
     </div>
   </div>

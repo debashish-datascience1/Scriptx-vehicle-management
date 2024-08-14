@@ -58,53 +58,56 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <table class="table table-bordered table-striped table-hover">
+          <table class="table table-bordered table-striped table-hover" style="font-size: 12px;">
             <thead>
-                <th>SL#</th>
-                <th>Name</th>
-                <th>Vehicle</th>
-                <th>Present/Absent</th>
-                <th>Net Salary</th>
-                <th>Booking Adv. Salary</th>
-                <th>Salary Advance</th>
-                <th>Absent Deduct</th>
-                <th>Payable Amount</th>
+              <th style="width: 50px;">SL#</th>
+              <th style="width: 150px;">Name</th>
+              <th style="width: 100px;">Vehicle</th>
+              <th style="width: 100px;">Present/Absent</th>
+              <th style="width: 100px;">Net Salary</th>
+              <th style="width: 100px;">Booking Adv. Salary</th>
+              <th style="width: 100px;">Salary Advance</th>
+              <th style="width: 100px;">Total Advance</th>
+              <th style="width: 100px;">Absent Deduct</th>
+              <th style="width: 150px;">Payable Amount</th>
             </thead>
             <tbody>
-            @foreach($salaries as $k=>$row) 
-                <tr>
-                    <td>{{$k+1}}</td>
-                    <td>
-                    @if($row->is_payroll)
-                        {{$row->driver->name}}
-                    @else
-                        {{$row->driver}}
-                    @endif
-                    </td>
-                    <td>
-                    @if($row->is_payroll)
-                        {{$row->driver->driver_vehicle->vehicle->license_plate}}
-                    @else
-                        {{$row->vehicle}}
-                    @endif
-                    </td>
-                    <td>{{$row->days_present}}/{{$row->days_absent}}</td>
-                    <td>{{bcdiv($row->gross_salary,1,2)}}</td>
-                    <td>{{bcdiv($row->bookingAdvance,1,2)}}</td>
-                    <td>{{bcdiv($row->salary_advance,1,2)}}</td>
-                    <td>{{bcdiv($row->deduct_amount,1,2)}}</td>
-                    <td>{{bcdiv($row->payable_salary,1,2)}}</td>
-                </tr>
-            @endforeach
-            <tr>
-              <th colspan="3"></th>
-              <th><strong>Total Amount(s)</strong></th>
-              <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('gross_salary'),1,2)}}</th>
-              <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('bookingAdvance'),1,2)}}</th>
-              <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('salary_advance'),1,2)}}</th>
-              <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('deduct_amount'),1,2)}}</th>
-              <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('payable_salary'),1,2)}}</th>
-            </tr>
+              @foreach($salaries as $k=>$row)
+              <tr>
+                <td>{{$k+1}}</td>
+                <td>
+                  @if($row->is_payroll)
+                  {{$row->driver->name}}
+                  @else
+                  {{$row->driver}}
+                  @endif
+                </td>
+                <td>
+                  @if($row->is_payroll)
+                  {{$row->driver->driver_vehicle->vehicle->license_plate}}
+                  @else
+                  {{$row->vehicle}}
+                  @endif
+                </td>
+                <td>{{$row->days_present}}/{{$row->days_absent}}</td>
+                <td>{{bcdiv($row->gross_salary,1,2)}}</td>
+                <td>{{bcdiv($row->bookingAdvance,1,2)}}</td>
+                <td>{{bcdiv($row->salary_advance,1,2)}}</td>
+                <td>{{bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)}}</td>
+                <td>{{bcdiv($row->deduct_amount,1,2)}}</td>
+                <td style="word-wrap: break-word;">{{bcdiv($row->payable_salary,1,2)}}</td>
+              </tr>
+              @endforeach
+              <tr>
+                <th colspan="3"></th>
+                <th><strong>Total Amount(s)</strong></th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('gross_salary'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('bookingAdvance'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('salary_advance'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('bookingAdvance') + $salaries->sum('salary_advance'), 1, 2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('deduct_amount'),1,2)}}</th>
+                <th style="word-wrap: break-word;">{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('payable_salary'),1,2)}}</th>
+              </tr>
             </tbody>
           </table>
         </div>

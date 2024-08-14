@@ -1,20 +1,19 @@
-@extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
 
-@section("breadcrumb")
+<?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
 <li class="breadcrumb-item active">Salary Report</li>
-@endsection
-@section('extra_css')
-<link rel="stylesheet" href="{{asset('assets/css/bootstrap-datepicker.min.css')}}">
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('extra_css'); ?>
+<link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
 <style>
     .form-label{display:block !important;}
     .fullsize{width: 100% !important;}
 	  /* .newrow{margin: 0 auto;width: 100%;margin-bottom: 15px;} */
 	  .dateShow{padding-right: 13px;}
 </style>
-@endsection
-@section('content')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('content'); ?>
 
 <div class="row">
   <div class="col-md-12">
@@ -25,46 +24,54 @@
       </div>
 
       <div class="card-body">
-        {!! Form::open(['route' => 'reports.salary-advance','method'=>'post','class'=>'form-block']) !!}
+        <?php echo Form::open(['route' => 'reports.salary-advance','method'=>'post','class'=>'form-block']); ?>
+
         <div class="row newrow">
           <div class="col-md-4">
             <div class="form-group">
-              {!! Form::label('driver', __('fleet.driver'), ['class' => 'form-label']) !!}
-              {!!Form::select('driver',$drivers,$request['driver'] ?? null,['class'=>'form-control','placeholder'=>'Select Driver'])!!}
+              <?php echo Form::label('driver', __('fleet.driver'), ['class' => 'form-label']); ?>
+
+              <?php echo Form::select('driver',$drivers,$request['driver'] ?? null,['class'=>'form-control','placeholder'=>'Select Driver']); ?>
+
             </div>
           </div>
           <div class="col-md-4">
             <div class="form-group">
-              {!! Form::label('from_date', __('fleet.fromDate'), ['class' => 'form-label']) !!}
-              {!!Form::text('from_date',$request['from_date'] ?? null,['class'=>'form-control','readonly'])!!}
+              <?php echo Form::label('from_date', __('fleet.fromDate'), ['class' => 'form-label']); ?>
+
+              <?php echo Form::text('from_date',$request['from_date'] ?? null,['class'=>'form-control','readonly']); ?>
+
             </div>
           </div>
           <div class="col-md-4">
             <div class="form-group">
-              {!! Form::label('to_date', __('fleet.toDate'), ['class' => 'form-label']) !!}
-              {!!Form::text('to_date',$request['to_date'] ?? null,['class'=>'form-control','readonly'])!!}
+              <?php echo Form::label('to_date', __('fleet.toDate'), ['class' => 'form-label']); ?>
+
+              <?php echo Form::text('to_date',$request['to_date'] ?? null,['class'=>'form-control','readonly']); ?>
+
             </div>
           </div>
         </div>
         <div class="row newrow">
           <div class="col-md-4">
-            <button type="submit" class="btn btn-info" style="margin-right: 10px">@lang('fleet.generate_report')</button>
-          <button type="submit" formaction="{{url('admin/print-salary-advance-report')}}" formtarget="_blank" class="btn btn-danger"><i class="fa fa-print"></i> @lang('fleet.print')</button>
+            <button type="submit" class="btn btn-info" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
+          <button type="submit" formaction="<?php echo e(url('admin/print-salary-advance-report')); ?>" formtarget="_blank" class="btn btn-danger"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>
           </div>
-          {!! Form::close() !!}
+          <?php echo Form::close(); ?>
+
         </div>
       </div>
     </div>
   </div>
 </div>
 
-@if(isset($result))
+<?php if(isset($result)): ?>
 <div class="row">
   <div class="col-md-12">
     <div class="card card-info">
       <div class="card-header">
         <h3 class="card-title">
-          @lang('fleet.report')
+          <?php echo app('translator')->getFromJson('fleet.report'); ?>
         </h3>
       </div>
 
@@ -82,17 +89,17 @@
             </tr>
           </thead>
           <tbody>
-            @foreach($advances as $k=>$row)
+            <?php $__currentLoopData = $advances; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <tr>
-              <td>{{$k+1}}</td>
-              <td>{{$row->driver->name}}</td>
-              <td><strong>{{$row->assigned_vehicle->Vehicle->license_plate}}</strong></td>
-              <td>{{Helper::getCanonicalDate($row->date,'default')}}</td>
-              <td>{{Hyvikk::get('currency')}} {{bcdiv($row->driver->salary,1,2)}}</td>
-              <td>{{Hyvikk::get('currency')}} {{bcdiv($row->amount,1,2)}}</td>
-              <td>{{$row->remarks}}</td>
+              <td><?php echo e($k+1); ?></td>
+              <td><?php echo e($row->driver->name); ?></td>
+              <td><strong><?php echo e($row->assigned_vehicle->Vehicle->license_plate); ?></strong></td>
+              <td><?php echo e(Helper::getCanonicalDate($row->date,'default')); ?></td>
+              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($row->driver->salary,1,2)); ?></td>
+              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($row->amount,1,2)); ?></td>
+              <td><?php echo e($row->remarks); ?></td>
             </tr>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
           </tbody>
           <tfoot>
             <tr>
@@ -110,10 +117,10 @@
     </div>
   </div>
 </div>
-@endif
-@endsection
+<?php endif; ?>
+<?php $__env->stopSection(); ?>
 
-@section("script")
+<?php $__env->startSection("script"); ?>
 
 <script type="text/javascript">
 	$(document).ready(function() {
@@ -121,11 +128,11 @@
 	});
 </script>
 
-<script type="text/javascript" src="{{ asset('assets/js/cdn/jszip.min.js')}}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/pdfmake.min.js')}}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/vfs_fonts.js')}}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/buttons.html5.min.js')}}"></script>
-<script src="{{asset('assets/js/bootstrap-datepicker.min.js')}}"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/jszip.min.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/pdfmake.min.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/vfs_fonts.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/buttons.html5.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
 <script type="text/javascript">
 
 $(document).ready(function() {
@@ -146,7 +153,7 @@ $(document).ready(function() {
               ]}
       ],
       "language": {
-               "url": '{{ __("fleet.datatable_lang") }}',
+               "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
             },
       "initComplete": function() {
               myTable.columns().every(function () {
@@ -190,4 +197,5 @@ $(document).ready(function() {
     $("#driver").select2();
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/daily_advance/report.blade.php ENDPATH**/ ?>

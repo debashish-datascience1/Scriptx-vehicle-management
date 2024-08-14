@@ -59,57 +59,60 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <table class="table table-bordered table-striped table-hover">
+          <table class="table table-bordered table-striped table-hover" style="font-size: 12px;">
             <thead>
-                <th>SL#</th>
-                <th>Name</th>
-                <th>Vehicle</th>
-                <th>Present/Absent</th>
-                <th>Net Salary</th>
-                <th>Booking Adv. Salary</th>
-                <th>Salary Advance</th>
-                <th>Absent Deduct</th>
-                <th>Payable Amount</th>
+              <th style="width: 50px;">SL#</th>
+              <th style="width: 150px;">Name</th>
+              <th style="width: 100px;">Vehicle</th>
+              <th style="width: 100px;">Present/Absent</th>
+              <th style="width: 100px;">Net Salary</th>
+              <th style="width: 100px;">Booking Adv. Salary</th>
+              <th style="width: 100px;">Salary Advance</th>
+              <th style="width: 100px;">Total Advance</th>
+              <th style="width: 100px;">Absent Deduct</th>
+              <th style="width: 150px;">Payable Amount</th>
             </thead>
             <tbody>
-            <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
-                <tr>
-                    <td><?php echo e($k+1); ?></td>
-                    <td>
-                    <?php if($row->is_payroll): ?>
-                        <?php echo e($row->driver->name); ?>
+              <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+              <tr>
+                <td><?php echo e($k+1); ?></td>
+                <td>
+                  <?php if($row->is_payroll): ?>
+                  <?php echo e($row->driver->name); ?>
 
-                    <?php else: ?>
-                        <?php echo e($row->driver); ?>
+                  <?php else: ?>
+                  <?php echo e($row->driver); ?>
 
-                    <?php endif; ?>
-                    </td>
-                    <td>
-                    <?php if($row->is_payroll): ?>
-                        <?php echo e($row->driver->driver_vehicle->vehicle->license_plate); ?>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?php if($row->is_payroll): ?>
+                  <?php echo e($row->driver->driver_vehicle->vehicle->license_plate); ?>
 
-                    <?php else: ?>
-                        <?php echo e($row->vehicle); ?>
+                  <?php else: ?>
+                  <?php echo e($row->vehicle); ?>
 
-                    <?php endif; ?>
-                    </td>
-                    <td><?php echo e($row->days_present); ?>/<?php echo e($row->days_absent); ?></td>
-                    <td><?php echo e(bcdiv($row->gross_salary,1,2)); ?></td>
-                    <td><?php echo e(bcdiv($row->bookingAdvance,1,2)); ?></td>
-                    <td><?php echo e(bcdiv($row->salary_advance,1,2)); ?></td>
-                    <td><?php echo e(bcdiv($row->deduct_amount,1,2)); ?></td>
-                    <td><?php echo e(bcdiv($row->payable_salary,1,2)); ?></td>
-                </tr>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-            <tr>
-              <th colspan="3"></th>
-              <th><strong>Total Amount(s)</strong></th>
-              <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('gross_salary'),1,2)); ?></th>
-              <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('bookingAdvance'),1,2)); ?></th>
-              <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('salary_advance'),1,2)); ?></th>
-              <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('deduct_amount'),1,2)); ?></th>
-              <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('payable_salary'),1,2)); ?></th>
-            </tr>
+                  <?php endif; ?>
+                </td>
+                <td><?php echo e($row->days_present); ?>/<?php echo e($row->days_absent); ?></td>
+                <td><?php echo e(bcdiv($row->gross_salary,1,2)); ?></td>
+                <td><?php echo e(bcdiv($row->bookingAdvance,1,2)); ?></td>
+                <td><?php echo e(bcdiv($row->salary_advance,1,2)); ?></td>
+                <td><?php echo e(bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)); ?></td>
+                <td><?php echo e(bcdiv($row->deduct_amount,1,2)); ?></td>
+                <td style="word-wrap: break-word;"><?php echo e(bcdiv($row->payable_salary,1,2)); ?></td>
+              </tr>
+              <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+              <tr>
+                <th colspan="3"></th>
+                <th><strong>Total Amount(s)</strong></th>
+                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('gross_salary'),1,2)); ?></th>
+                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('bookingAdvance'),1,2)); ?></th>
+                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('salary_advance'),1,2)); ?></th>
+                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('bookingAdvance') + $salaries->sum('salary_advance'), 1, 2)); ?></th>
+                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('deduct_amount'),1,2)); ?></th>
+                <th style="word-wrap: break-word;"><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('payable_salary'),1,2)); ?></th>
+              </tr>
             </tbody>
           </table>
         </div>

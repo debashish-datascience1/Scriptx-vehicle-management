@@ -2812,9 +2812,9 @@ class ReportsController extends Controller
 					->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
 			})->whereBetween(DB::raw('DATE(pickup)'), [$start, $end])->with('vehicle');
 		if (!empty($driver_id))
-			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "ASC")->get();
 		else
-			$data['advance_bookings'] = $bookData->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->orderBy("id", "ASC")->get();
 
 
 		// dd($data);
@@ -2834,7 +2834,7 @@ class ReportsController extends Controller
 		$data['result'] = "";
 		$data['dates'] = [$start, $end];
 		$data['request'] = $request->all();
-		// dd($data['advance_bookings']->first());
+		// dd($data);
 		return view('reports.driveradvance', $data);
 	}
 
@@ -2863,9 +2863,9 @@ class ReportsController extends Controller
 					->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
 			})->whereBetween(DB::raw('DATE(pickup)'), [$start, $end])->with('vehicle');
 		if (!empty($driver_id))
-			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "ASC")->get();
 		else
-			$data['advance_bookings'] = $bookData->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->orderBy("id", "ASC")->get();
 
 
 		// Vehicle selected
@@ -3444,7 +3444,7 @@ class ReportsController extends Controller
 				$payable_salary = 0;
 				$deduct_amount = 0;
 			} else {
-				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$perday = bcdiv($gross_salary / 30, 1, 2);
 				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
 				$payable_salary = $payable_salary - $deduct_amount;
 			}
@@ -3514,7 +3514,7 @@ class ReportsController extends Controller
 	{
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -3563,7 +3563,7 @@ class ReportsController extends Controller
 				$payable_salary = 0;
 				$deduct_amount = 0;
 			} else {
-				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$perday = bcdiv($gross_salary / 30, 1, 2);
 				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
 				$payable_salary = $payable_salary - $deduct_amount;
 			}
@@ -3631,7 +3631,7 @@ class ReportsController extends Controller
 	{
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -3675,7 +3675,7 @@ class ReportsController extends Controller
 				$payable_salary = 0;
 				$deduct_amount = 0;
 			} else {
-				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$perday = bcdiv($gross_salary / 30, 1, 2);
 				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
 				$payable_salary = $payable_salary - $deduct_amount;
 			}
@@ -3732,8 +3732,8 @@ class ReportsController extends Controller
 		];
 
 		$columns = [
-			'SL#', 'Name', 'Vehicle', 'Present/Absent', 'Net Salary', 
-			'Booking Adv. Salary', 'Salary Advance', 'Absent Deduct', 'Payable Amount'
+			'SL#', 'Name', 'Vehicle', 'Present/Absent', 'Basic Salary',
+			'Booking Adv. Salary', 'Salary Advance', 'Total Advance', 'Absent Deduct', 'Payable Amount'
 		];
 
 		$callback = function() use ($finalList, $columns) {
@@ -3741,6 +3741,7 @@ class ReportsController extends Controller
 			fputcsv($file, $columns);
 
 			foreach ($finalList as $index => $row) {
+				$totalAdvance = bcdiv($row->bookingAdvance, 1, 2) + bcdiv($row->salary_advance, 1, 2);
 				fputcsv($file, [
 					$index + 1,
 					$row->is_payroll ? $row->driver->name : $row->driver,
@@ -3749,17 +3750,22 @@ class ReportsController extends Controller
 					bcdiv($row->gross_salary, 1, 2),
 					bcdiv($row->bookingAdvance, 1, 2),
 					bcdiv($row->salary_advance, 1, 2),
+					bcdiv($totalAdvance, 1, 2),
 					bcdiv($row->deduct_amount, 1, 2),
 					bcdiv($row->payable_salary, 1, 2),
 				]);
 			}
 
 			// Add total row
+			$totalBookingAdvance = bcdiv($finalList->sum('bookingAdvance'), 1, 2);
+			$totalSalaryAdvance = bcdiv($finalList->sum('salary_advance'), 1, 2);
+			$totalAdvance = bcdiv($totalBookingAdvance + $totalSalaryAdvance, 1, 2);
 			fputcsv($file, [
 				'', '', 'Total Amount(s)', '',
 				bcdiv($finalList->sum('gross_salary'), 1, 2),
-				bcdiv($finalList->sum('bookingAdvance'), 1, 2),
-				bcdiv($finalList->sum('salary_advance'), 1, 2),
+				bcdiv($totalBookingAdvance, 1, 2),
+				bcdiv($totalSalaryAdvance, 1, 2),
+				bcdiv($totalAdvance, 1, 2),
 				bcdiv($finalList->sum('deduct_amount'), 1, 2),
 				bcdiv($finalList->sum('payable_salary'), 1, 2),
 			]);
@@ -3787,7 +3793,7 @@ class ReportsController extends Controller
 		// dd($request->all());
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -3862,6 +3868,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3897,8 +3904,6 @@ class ReportsController extends Controller
 
 		if (!$request->has('driver_id'))	$request->merge(['driver_id' => null]);
 		$data['request'] = $request->all();
-
-
 		// dd($data);
 		// dd(request()->segments(count($request->segments())));
 
@@ -3909,7 +3914,7 @@ class ReportsController extends Controller
 	{
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -4024,6 +4029,150 @@ class ReportsController extends Controller
 
 		return view('reports.print_salary-processing', $data);
 	}
+
+	public function salaryProcessing_export(Request $request)
+	{
+		$driver_ids = $request->driver_id;
+		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
+		}
+
+		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
+		$year = $request->get('years');
+
+		$search_date = "$year-$month-01";
+		$search_ym = "$year-$month";
+		
+		$arrayList = [];
+		foreach ($driver_ids as $did) {
+			$payroll = Payroll::where('for_date', $search_date)->where('user_id', $did);
+
+			//Working Days
+			$present = Leave::where('driver_id', $did)
+				->where('date', 'LIKE', "%$search_ym%")
+				->where('is_present', 1)->get();
+			$halfLeave = Leave::where('driver_id', $did)
+				->where('date', 'LIKE', "%$search_ym%")
+				->whereIn('is_present', [3, 4])->get();
+
+			$presentDays = $present->count() + ($halfLeave->count() * .5);
+			$totalMonthDays = date('t', strtotime($search_date));
+			$absentDays = $totalMonthDays - $presentDays;
+
+			//Calculating advances
+			$salary_advance = DailyAdvance::where('date', 'LIKE', "%$search_ym%")->where(['driver_id' => $did, 'payroll_check' => null, 'advance_driver_id' => null])->sum('amount');
+			$booking_ids = Bookings::where('driver_id', $did)->where(function ($query) {
+				$query->where('payroll_check', '!=', 1)
+					->orWhereRaw('bookings.payroll_check IS NULL');
+			})->where('pickup', 'LIKE', "%$search_ym%")->pluck('id')->toArray();
+
+			if (!empty($booking_ids)) {
+				$bookingAdvance = AdvanceDriver::whereIn('booking_id', $booking_ids)->where('param_id', 7)->sum('value');
+			} else $bookingAdvance = 0;
+
+			$userData =  User::where('id', $did)->first();
+			$gross_salary = $userData->salary;
+			$user_vehicle =  !empty($userData->driver_vehicle->vehicle) ? $userData->driver_vehicle->vehicle->license_plate : "-";
+			$payable_salary = $gross_salary - ($salary_advance + $bookingAdvance);
+
+			if ($totalMonthDays == $absentDays && $presentDays == 0) {
+				$payable_salary = 0;
+				$deduct_amount = 0;
+			} else {
+				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
+				$payable_salary = $payable_salary - $deduct_amount;
+			}
+
+			$bankInfo = $userData->bank;
+			$showRow = !$request->payment_type || 
+					($request->payment_type == 'bank' && !empty($bankInfo)) || 
+					($request->payment_type == 'cash' && empty($bankInfo));
+
+			if ($showRow) {
+				if ($payroll->exists()) {
+					$paydata = $payroll->first();
+					$paydata->is_payroll = true;
+					$paydata->gross_salary = $gross_salary;
+					$arrayList[] = $paydata;
+				} else {
+					$primaryID =  rand(1000, 100000);
+					$newArray = [
+						"id" => $primaryID,
+						"user_id" => $did,
+						"driver" =>  User::find($did)->name,
+						"vehicle" =>  $user_vehicle,
+						"salary" => $gross_salary,
+						"date" => $search_date,
+						"for_date" => $search_date,
+						"payable_salary" => $payable_salary,
+						"for_month" => date('m', strtotime($search_date)),
+						"for_year" => date('Y', strtotime($search_date)),
+						"is_payroll" => false,
+						"gross_salary" => $gross_salary,
+						"bank" => $bankInfo,
+						"account_no" => $userData->account_no,
+					];
+					$arrayList[] = Helper::toCollection($newArray);
+				}
+			}
+		}
+		$finalList = collect($arrayList)->values();
+
+		$fileName = 'salary_processing_report_' . $year . '_' . $month . '.csv';
+		$headers = [
+			"Content-type" => "text/csv",
+			"Content-Disposition" => "attachment; filename=$fileName",
+			"Pragma" => "no-cache",
+			"Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+			"Expires" => "0"
+		];
+
+		$columns = ['SL#', 'Name', 'Bank', 'A/C No.', 'Payable Amount'];
+
+		$callback = function() use ($finalList, $columns, $request) {
+			$file = fopen('php://output', 'w');
+			fputcsv($file, $columns);
+
+			$index = 1;
+			foreach ($finalList as $row) {
+				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+				$showRow = !$request->payment_type || 
+						($request->payment_type == 'bank' && !empty($bankInfo)) || 
+						($request->payment_type == 'cash' && empty($bankInfo));
+
+				if ($showRow) {
+					fputcsv($file, [
+						$index,
+						$row->is_payroll ? $row->driver->name : $row->driver,
+						!empty($bankInfo) ? $bankInfo : 'Cash',
+						$row->is_payroll ? $row->driver->account_no : $row->account_no,
+						bcdiv($row->payable_salary, 1, 2)
+					]);
+					$index++;
+				}
+			}
+
+			// Add total row
+			$totalPayableSalary = $finalList->sum(function ($row) use ($request) {
+				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+				$showRow = !$request->payment_type || 
+						($request->payment_type == 'bank' && !empty($bankInfo)) || 
+						($request->payment_type == 'cash' && empty($bankInfo));
+				return $showRow ? $row->payable_salary : 0;
+			});
+
+			fputcsv($file, [
+				'', 'Total', '', '',
+				bcdiv($totalPayableSalary, 1, 2)
+			]);
+
+			fclose($file);
+		};
+
+		return response()->stream($callback, 200, $headers);
+	}
+
 	public function globalSearch()
 	{
 		$sessionArray = Session::get('globalSearch');
@@ -4578,7 +4727,7 @@ class ReportsController extends Controller
 			$yearArr[$year->date] = $year->date;
 		}
 		$index['years'] = !empty($yearArr) ? $yearArr : [date("Y") => date("Y")];
-		$index['advances'] = $dailyAdvance->orderBy('date', 'DESC')->get();
+		$index['advances'] = $dailyAdvance->orderBy('date', 'ASC')->get();
 		$index['drivers'] = User::whereUserType('D')->orderByName()->pluck('name', 'id');
 		$index['request'] = $request->all();
 
@@ -4615,7 +4764,7 @@ class ReportsController extends Controller
 			$dailyAdvance = DailyAdvance::whereBetween('date', [$from_date, $to_date]);
 
 
-		$index['advances'] = $dailyAdvance->orderBy('date', 'DESC')->get();
+		$index['advances'] = $dailyAdvance->orderBy('date', 'ASC')->get();
 		$index['date'] = collect(['from_date' => $from_date, 'to_date' => $to_date]);
 		return view('daily_advance.report-print', $index);
 	}

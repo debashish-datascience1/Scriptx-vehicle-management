@@ -95,6 +95,7 @@
 							<th>Distance Duration</th>
 							<th>Party</th>
                             <th><?php echo e(Hyvikk::get('currency')); ?> Advance</th>
+							<th>Booking Status</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -110,6 +111,7 @@
 							<td><?php echo e($adv->distance); ?> <br><?php echo e($adv->duration_map); ?></td>
 							<td><?php echo e($adv->party_name); ?></td>
 							<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals($adv->advance_pay)); ?></td>
+							<td><?php echo e($adv->ride_status == 'Upcoming' ? 'Pending' : $adv->ride_status); ?></td>
 						</tr>
 					<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 					</tbody>
@@ -125,6 +127,7 @@
 							<th>Distance Duration</th>
 							<th>Party</th>
                             <th><?php echo e(Hyvikk::get('currency')); ?> Advance</th>
+							<th>Booking Status</th>
 						</tr>
 					</tfoot>
 				</table>

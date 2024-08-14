@@ -1067,9 +1067,15 @@
                 </a>
               </li> --}}
               <li class="nav-item">
-                <a href="{{ route('parts.index') }}" class="nav-link @if(Request::is('admin/parts*') && !(Request::is('admin/parts-category*')) && !Request::is('admin/parts/create') && !Request::is('admin/parts-invoice*')) active @endif">
+                <a href="{{ route('parts.index') }}" class="nav-link @if(Request::is('admin/parts*') && !(Request::is('admin/parts-category*')) && !Request::is('admin/parts/create') && !Request::is('admin/parts-invoice*') && !Request::is('admin/parts-sell*')) active @endif"> 
                   <i class="fa fa-gears nav-icon"></i>
                   <p>@lang('menu.manageParts')</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('parts-sell.index') }}" class="nav-link @if(Request::is('admin/parts-sell*')) active @endif">
+                  <i class="fa fa-gears nav-icon"></i>
+                  <p>@lang('menu.partSell')</p>
                 </a>
               </li>
               <li class="nav-item">

@@ -48,6 +48,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('delete-reminders', 'ServiceReminderController@bulk_delete');
         Route::post('delete-service-items', 'ServiceItemsController@bulk_delete');
         Route::post('delete-parts', 'PartsController@bulk_delete');
+        Route::post('delete-part', 'PartSellController@bulk_delete');
         Route::post('delete-work-orders', 'WorkOrdersController@bulk_delete');
         Route::post('delete-parts-category', 'PartsCategoryController@bulk_delete');
         Route::post('delete-users', 'CustomersController@bulk_delete');
@@ -196,7 +197,12 @@ Route::namespace('Admin')->group(function () {
         Route::post('/parts/getparts_form', 'PartsController@get_parts_form')->name('parts.get_parts_form')->middleware('userpermission:14');
         Route::get('/parts/view_event/{id}', 'PartsController@view_event')->middleware('userpermission:14');
         Route::post('/parts/parts_gstcalculate', 'PartsController@parts_gstcalculate')->name('fuel.parts_gstcalculate')->middleware('userpermission:3');
-
+        // Route::resource('/parts-sell', 'PartSellController')->middleware('userpermission:14');
+        Route::resource('/parts-sell', 'PartSellController')->except(['show'])->middleware('userpermission:14');
+        Route::get('parts-sell/{id}/edit', 'PartSellController@edit')->name('parts-sell.edit');
+        // Route::get('parts-sell/print-all', 'PartSellController@printAll')->name('parts-sell.print-all')->middleware('userpermission:14');
+        Route::get('parts-sell/get-all-data', 'PartSellController@getAllData')->name('parts-sell.get-all-data')->middleware('userpermission:14');
+        // Route::get('admin/parts-sell/get-all-data', [PartsSellController::class, 'getAllData'])->name('parts-sell.get-all-data');
         //debi start
 
         Route::get('/reports/view_fuel_details/{id}', 'ReportsController@view_fuel_details')->middleware('userpermission:5');
@@ -364,6 +370,7 @@ Route::namespace('Admin')->group(function () {
         Route::post("reports/salary-report", "ReportsController@salaryReport_post")->name("reports.salary-report")->middleware('userpermission:4');
         Route::post("print-salary-report", "ReportsController@salaryReport_print")->middleware('userpermission:4');
         Route::post("export-salary-report", "ReportsController@exportReport_print")->middleware('userpermission:4');
+        Route::post("export-salary-processing", "ReportsController@salaryProcessing_export")->middleware('userpermission:4');
 
         Route::get("reports/vehicle-advance/vehicle-head-advance-report/{id}", "ReportsController@vehicleHeadAdvance")->name("reports.vehicle-head-advance-report")->middleware('userpermission:4');
         Route::post("print-vehicle-head-advance-report", "ReportsController@vehicleHeadAdvance_print")->middleware('userpermission:4');

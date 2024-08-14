@@ -1,4 +1,4 @@
-<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')?>
 
 <?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -70,11 +70,20 @@
 
             </div>
           </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <?php echo Form::label('payment_type', "Type", ['class' => 'form-label']); ?>
+
+              <?php echo Form::select('payment_type', ['bank' => 'Bank', 'cash' => 'Cash'], $request['payment_type'] ?? null, ['class' => 'form-control fullsize', 'id' => 'payment_type', 'placeholder' => 'All']); ?>
+
+            </div>
+          </div>
         </div>
         <div class="row newrow">
           <div class="col-md-12">
             <button type="submit" class="btn btn-info gen_report" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
             <button type="submit" formaction="<?php echo e(url('admin/print-salary-processing')); ?>" class="btn btn-danger print_report" formtarget="_blank"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>
+            <button type="submit" formaction="<?php echo e(url('admin/export-salary-processing')); ?>" class="btn btn-success export_excel"><i class="fa fa-file-excel-o"></i> Export to Excel</button>
           </div>
         </div>
           <?php echo Form::close(); ?>
@@ -106,6 +115,13 @@
           </thead>
           <tbody>
             <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
+            <?php
+              $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+              $showRow = !$request['payment_type'] || 
+                        ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                        ($request['payment_type'] == 'cash' && empty($bankInfo));
+            ?>
+            <?php if($showRow): ?>
             <tr>
               <td><?php echo e($k+1); ?></td>
               <td>
@@ -118,31 +134,31 @@
                 <?php endif; ?>
               </td>
               <td>
-                <?php if($row->is_payroll): ?>
-                  <?php echo e($row->driver->bank); ?>
+                <?php if(!empty($bankInfo)): ?>
+                  <?php echo e($bankInfo); ?>
 
                 <?php else: ?>
-                  <?php echo e($row->bank); ?>
-
+                  Cash
                 <?php endif; ?>
               </td>
               <td>
                 <?php if($row->is_payroll): ?>
-                  <?php echo e($row->driver->account_no); ?>
+                  <?php echo e($row->driver->account_no ?? 'N/A'); ?>
 
                 <?php else: ?>
-                  <?php echo e($row->account_no); ?>
+                  <?php echo e($row->account_no ?? 'N/A'); ?>
 
                 <?php endif; ?>
               </td>
               <td>
-				<?php echo e(bcdiv($row->payable_salary,1,2)); ?>
+                <?php echo e(bcdiv($row->payable_salary,1,2)); ?>
 
-				<?php if($row->is_payroll): ?>
-				<span title="Paid" class="check"><i class="fa fa-check"></i></span>
-				<?php endif; ?>
-			  </td>
+                <?php if($row->is_payroll): ?>
+                <span title="Paid" class="check"><i class="fa fa-check"></i></span>
+                <?php endif; ?>
+              </td>
             </tr>
+            <?php endif; ?>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
           </tbody>
            <tfoot>
@@ -156,10 +172,20 @@
           </tfoot> 
         </table>
         <br>
+          <?php
+          $totalPayableSalary = $salaries->filter(function($row) use ($request) {
+            $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+            return !$request['payment_type'] || 
+                  ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                  ($request['payment_type'] == 'cash' && empty($bankInfo));
+          })->sum('payable_salary');
+        ?>
+
         <table class="table">
-          <tr> <th style="float:right">Total Payable Salary : <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('payable_salary'),1,2)); ?></th>
+          <tr>
+            <th style="float:right">Total Payable Salary : <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($totalPayableSalary,1,2)); ?></th>
           </tr>
-      </table>
+        </table>
       </div>
     </div>
   </div>

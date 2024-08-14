@@ -989,9 +989,15 @@
             <ul class="nav nav-treeview">
               
               <li class="nav-item">
-                <a href="<?php echo e(route('parts.index')); ?>" class="nav-link <?php if(Request::is('admin/parts*') && !(Request::is('admin/parts-category*')) && !Request::is('admin/parts/create') && !Request::is('admin/parts-invoice*')): ?> active <?php endif; ?>">
+                <a href="<?php echo e(route('parts.index')); ?>" class="nav-link <?php if(Request::is('admin/parts*') && !(Request::is('admin/parts-category*')) && !Request::is('admin/parts/create') && !Request::is('admin/parts-invoice*') && !Request::is('admin/parts-sell*')): ?> active <?php endif; ?>"> 
                   <i class="fa fa-gears nav-icon"></i>
                   <p><?php echo app('translator')->getFromJson('menu.manageParts'); ?></p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?php echo e(route('parts-sell.index')); ?>" class="nav-link <?php if(Request::is('admin/parts-sell*')): ?> active <?php endif; ?>">
+                  <i class="fa fa-gears nav-icon"></i>
+                  <p><?php echo app('translator')->getFromJson('menu.partSell'); ?></p>
                 </a>
               </li>
               <li class="nav-item">

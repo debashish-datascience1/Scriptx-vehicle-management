@@ -261,7 +261,7 @@ class PayrollController extends Controller
             $payable_salary = 0;
             $deduct_amount = 0;
         } else {
-            $perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+            $perday = bcdiv($gross_salary / 30, 1, 2);
             $deduct_amount = bcdiv($absentDays * $perday, 1, 2);
             $payable_salary = $payable_salary - $deduct_amount;
         }
@@ -298,6 +298,7 @@ class PayrollController extends Controller
 
         $index['view'] = view('payroll.expenses', $index)->render();
         // dd($advanceFromBooking->first()->advanceFromBooking);
+        // print_r($index);
         return response()->json($index);
     }
 
