@@ -88,6 +88,7 @@
 							<th>Distance Duration</th>
 							<th>Party</th>
                             <th>{{Hyvikk::get('currency')}} Advance</th>
+							<th>Booking Status</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -103,6 +104,7 @@
 							<td>{{$adv->distance}} <br>{{$adv->duration_map}}</td>
 							<td>{{$adv->party_name}}</td>
 							<td>{{Hyvikk::get('currency')}} {{Helper::properDecimals($adv->advance_pay)}}</td>
+							<td>{{ $adv->ride_status == 'Upcoming' ? 'Pending' : $adv->ride_status }}</td>
 						</tr>
 					@endforeach
 					</tbody>
@@ -118,6 +120,7 @@
 							<th>Distance Duration</th>
 							<th>Party</th>
                             <th>{{Hyvikk::get('currency')}} Advance</th>
+							<th>Booking Status</th>
 						</tr>
 					</tfoot>
 				</table>

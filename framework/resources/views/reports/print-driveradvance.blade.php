@@ -55,12 +55,12 @@
         <div class="col-md-12 text-center">
           <h3>Driver Advance Report</h3>
           @if(!empty($driver_id))
-          <h4>{{$driver_name}}</h4>
+          <h4><strong>{{$driver_name}}</strong></h4>
           @endif
           @if(!empty($vehicleData))
           <h5>{{$vehicleData['make']}}-{{$vehicleData['model']}}-{{$vehicleData['license_plate']}}</h4>
           @endif
-          <small>{{$from_date}} - {{$to_date}}</small>
+          <small><h4><strong>{{$from_date}} - {{$to_date}}</strong></h4></small>
         </div>
       </div>
       <div class="row">
@@ -77,6 +77,7 @@
                 <th>Distance Duration</th>
                 <th>Party</th>
                 <th style="width: 12%">{{Hyvikk::get('currency')}} Advance</th>
+                <th>Booking Status</th>
             </thead>
 
             <tbody>
@@ -92,7 +93,8 @@
                     <td>{{$adv->distance}} <br>{{$adv->duration_map}}</td>
                     <td>{{$adv->party_name}}</td>
                     <td nowrap>{{Hyvikk::get('currency')}} {{bcdiv($adv->advance_pay,1,2)}}</td>
-                </tr>
+                    <td>{{ $adv->ride_status == 'Upcoming' ? 'Pending' : $adv->ride_status }}</td>
+                  </tr>
             @endforeach
             <tr>
               <td colspan="6"></td>

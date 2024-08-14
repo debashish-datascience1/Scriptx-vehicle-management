@@ -78,6 +78,7 @@
               <th>Date</th>
               <th><span class="fa fa-inr"></span> Salary</th>
               <th><span class="fa fa-inr"></span> Amount</th>
+              <th> Remarks </th>
             </tr>
           </thead>
           <tbody>
@@ -89,6 +90,7 @@
               <td>{{Helper::getCanonicalDate($row->date,'default')}}</td>
               <td>{{Hyvikk::get('currency')}} {{bcdiv($row->driver->salary,1,2)}}</td>
               <td>{{Hyvikk::get('currency')}} {{bcdiv($row->amount,1,2)}}</td>
+              <td>{{$row->remarks}}</td>
             </tr>
             @endforeach
           </tbody>
@@ -100,6 +102,7 @@
               <th>Date</th>
               <th><span class="fa fa-inr"></span> Salary</th>
               <th><span class="fa fa-inr"></span> Amount</th>
+              <th> Remarks </th>
             </tr>
           </tfoot>
         </table>

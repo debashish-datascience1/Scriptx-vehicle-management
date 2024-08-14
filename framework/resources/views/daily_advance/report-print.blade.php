@@ -67,6 +67,7 @@
               <th>Date</th>
               <th><span class="fa fa-inr"></span> Salary</th>
               <th><span class="fa fa-inr"></span> Amount</th>
+              <th> Remarks </th>
             </thead>
 
             <tbody>
@@ -78,6 +79,7 @@
                         <td>{{Helper::getCanonicalDate($row->date,'default')}}</td>
                         <td>{{Hyvikk::get('currency')}} {{$row->driver->salary}}</td>
                         <td>{{Hyvikk::get('currency')}} {{number_format(round($row->amount),2)}}</td>
+                        <td>{{$row->remarks}}</td>
                     </tr>
                 @endforeach
                 <tr>

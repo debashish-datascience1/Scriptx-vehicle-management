@@ -133,38 +133,61 @@
           </div>
         </div>
         <div class="parts-div">
-          @if (!empty($data->parts))
-            @foreach ($data->parts as $key=>$item)
-            <div class="fullPartsRow">
+        @if (!empty($data->parts))
+        @foreach ($data->parts as $key=>$item)
+          <div class="fullPartsRow" data-stock='{{ $partsWithStock }}'>
+          <!-- <p>Debug Info:</p>
+              <ul>
+                  <li>Part ID: {{ $item->part_id }}</li>
+                  <li>Quantity: {{ $item->qty }}</li>
+                  <li>Unit Cost: {{ $item->price }}</li>
+                  <li>Is Own: {{ $item->is_own }}</li>
+                  <li>Tyre Used: {{ $item->tyre_used }}</li>
+                  <li>Non-stock Tyre Numbers: {{ $item->non_stock_tyre_numbers }}</li>
+              </ul> -->
               <div class="row parts-row">
                   <div class="col-md-3">
                       <div class="form-group">
                           {!! Form::label('parts_id',__('fleet.selectPart'), ['class' => 'form-label']) !!}
-                          {!! Form::select('parts_id[]',$options,$item->part_id,['class'=>'form-control parts_id','id'=>'parts_id','placeholder'=>'Select Part','required']) !!}
+                          {!! Form::select('parts_id[]', $options, $item->part_id, ['class'=>'form-control parts_id','id'=>'parts_id','placeholder'=>'Select Part','required']) !!}
                       </div>
                   </div>
-                  <div class="col-md-1">
+                  <div class="col-md-2">
                       <div class="form-group">
                           {!! Form::label('is_own',"Own Stock ?", ['class' => 'form-label']) !!}
-                          {!! Form::select('is_own[]',[2=>'No',1=>'Yes'],$item->is_own,['class'=>'form-control is_own','id'=>'is_own','required']) !!}
+                          {!! Form::select('is_own[]',[2=>'No',1=>'Yes'], $item->is_own, ['class'=>'form-control is_own','id'=>'is_own','required']) !!}
                       </div>
                   </div>
                   <div class="col-md-1">
                       <div class="form-group">
                           {!! Form::label('qty',"Quantity", ['class' => 'form-label']) !!}
-                          {!! Form::text('qty[]',$item->qty,['class'=>'form-control qty','id'=>'qty','placeholder'=>'Pieces','required','onkeypress'=>'return isNumberOnly(event)']) !!}
+                          {!! Form::text('qty[]', $item->qty, ['class'=>'form-control qty','id'=>'qty','placeholder'=>'Pieces','required','onkeypress'=>'return isNumberOnly(event)']) !!}
                       </div>
                   </div>
                   <div class="col-md-2">
                       <div class="form-group">
+                          {!! Form::label('tyre_numbers', 'Tyre Numbers', ['class' => 'form-label']) !!}
+                          {!! Form::select('tyre_numbers[]', [], $item->tyre_used, ['class' => 'form-control tyre_numbers', 'id' => 'tyre_numbers','multiple' => 'multiple', 'placeholder' => 'Select Tyre Number', 'data-selected' => $item->tyre_used]) !!}
+                          <input type="hidden" name="tyre_numbers_grouped[]" class="tyre_numbers_grouped">
+                      </div>
+                  </div>
+                  <div class="col-md-2">
+                      <div class="form-group">
+                          {!! Form::label('manual_tyre_numbers', 'Enter Tyre Numbers', ['class' => 'form-label']) !!}
+                          {!! Form::text('manual_tyre_numbers[]', $item->is_own == 2 ? $item->non_stock_tyre_numbers : null, ['class' => 'form-control manual_tyre_numbers', 'id' => 'manual_tyre_numbers', 'placeholder' => 'Enter comma-separated numbers']) !!}
+                          <input type="hidden" name="manual_tyre_numbers_grouped[]" class="manual_tyre_numbers_grouped">
+                        </div>
+                  </div>
+                  <div class="col-md-2">
+                      <div class="form-group">
                           {!! Form::label('unit_cost',__('fleet.unit_cost'), ['class' => 'form-label']) !!}
-                          {!! Form::text('unit_cost[]',$item->price,['class'=>'form-control unit_cost','id'=>'unit_cost','placeholder'=>'Cost Per Unit','required','onkeypress'=>'return isNumber(event,this)']) !!}
+                          {!! Form::text('unit_cost[]', $item->price, ['class'=>'form-control unit_cost','id'=>'unit_cost','placeholder'=>'Cost Per Unit','required','onkeypress'=>'return isNumber(event,this)']) !!}
                       </div>
                   </div>
                   <div class="col-md-3">
                       <div class="form-group">
                           {!! Form::label('total_cost',"Amount", ['class' => 'form-label']) !!}
-                          {!! Form::text('total_cost[]',$item->total,['class'=>'form-control total_cost','id'=>'total_cost','placeholder'=>'Total Amount','disabled']) !!}
+                          {!! Form::text('total_cost[]', $item->total, ['class'=>'form-control total_cost','id'=>'total_cost','placeholder'=>'Total Amount','disabled']) !!}
                       </div>
                   </div>
                   @if($key==0)
@@ -189,38 +212,38 @@
                   <div class="col-md-2">
                       <div class="form-group">
                           {!! Form::label('cgst',__('fleet.cgst')." %", ['class' => 'form-label']) !!}
-                          {!! Form::text('cgst[]',$item->cgst,['class'=>'form-control cgst','id'=>'cgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',$item->is_own==2 ? 'required' : 'readonly']) !!}
+                          {!! Form::text('cgst[]', $item->cgst, ['class'=>'form-control cgst','id'=>'cgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',$item->is_own==2 ? 'required' : 'readonly']) !!}
                       </div>
                   </div>
                   <div class="col-md-2">
                       <div class="form-group">
                           {!! Form::label('cgst_amt',__('fleet.cgst_amt'), ['class' => 'form-label']) !!}
-                          {!! Form::text('cgst_amt[]',$item->cgst_amt,['class'=>'form-control cgst_amt','id'=>'cgst_amt','readonly']) !!}
+                          {!! Form::text('cgst_amt[]', $item->cgst_amt, ['class'=>'form-control cgst_amt','id'=>'cgst_amt','readonly']) !!}
                       </div>
                   </div>
                   <div class="col-md-2">
                       <div class="form-group">
                           {!! Form::label('sgst',__('fleet.sgst')." %", ['class' => 'form-label']) !!}
-                          {!! Form::text('sgst[]',$item->sgst,['class'=>'form-control sgst','id'=>'sgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',$item->is_own==2 ? 'required' : 'readonly']) !!}
+                          {!! Form::text('sgst[]', $item->sgst, ['class'=>'form-control sgst','id'=>'sgst','placeholder'=>'Enter %','onkeypress'=>'return isNumber(event,this)',$item->is_own==2 ? 'required' : 'readonly']) !!}
                       </div>
                   </div>
                   <div class="col-md-2">
                       <div class="form-group">
                           {!! Form::label('sgst_amt',__('fleet.sgst_amt'), ['class' => 'form-label']) !!}
-                          {!! Form::text('sgst_amt[]',$item->sgst_amt,['class'=>'form-control sgst_amt','id'=>'sgst_amt','readonly']) !!}
+                          {!! Form::text('sgst_amt[]', $item->sgst_amt, ['class'=>'form-control sgst_amt','id'=>'sgst_amt','readonly']) !!}
                       </div>
                   </div>
                   <div class="col-md-2">
                       <div class="form-group">
                           {!! Form::label('after_gst',"Amount (After GST)", ['class' => 'form-label']) !!}
-                          {!! Form::text('after_gst[]',$item->grand_total,['class'=>'form-control after_gst','id'=>'after_gst','readonly']) !!}
+                          {!! Form::text('after_gst[]', $item->grand_total, ['class'=>'form-control after_gst','id'=>'after_gst','readonly']) !!}
                       </div>
                   </div>
               </div>
               <hr>
-            </div>
-            @endforeach
-          @endif
+          </div>
+          @endforeach
+        @endif
         </div>
         <hr>
         <div class="row">
@@ -491,8 +514,6 @@ $(document).ready(function() {
       })
     }
   })
-
-
   $("#is_gst").change(function(){
     var is_gst = $("#is_gst").val();
     var cgst = $("#cgst")
@@ -510,78 +531,293 @@ $(document).ready(function() {
       $("#total_amount").val('');
     }
   })
+$(document).ready(function() {
+  $('.fullPartsRow').each(function() {
+        if (!$(this).data('initialized')) {
+            initializePartRow($(this));
+            $(this).data('initialized', true);
+        }
+    });
+    function initializePartRow(row) {
+        var stockData = JSON.parse(row.attr('data-stock'));
+        var tyreNumbersSelect = row.find('.tyre_numbers');
+        var selectedTyreNumber = tyreNumbersSelect.data('selected');
 
-  // $("#price").keyup(function(){
-  //   console.log($(this).val())
-  //   var price = $(this).val();
-  //   $("#total_amount").val(parseFloat(price).toFixed(2));
-  // })
-  // $(document).on('keyup','#price,#cgst,#sgst',function(){
-  //   var price = $("#price").val();
-  //   var cgst = $("#cgst").val();
-  //   // var cgst_amt = $("#cgst_amt").val();
-  //   var sgst = $("#sgst").val();
-  //   // var sgst_amt = $("#sgst_amt").val();
+        var existingQty = row.find('.qty').val();
+        var existingUnitCost = row.find('.unit_cost').val();
+        var existingManualTyreNumbers = row.find('.manual_tyre_numbers').val();
+
+        function populateTyreNumbers(partId, tyreNumbersSelect) {
+            if (partId && partId !== 'add_new') {
+                $.ajax({
+                    url: '{{ route("get.edit.tyre.numbers") }}',
+                    type: 'GET',
+                    data: { part_id: partId },
+                    success: function(data) {
+                        tyreNumbersSelect.empty();
+                        tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+                        
+                        var selectedTyreNumbers = tyreNumbersSelect.data('selected').toString().split(',');
+                        
+                        $.each(data, function(key, value) {
+                            var selected = (selectedTyreNumbers.indexOf(value.toString()) !== -1) ? 'selected' : '';
+                            tyreNumbersSelect.append('<option value="' + value + '" ' + selected + '>' + value + '</option>');
+                        });
+                        updateGroupedTyreNumbers(tyreNumbersSelect.closest('.fullPartsRow')); // Add this line
+
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                    }
+                });
+            } else {
+                tyreNumbersSelect.empty();
+                tyreNumbersSelect.append('<option value="">Select Tyre Number</option>');
+                updateGroupedTyreNumbers(tyreNumbersSelect.closest('.fullPartsRow')); // Add this line
+
+            }
+        }
+          function validateTyreNumbers(row) {
+              var isOwn = row.find('.is_own').val();
+              var qty = parseInt(row.find('.qty').val()) || 0;
+              var manualTyreNumbers = row.find('.manual_tyre_numbers').val().trim();
+              var isTyre = row.data('is-tyre');
+
+              updateGroupedTyreNumbers(row); 
+
+              if (isTyre && isOwn == '2') { // No for Own Stock and is a tyre
+                  var tyreNumbersCount = manualTyreNumbers ? manualTyreNumbers.split(',').filter(n => n.trim() !== '').length : 0;
+                  return tyreNumbersCount === qty;
+              }
+              return true;
+          }
+
+        function updateValidationUI(row) {
+            var isValid = validateTyreNumbers(row);
+            var qtyInput = row.find('.qty');
+            var manualTyreNumbers = row.find('.manual_tyre_numbers');
+
+            if (!isValid) {
+                qtyInput.addClass('is-invalid');
+                manualTyreNumbers.addClass('is-invalid');
+            } else {
+                qtyInput.removeClass('is-invalid');
+                manualTyreNumbers.removeClass('is-invalid');
+            }
+        }
+
+        function updatePartDetails(row) {
+            var partId = row.find('.parts_id').val();
+            var tyreNumbersSelect = row.find('.tyre_numbers');
+            var manualTyreNumbers = row.find('.manual_tyre_numbers');
+            
+            row.find('.unit_cost, .qty, .total_cost').val('');
+            manualTyreNumbers.val('');
+            tyreNumbersSelect.empty();
     
-  //   var sendData = {_token:"{{csrf_token()}}",price:price,cgst:cgst,sgst:sgst};
-  //   $.post("{{route('work_order.wo_gstcalculate')}}",sendData).done(function(data){
-  //     // console.log(data)
-  //     console.table(data)
-  //     // if(!isNaN(data.total) && data.total!=0){
-  //     //   $(".smallfuel").show()
-  //     //   $(".fueltot").html(data.total)
-  //     // }else{
-  //     //   $(".smallfuel").hide()
-  //     //   $(".fueltot").html('')
-  //     // }
+            if (partId && partId !== 'add_new') {
+                $.ajax({
+                    url: '{{ route("get.part.category") }}',
+                    type: 'GET',
+                    data: { part_id: partId },
+                    success: function(categoryData) {
+                        row.data('is-tyre', categoryData.is_tyre);
+                        
+                        updateQuantityStatus(row);
+                        
+                        if (categoryData.is_tyre) {
+                            populateTyreNumbers(partId, tyreNumbersSelect);
+                        }
+                        tyreNumbersSelect.off('change').on('change', function() {
+                          updateGroupedTyreNumbers(row);
+                          validateTyreNumbers(row);
+                      });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        row.data('is-tyre', false);
+                        updateQuantityStatus(row);
+                    }
+                });
+            } else {
+                row.data('is-tyre', false);
+                updateQuantityStatus(row);
+            }
+        }
 
-  //     if(!isNaN(data.cgstval) && data.cgstval!=0){
-  //       $("#cgst_amt").val(data.cgstval)
-  //     }else{
-  //       $("#cgst_amt").val('')
-  //     }
+        function updateGroupedTyreNumbers(row) {
+            var selectedTyreNumbers = row.find('.tyre_numbers').val() || [];
+            var groupedTyreNumbers = selectedTyreNumbers.join(',');
+            row.find('.tyre_numbers_grouped').val(groupedTyreNumbers);
 
-  //     if(!isNaN(data.sgstval) && data.sgstval!=0){
-  //       $("#sgst_amt").val(data.sgstval)
-  //     }else{
-  //       $("#sgst_amt").val('')
-  //     }
+            var manualTyreNumbers = row.find('.manual_tyre_numbers').val();
+            row.find('.manual_tyre_numbers_grouped').val(manualTyreNumbers);
+        }
 
-  //     if(!isNaN(data.grandtotal) && data.grandtotal!=0){
-  //       $("#total_amount").val(data.grandtotal)
-  //     }else{
-  //       $("#total_amount").val('')
-  //     }
+        function updateQuantityStatus(row) {
+            var partId = row.find('.parts_id').val();
+            var isOwn = row.find('.is_own').val();
+            var qtyInput = row.find('.qty');
+            var unitCostInput = row.find('.unit_cost');
+            var totalCostInput = row.find('.total_cost');
+            var gstRow = row.next('.gst-row');
+            var tyreNumbersSelect = row.find('.tyre_numbers');
+            var manualTyreNumbers = row.find('.manual_tyre_numbers');
+            var isTyre = row.data('is-tyre');
+            
+            if (partId && partId !== 'add_new') {
+              var stock = stockData[partId] !== undefined ? parseInt(stockData[partId]) : 0;
+              
+              if (isTyre) {
+                  if (isOwn == '1') { // Yes for Own Stock
+                      if (stock <= 0) {
+                          qtyInput.prop('disabled', true);
+                          tyreNumbersSelect.prop('disabled', true);
+                      } else {
+                          qtyInput.prop('disabled', false).attr('data-max-stock', stock);
+                          tyreNumbersSelect.prop('disabled', false);
+                      }
+                      unitCostInput.prop('disabled', true);
+                      totalCostInput.prop('disabled', true);
+                      gstRow.find('input').prop('disabled', true);
+                      manualTyreNumbers.prop('disabled', true);
+                  } else { // No for Own Stock
+                      qtyInput.prop('disabled', false).removeAttr('data-max-stock');
+                      unitCostInput.prop('disabled', false);
+                      totalCostInput.prop('disabled', true);
+                      gstRow.find('input').prop('disabled', false);
+                      tyreNumbersSelect.prop('disabled', true);
+                      manualTyreNumbers.prop('disabled', false);
+                  }
+              } else {
+                  // Not a tyre part
+                  if (isOwn == '1') { // Yes for Own Stock
+                      if (stock <= 0) {
+                          qtyInput.prop('disabled', true);
+                      } else {
+                          qtyInput.prop('disabled', false).attr('data-max-stock', stock);
+                      }
+                      unitCostInput.prop('disabled', true);
+                      totalCostInput.prop('disabled', true);
+                      gstRow.find('input').prop('disabled', true);
+                  } else { // No for Own Stock
+                      qtyInput.prop('disabled', false).removeAttr('data-max-stock');
+                      unitCostInput.prop('disabled', false);
+                      totalCostInput.prop('disabled', true);
+                      gstRow.find('input').prop('disabled', false);
+                  }
+                  tyreNumbersSelect.prop('disabled', true);
+                  manualTyreNumbers.prop('disabled', true);
+              }
+          } else {
+              qtyInput.prop('disabled', false).removeAttr('data-max-stock');
+              unitCostInput.prop('disabled', false);
+              totalCostInput.prop('disabled', true);
+              gstRow.find('input').prop('disabled', false);
+              tyreNumbersSelect.prop('disabled', true);
+              manualTyreNumbers.prop('disabled', true);
+          }
 
+          calculateAmount(row);
+        }
+
+        function calculateAmount(row) {
+            var isOwn = row.find('.is_own').val();
+            var qty = parseFloat(row.find('.qty').val()) || 0;
+            var unitCost = parseFloat(row.find('.unit_cost').val()) || 0;
+            var totalCost = row.find('.total_cost');
+            var gstRow = row.next('.gst-row');
+
+            if (isOwn == '1') {
+                totalCost.val('0');
+                gstRow.find('input').val('').prop('disabled', true);
+            } else {
+                var amount = qty * unitCost;
+                totalCost.val(amount.toFixed(2));
+
+                var cgst = parseFloat(gstRow.find('.cgst').val()) || 0;
+                var sgst = parseFloat(gstRow.find('.sgst').val()) || 0;
+
+                var cgstAmount = (amount * cgst / 100).toFixed(2);
+                var sgstAmount = (amount * sgst / 100).toFixed(2);
+                var afterGstAmount = (amount + parseFloat(cgstAmount) + parseFloat(sgstAmount)).toFixed(2);
+
+                gstRow.find('.cgst_amt').val(cgstAmount);
+                gstRow.find('.sgst_amt').val(sgstAmount);
+                gstRow.find('.after_gst').val(afterGstAmount);
+            }
+            updateValidationUI(row);
+        }
+
+        row.find('.parts_id').on('change', function() {
+            updatePartDetails(row);
+        });
+
+        row.find('.is_own').on('change', function() {
+            var isOwn = $(this).val();
+            if (isOwn == '1') {  // If changed to "Yes"
+                row.find('.cgst, .cgst_amt, .sgst, .sgst_amt, .after_gst').val('');
+            }
+            updateQuantityStatus(row);
+        });
+
+        row.find('.qty, .unit_cost, .cgst, .sgst, .manual_tyre_numbers').on('input', function() {
+            calculateAmount(row);
+        });
+
+        row.find('.tyre_numbers').on('change', function() {
+            updateGroupedTyreNumbers(row);
+        });
+
+        updatePartDetails(row);
+        if (existingQty) row.find('.qty').val(existingQty);
+        if (existingUnitCost) row.find('.unit_cost').val(existingUnitCost);
+        if (existingManualTyreNumbers) row.find('.manual_tyre_numbers').val(existingManualTyreNumbers);
         
-  //   })
-  // })
+        // Recalculate amount after setting existing values
+        calculateAmount(row);
+        updateGroupedTyreNumbers(row); 
+    }
 
-  //Flat green color scheme for iCheck
-  // $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
-  //   checkboxClass: 'icheckbox_flat-green',
-  //   radioClass   : 'iradio_flat-green'
-  // });
+    $('.fullPartsRow').each(function() {
+        initializePartRow($(this));
+    });
 
-  // $('.attach').on('click',function(){
-  //   var field = $('#select_part').val();
-  //   if(field == "" || field == null){
-  //     alert('Select Part');
-  //   }
-  //   else{
-  //     var qty=$('#select_part option:selected').attr('qty');
-  //     var title=$('#select_part option:selected').attr('title');
-  //     var price=$('#select_part option:selected').attr('price');
-  //     // alert($('#select_part option:selected').attr('title'));
-  //     // alert($('#select_part option:selected').attr('qty'));
-  //     $(".parts").append('<div class="row col-md-12"><div class="col-md-4">  <div class="form-group"> <label class="form-label">@lang('fleet.selectPart')</label> <select  class="form-control" disabled>  <option value="'+field+'" selected >'+title+'</option> </select> </div></div> <div class="col-md-2">  <div class="form-group"> <label class="form-label">@lang('fleet.qty')</label> <input type="number" name="parts['+field+']" min="1" value="1" class="form-control calc" max='+qty+' required> </div></div><div class="col-md-2">  <div class="form-group"> <label class="form-label">@lang('fleet.unit_cost')</label> <input type="number" value="'+price+'" class="form-control" disabled> </div></div><div class="col-md-2">  <div class="form-group"> <label class="form-label">@lang('fleet.total_cost')</label> <input type="number" value="'+price+'" class="form-control total_cost" disabled id="'+field+'"> </div></div> <div class="col-md-2"> <div class="form-group" style="margin-top: 30px"><button class="btn btn-danger" type="button" onclick="this.parentElement.parentElement.parentElement.remove();">Remove</button> </div></div></div>');
-  //     $('#select_part').val('').change();
-  //     $('.calc').on('change',function(){
-  //       // alert($(this).val()*price);
-  //       $('#'+field).val($(this).val()*price);
-  //     });
-  //   }
-  // });
+    $('body').on('click', '.addmore', function() {
+        var newRow = $(this).closest('.fullPartsRow').clone(true);
+        newRow.find('input, select').val('');
+        $(this).closest('.fullPartsRow').after(newRow);
+        initializePartRow(newRow);
+    });
+
+    $('form').on('submit', function(e) {
+        var isValid = true;
+        $('.fullPartsRow').each(function() {
+            var row = $(this);
+            var isOwn = row.find('.is_own').val();
+            var qty = parseInt(row.find('.qty').val());
+            var maxStock = parseInt(row.find('.qty').attr('data-max-stock'));
+            
+            if (isOwn == '1' && !isNaN(maxStock) && qty > maxStock) {
+                alert('Input quantity (' + qty + ') is greater than the available stock (' + maxStock + ') for one or more parts.');
+                isValid = false;
+                return false;
+            }
+            
+            if (!validateTyreNumbers(row)) {
+                alert('The number of tyre numbers must match the quantity for non-own stock parts.');
+                updateValidationUI(row);
+                isValid = false;
+                return false;
+            }
+            updateGroupedTyreNumbers(row);
+        });
+    
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+});
 });
 </script>
 @endsection

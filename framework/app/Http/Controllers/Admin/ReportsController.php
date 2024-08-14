@@ -9,6 +9,7 @@ use App\Model\Bookings;
 use App\Model\ExpCats;
 use App\Model\Expense;
 use App\Model\PartsModel;
+use App\Model\PartsCategoryModel;
 use App\Model\FuelModel;
 use App\Model\IncCats;
 use App\Model\IncomeModel;
@@ -1028,8 +1029,22 @@ class ReportsController extends Controller
 		$data['date1'] = null;
 		$data['date2'] = null;
 		$data['request'] = null;
+		$data['options'] = Helper::getAllParts();
+
 
 		return view("reports.booking", $data);
+	}
+
+	public function stock(Request $request)
+	{
+		$allParts = Helper::getAllParts();
+		$data['options'] = ['all' => 'All'] + $allParts; 
+		$data['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+		$data['date1'] = $request->date1 ?? null;
+		$data['date2'] = $request->date2 ?? null;
+		$data['request'] = $request->all();
+
+		return view("reports.stock", $data);
 	}
 
 	public function booking_post(Request $request)
@@ -1100,6 +1115,79 @@ class ReportsController extends Controller
 // 		dd($index);
 		return view("reports.booking", $index);
 	}
+	
+	public function stock_post(Request $request)
+	{
+		$parts_ids = $request->parts_id;
+		$category_ids = $request->category_id; // Change variable name to reflect multiple categories
+		$from_date = $request->date1;
+		$to_date = $request->date2;
+
+		$from_date = !empty($from_date) ? Helper::ymd($from_date) : null;
+		$to_date = !empty($to_date) ? Helper::ymd($to_date) : null;
+
+		$query = PartsModel::query();
+
+		// Only join with parts_details if any date is provided
+		if ($from_date || $to_date) {
+			$query->leftJoin('parts_details', 'parts.id', '=', 'parts_details.parts_id')
+				->whereNull('parts_details.deleted_at');
+		}
+
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$query->whereIn('parts.id', $parts_ids);
+		}
+
+		// dd($request->all());
+
+		$category_ids = is_array($request->category_id) ? $request->category_id : [$request->category_id];
+
+		// Handle multiple categories
+		if (!empty($category_ids) && !in_array('all', $category_ids)) {
+			if ($from_date || $to_date) {
+				$query->whereIn('parts_details.parts_category', $category_ids);
+			} else {
+				$query->whereIn('parts.category_id', $category_ids);
+			}
+		}
+
+		// Apply date filter only if at least one date is provided
+		if ($from_date && $to_date) {
+			$query->whereBetween('parts_details.date_of_purchase', [$from_date, $to_date]);
+		} elseif ($from_date) {
+			$query->where('parts_details.date_of_purchase', '>=', $from_date);
+		} elseif ($to_date) {
+			$query->where('parts_details.date_of_purchase', '<=', $to_date);
+		}
+
+		// Select and get parts
+		if ($from_date || $to_date) {
+			$parts = $query->select('parts.*')->distinct()->get();
+		} else {
+			$parts = $query->get();
+		}
+
+		// Fetch tyres used data
+		$tyres_used_query = DB::table('parts_used')
+			->whereNull('deleted_at')
+			->select('part_id', DB::raw('SUM(qty) as total_used'))
+			->groupBy('part_id');
+
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$tyres_used_query->whereIn('part_id', $parts_ids);
+		}
+
+		$tyres_used = $tyres_used_query->get()->keyBy('part_id');
+
+		$index['options'] = ['all' => 'All'] + Helper::getAllParts();
+		$index['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+		$index['parts'] = $parts;
+		$index['tyres_used'] = $tyres_used;
+		$index['request'] = $request->all();
+
+		return view("reports.stock", $index);
+	}
+	
 
 	public function view_booking_details($arr)
 	{
@@ -2019,6 +2107,79 @@ class ReportsController extends Controller
 		// dd($index);
 		return view('reports.print_bookings', $index);
 	}
+	
+	public function print_stock(Request $request)
+	{
+		$parts_ids = $request->parts_id;
+		$category_ids = $request->category_id; // Change variable name to reflect multiple categories
+		$from_date = $request->date1;
+		$to_date = $request->date2;
+
+		$from_date = !empty($from_date) ? Helper::ymd($from_date) : null;
+		$to_date = !empty($to_date) ? Helper::ymd($to_date) : null;
+
+		$query = PartsModel::query();
+
+		// Only join with parts_details if any date is provided
+		if ($from_date || $to_date) {
+			$query->leftJoin('parts_details', 'parts.id', '=', 'parts_details.parts_id')
+				->whereNull('parts_details.deleted_at');
+		}
+
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$query->whereIn('parts.id', $parts_ids);
+		}
+
+		// dd($request->all());
+
+		$category_ids = is_array($request->category_id) ? $request->category_id : [$request->category_id];
+
+		// Handle multiple categories
+		if (!empty($category_ids) && !in_array('all', $category_ids)) {
+			if ($from_date || $to_date) {
+				$query->whereIn('parts_details.parts_category', $category_ids);
+			} else {
+				$query->whereIn('parts.category_id', $category_ids);
+			}
+		}
+
+		// Apply date filter only if at least one date is provided
+		if ($from_date && $to_date) {
+			$query->whereBetween('parts_details.date_of_purchase', [$from_date, $to_date]);
+		} elseif ($from_date) {
+			$query->where('parts_details.date_of_purchase', '>=', $from_date);
+		} elseif ($to_date) {
+			$query->where('parts_details.date_of_purchase', '<=', $to_date);
+		}
+
+		// Select and get parts
+		if ($from_date || $to_date) {
+			$parts = $query->select('parts.*')->distinct()->get();
+		} else {
+			$parts = $query->get();
+		}
+
+		// Fetch tyres used data
+		$tyres_used_query = DB::table('parts_used')
+			->whereNull('deleted_at')
+			->select('part_id', DB::raw('SUM(qty) as total_used'))
+			->groupBy('part_id');
+
+		if (!empty($parts_ids) && !in_array('all', $parts_ids)) {
+			$tyres_used_query->whereIn('part_id', $parts_ids);
+		}
+
+		$tyres_used = $tyres_used_query->get()->keyBy('part_id');
+
+		$index['options'] = ['all' => 'All'] + Helper::getAllParts();
+		$index['categories'] = ['all' => 'All'] + PartsCategoryModel::pluck('name', 'id')->toArray();
+		$index['parts'] = $parts;
+		$index['tyres_used'] = $tyres_used;
+		$index['request'] = $request->all();
+
+		return view("reports.print_stock", $index);
+	}
+	
 
 	public function print_fuel(Request $request)
 	{
@@ -2651,9 +2812,9 @@ class ReportsController extends Controller
 					->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
 			})->whereBetween(DB::raw('DATE(pickup)'), [$start, $end])->with('vehicle');
 		if (!empty($driver_id))
-			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "ASC")->get();
 		else
-			$data['advance_bookings'] = $bookData->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->orderBy("id", "ASC")->get();
 
 
 		// dd($data);
@@ -2673,7 +2834,7 @@ class ReportsController extends Controller
 		$data['result'] = "";
 		$data['dates'] = [$start, $end];
 		$data['request'] = $request->all();
-		// dd($data['advance_bookings']->first());
+		// dd($data);
 		return view('reports.driveradvance', $data);
 	}
 
@@ -2702,9 +2863,9 @@ class ReportsController extends Controller
 					->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
 			})->whereBetween(DB::raw('DATE(pickup)'), [$start, $end])->with('vehicle');
 		if (!empty($driver_id))
-			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->where('driver_id', $driver_id)->orderBy("id", "ASC")->get();
 		else
-			$data['advance_bookings'] = $bookData->orderBy("id", "DESC")->get();
+			$data['advance_bookings'] = $bookData->orderBy("id", "ASC")->get();
 
 
 		// Vehicle selected
@@ -3283,7 +3444,7 @@ class ReportsController extends Controller
 				$payable_salary = 0;
 				$deduct_amount = 0;
 			} else {
-				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$perday = bcdiv($gross_salary / 30, 1, 2);
 				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
 				$payable_salary = $payable_salary - $deduct_amount;
 			}
@@ -3353,7 +3514,7 @@ class ReportsController extends Controller
 	{
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -3402,7 +3563,7 @@ class ReportsController extends Controller
 				$payable_salary = 0;
 				$deduct_amount = 0;
 			} else {
-				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$perday = bcdiv($gross_salary / 30, 1, 2);
 				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
 				$payable_salary = $payable_salary - $deduct_amount;
 			}
@@ -3466,6 +3627,155 @@ class ReportsController extends Controller
 
 		return view('reports.print_salary-report', $data);
 	}
+	public function exportReport_print(Request $request)
+	{
+		$driver_ids = $request->driver_id;
+		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
+		}
+
+		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
+		$year = $request->get('years');
+
+		$search_date = "$year-$month-01";
+		$search_ym = "$year-$month";
+		
+		$arrayList = [];
+		foreach ($driver_ids as $did) {
+			$payroll = Payroll::where('for_date', $search_date)->where('user_id', $did);
+
+			//Working Days
+			$present = Leave::where('driver_id', $did)
+				->where('date', 'LIKE', "%$search_ym%")
+				->where('is_present', 1)->get();
+			$halfLeave = Leave::where('driver_id', $did)
+				->where('date', 'LIKE', "%$search_ym%")
+				->whereIn('is_present', [3, 4])->get();
+
+			$presentDays = $present->count() + ($halfLeave->count() * .5);
+			$totalMonthDays = date('t', strtotime($search_date));
+			$absentDays = $totalMonthDays - $presentDays;
+
+			//Calculating advances
+			$salary_advance = DailyAdvance::where('date', 'LIKE', "%$search_ym%")->where(['driver_id' => $did, 'payroll_check' => null, 'advance_driver_id' => null])->sum('amount');
+			
+			$booking_ids = Bookings::where('driver_id', $did)->where(function ($query) {
+				$query->where('payroll_check', '!=', 1)
+					->orWhereRaw('bookings.payroll_check IS NULL');
+			})->where('pickup', 'LIKE', "%$search_ym%")->pluck('id')->toArray();
+			
+			$bookingAdvance = !empty($booking_ids) ? AdvanceDriver::whereIn('booking_id', $booking_ids)->where('param_id', 7)->sum('value') : 0;
+
+			$userData =  User::where('id', $did)->first();
+			$gross_salary = $userData->salary;
+			$user_vehicle =  !empty($userData->driver_vehicle->vehicle) ? $userData->driver_vehicle->vehicle->license_plate : "-";
+			$payable_salary = $gross_salary - ($salary_advance + $bookingAdvance);
+
+			if ($totalMonthDays == $absentDays && $presentDays == 0) {
+				$payable_salary = 0;
+				$deduct_amount = 0;
+			} else {
+				$perday = bcdiv($gross_salary / 30, 1, 2);
+				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
+				$payable_salary = $payable_salary - $deduct_amount;
+			}
+
+			if ($payroll->exists()) {
+				$paydata = $payroll->first();
+				$paydata->is_payroll = true;
+				$paydata->days_present = $presentDays;
+				$paydata->days_absent = $absentDays;
+				$paydata->bookingAdvance = $bookingAdvance;
+				$paydata->gross_salary = $gross_salary;
+				$paydata->salary_advance = $salary_advance;
+				$paydata->deduct_amount = $deduct_amount;
+				$arrayList[] = $paydata;
+			} else {
+				$primaryID =  rand(1000, 100000);
+				$newArray = [
+					"id" => $primaryID,
+					"user_id" => $did,
+					"driver" =>  User::find($did)->name,
+					"vehicle" =>  $user_vehicle,
+					"salary" => $gross_salary,
+					"date" => $search_date,
+					"for_date" => $search_date,
+					"payable_salary" => $payable_salary,
+					"for_month" => date('m', strtotime($search_date)),
+					"for_year" => date('Y', strtotime($search_date)),
+					"is_payroll" => false,
+					"days_present" => $presentDays,
+					"days_absent" => $absentDays,
+					"bookingAdvance" => $bookingAdvance,
+					"gross_salary" => $gross_salary,
+					"salary_advance" => $salary_advance,
+					"deduct_amount" => $deduct_amount,
+				];
+				$arrayList[] = Helper::toCollection($newArray);
+			}
+		}
+		
+		$finalList = collect($arrayList)->values();
+
+		$dateFor = $request['years'] . '-' . $request['months'] . "-01";
+		$date1 = date("m-Y", strtotime($dateFor));
+		$date2 = date("F-Y", strtotime($dateFor));
+
+		// Generate CSV file
+		$fileName = 'salary_report_' . $date1 . '.csv';
+		$headers = [
+			"Content-type" => "text/csv",
+			"Content-Disposition" => "attachment; filename=$fileName",
+			"Pragma" => "no-cache",
+			"Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+			"Expires" => "0"
+		];
+
+		$columns = [
+			'SL#', 'Name', 'Vehicle', 'Present/Absent', 'Basic Salary',
+			'Booking Adv. Salary', 'Salary Advance', 'Total Advance', 'Absent Deduct', 'Payable Amount'
+		];
+
+		$callback = function() use ($finalList, $columns) {
+			$file = fopen('php://output', 'w');
+			fputcsv($file, $columns);
+
+			foreach ($finalList as $index => $row) {
+				$totalAdvance = bcdiv($row->bookingAdvance, 1, 2) + bcdiv($row->salary_advance, 1, 2);
+				fputcsv($file, [
+					$index + 1,
+					$row->is_payroll ? $row->driver->name : $row->driver,
+					$row->is_payroll ? $row->driver->driver_vehicle->vehicle->license_plate : $row->vehicle,
+					$row->days_present . '/' . $row->days_absent,
+					bcdiv($row->gross_salary, 1, 2),
+					bcdiv($row->bookingAdvance, 1, 2),
+					bcdiv($row->salary_advance, 1, 2),
+					bcdiv($totalAdvance, 1, 2),
+					bcdiv($row->deduct_amount, 1, 2),
+					bcdiv($row->payable_salary, 1, 2),
+				]);
+			}
+
+			// Add total row
+			$totalBookingAdvance = bcdiv($finalList->sum('bookingAdvance'), 1, 2);
+			$totalSalaryAdvance = bcdiv($finalList->sum('salary_advance'), 1, 2);
+			$totalAdvance = bcdiv($totalBookingAdvance + $totalSalaryAdvance, 1, 2);
+			fputcsv($file, [
+				'', '', 'Total Amount(s)', '',
+				bcdiv($finalList->sum('gross_salary'), 1, 2),
+				bcdiv($totalBookingAdvance, 1, 2),
+				bcdiv($totalSalaryAdvance, 1, 2),
+				bcdiv($totalAdvance, 1, 2),
+				bcdiv($finalList->sum('deduct_amount'), 1, 2),
+				bcdiv($finalList->sum('payable_salary'), 1, 2),
+			]);
+
+			fclose($file);
+		};
+
+		return response()->stream($callback, 200, $headers);
+	}
+
 	public function salaryProcessing()
 	{
 		$data['drivers'] = User::getDrivers()->orderBy('name', 'ASC')->pluck('name', 'id');
@@ -3483,7 +3793,7 @@ class ReportsController extends Controller
 		// dd($request->all());
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -3558,6 +3868,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3593,8 +3904,6 @@ class ReportsController extends Controller
 
 		if (!$request->has('driver_id'))	$request->merge(['driver_id' => null]);
 		$data['request'] = $request->all();
-
-
 		// dd($data);
 		// dd(request()->segments(count($request->segments())));
 
@@ -3605,7 +3914,7 @@ class ReportsController extends Controller
 	{
 		$driver_ids = $request->driver_id;
 		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
-			$driver_ids = User::getDrivers()->orderBy('name', 'ASC')->pluck('id');
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
 		}
 
 		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
@@ -3720,6 +4029,150 @@ class ReportsController extends Controller
 
 		return view('reports.print_salary-processing', $data);
 	}
+
+	public function salaryProcessing_export(Request $request)
+	{
+		$driver_ids = $request->driver_id;
+		if ($driver_ids == null || empty($driver_ids) || in_array(null, $driver_ids)) {
+			$driver_ids = User::haveSalary()->getDrivers()->orderBy('name', 'ASC')->pluck('id');
+		}
+
+		$month = $request->get('months') < 10 ? "0" . $request->get('months') : $request->get('months');
+		$year = $request->get('years');
+
+		$search_date = "$year-$month-01";
+		$search_ym = "$year-$month";
+		
+		$arrayList = [];
+		foreach ($driver_ids as $did) {
+			$payroll = Payroll::where('for_date', $search_date)->where('user_id', $did);
+
+			//Working Days
+			$present = Leave::where('driver_id', $did)
+				->where('date', 'LIKE', "%$search_ym%")
+				->where('is_present', 1)->get();
+			$halfLeave = Leave::where('driver_id', $did)
+				->where('date', 'LIKE', "%$search_ym%")
+				->whereIn('is_present', [3, 4])->get();
+
+			$presentDays = $present->count() + ($halfLeave->count() * .5);
+			$totalMonthDays = date('t', strtotime($search_date));
+			$absentDays = $totalMonthDays - $presentDays;
+
+			//Calculating advances
+			$salary_advance = DailyAdvance::where('date', 'LIKE', "%$search_ym%")->where(['driver_id' => $did, 'payroll_check' => null, 'advance_driver_id' => null])->sum('amount');
+			$booking_ids = Bookings::where('driver_id', $did)->where(function ($query) {
+				$query->where('payroll_check', '!=', 1)
+					->orWhereRaw('bookings.payroll_check IS NULL');
+			})->where('pickup', 'LIKE', "%$search_ym%")->pluck('id')->toArray();
+
+			if (!empty($booking_ids)) {
+				$bookingAdvance = AdvanceDriver::whereIn('booking_id', $booking_ids)->where('param_id', 7)->sum('value');
+			} else $bookingAdvance = 0;
+
+			$userData =  User::where('id', $did)->first();
+			$gross_salary = $userData->salary;
+			$user_vehicle =  !empty($userData->driver_vehicle->vehicle) ? $userData->driver_vehicle->vehicle->license_plate : "-";
+			$payable_salary = $gross_salary - ($salary_advance + $bookingAdvance);
+
+			if ($totalMonthDays == $absentDays && $presentDays == 0) {
+				$payable_salary = 0;
+				$deduct_amount = 0;
+			} else {
+				$perday = bcdiv($gross_salary / $totalMonthDays, 1, 2);
+				$deduct_amount = bcdiv($absentDays * $perday, 1, 2);
+				$payable_salary = $payable_salary - $deduct_amount;
+			}
+
+			$bankInfo = $userData->bank;
+			$showRow = !$request->payment_type || 
+					($request->payment_type == 'bank' && !empty($bankInfo)) || 
+					($request->payment_type == 'cash' && empty($bankInfo));
+
+			if ($showRow) {
+				if ($payroll->exists()) {
+					$paydata = $payroll->first();
+					$paydata->is_payroll = true;
+					$paydata->gross_salary = $gross_salary;
+					$arrayList[] = $paydata;
+				} else {
+					$primaryID =  rand(1000, 100000);
+					$newArray = [
+						"id" => $primaryID,
+						"user_id" => $did,
+						"driver" =>  User::find($did)->name,
+						"vehicle" =>  $user_vehicle,
+						"salary" => $gross_salary,
+						"date" => $search_date,
+						"for_date" => $search_date,
+						"payable_salary" => $payable_salary,
+						"for_month" => date('m', strtotime($search_date)),
+						"for_year" => date('Y', strtotime($search_date)),
+						"is_payroll" => false,
+						"gross_salary" => $gross_salary,
+						"bank" => $bankInfo,
+						"account_no" => $userData->account_no,
+					];
+					$arrayList[] = Helper::toCollection($newArray);
+				}
+			}
+		}
+		$finalList = collect($arrayList)->values();
+
+		$fileName = 'salary_processing_report_' . $year . '_' . $month . '.csv';
+		$headers = [
+			"Content-type" => "text/csv",
+			"Content-Disposition" => "attachment; filename=$fileName",
+			"Pragma" => "no-cache",
+			"Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+			"Expires" => "0"
+		];
+
+		$columns = ['SL#', 'Name', 'Bank', 'A/C No.', 'Payable Amount'];
+
+		$callback = function() use ($finalList, $columns, $request) {
+			$file = fopen('php://output', 'w');
+			fputcsv($file, $columns);
+
+			$index = 1;
+			foreach ($finalList as $row) {
+				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+				$showRow = !$request->payment_type || 
+						($request->payment_type == 'bank' && !empty($bankInfo)) || 
+						($request->payment_type == 'cash' && empty($bankInfo));
+
+				if ($showRow) {
+					fputcsv($file, [
+						$index,
+						$row->is_payroll ? $row->driver->name : $row->driver,
+						!empty($bankInfo) ? $bankInfo : 'Cash',
+						$row->is_payroll ? $row->driver->account_no : $row->account_no,
+						bcdiv($row->payable_salary, 1, 2)
+					]);
+					$index++;
+				}
+			}
+
+			// Add total row
+			$totalPayableSalary = $finalList->sum(function ($row) use ($request) {
+				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+				$showRow = !$request->payment_type || 
+						($request->payment_type == 'bank' && !empty($bankInfo)) || 
+						($request->payment_type == 'cash' && empty($bankInfo));
+				return $showRow ? $row->payable_salary : 0;
+			});
+
+			fputcsv($file, [
+				'', 'Total', '', '',
+				bcdiv($totalPayableSalary, 1, 2)
+			]);
+
+			fclose($file);
+		};
+
+		return response()->stream($callback, 200, $headers);
+	}
+
 	public function globalSearch()
 	{
 		$sessionArray = Session::get('globalSearch');
@@ -4274,7 +4727,7 @@ class ReportsController extends Controller
 			$yearArr[$year->date] = $year->date;
 		}
 		$index['years'] = !empty($yearArr) ? $yearArr : [date("Y") => date("Y")];
-		$index['advances'] = $dailyAdvance->orderBy('date', 'DESC')->get();
+		$index['advances'] = $dailyAdvance->orderBy('date', 'ASC')->get();
 		$index['drivers'] = User::whereUserType('D')->orderByName()->pluck('name', 'id');
 		$index['request'] = $request->all();
 
@@ -4311,7 +4764,7 @@ class ReportsController extends Controller
 			$dailyAdvance = DailyAdvance::whereBetween('date', [$from_date, $to_date]);
 
 
-		$index['advances'] = $dailyAdvance->orderBy('date', 'DESC')->get();
+		$index['advances'] = $dailyAdvance->orderBy('date', 'ASC')->get();
 		$index['date'] = collect(['from_date' => $from_date, 'to_date' => $to_date]);
 		return view('daily_advance.report-print', $index);
 	}
@@ -5490,6 +5943,7 @@ class ReportsController extends Controller
 
 	public function workOrderReport_vendor()
 	{
+		$ids = [];
 		$workOrder = WorkOrders::orderBy('vendor_id', 'ASC')->groupBy('vendor_id')->get();
 		foreach ($workOrder as $work) {
 			$ids[] = $work->vendor_id;
@@ -5525,7 +5979,58 @@ class ReportsController extends Controller
 		foreach ($vendor_ids as $work) {
 			$ids[] = $work->vendor_id;
 		}
-		$index['workOrder'] = $workOrder->get();
+		$workOrders = $workOrder->with(['part_fromown', 'parts_fromvendor'])->get();
+
+		$processedData = [];
+	
+		foreach ($workOrders as $order) {
+			$orderData = [
+				'id' => $order->id,
+				'required_by' => $order->required_by,
+				'vendor' => $order->vendor,
+				'vehicle' => $order->vehicle,
+				'is_own' => $order->is_own,
+				'status' => $order->status,
+				'price' => $order->price,
+				'parts' => []
+			];
+	
+			// Process parts from own inventory
+			foreach ($order->part_fromown as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => true
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->tyre_used) {
+					$orderData['parts'][$partName]['tyres'][] = $part->tyre_used;
+				}
+			}
+	
+			// Process parts from vendors
+			foreach ($order->parts_fromvendor as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => false
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->non_stock_tyre_numbers) {
+					$orderData['parts'][$partName]['tyres'][] = $part->non_stock_tyre_numbers;
+				}
+			}
+	
+			$processedData[] = $orderData;
+		}
+	
+		$index['processedData'] = $processedData;
 		$index['vendors'] = Vendor::whereIn('id', $ids)->pluck('name', 'id');
 		$index['status'] = WorkOrders::groupBy('status')->pluck('status', 'status');
 		$index['is_vendor'] = !empty($vendor) ? true : false;
@@ -5556,13 +6061,67 @@ class ReportsController extends Controller
 			$workOrder = WorkOrders::where(['vendor_id' => $vendor, 'status' => $status])->whereBetween('required_by', [$from_date, $to_date]);
 
 
-		// dd($ids);
-		$index['workOrder'] = $workOrder->get();
+		$workOrders = $workOrder->with(['part_fromown', 'parts_fromvendor'])->get();
+
+		$processedData = [];
+		
+		foreach ($workOrders as $order) {
+			$orderData = [
+				'id' => $order->id,
+				'required_by' => $order->required_by,
+				'vendor' => $order->vendor,
+				'vehicle' => $order->vehicle,
+				'description' => $order->description,
+				'status' => $order->status,
+				'price' => $order->price,
+				'parts' => []
+			];
+		
+				// Process parts from own inventory
+			foreach ($order->part_fromown as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => true
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->tyre_used) {
+					$orderData['parts'][$partName]['tyres'][] = $part->tyre_used;
+				}
+			}
+		
+				// Process parts from vendors
+			foreach ($order->parts_fromvendor as $part) {
+				$partName = Helper::getFullPartName($part->part->id);
+				if (!isset($orderData['parts'][$partName])) {
+					$orderData['parts'][$partName] = [
+						'qty' => 0,
+						'tyres' => [],
+						'is_own' => false
+					];
+				}
+				$orderData['parts'][$partName]['qty'] += $part->qty;
+				if ($part->non_stock_tyre_numbers) {
+					$orderData['parts'][$partName]['tyres'][] = $part->non_stock_tyre_numbers;
+				}
+			}
+		
+			$processedData[] = $orderData;
+		}
+		
+		$index['processedData'] = $processedData;
 		$index['is_vendor'] = !empty($vendor) ? true : false;
 		$index['vendorName'] = Vendor::where('id', $vendor)->exists() ? Vendor::where('id', $vendor)->first()->name : "";
 		$index['gtotal'] = $workOrder->sum('price');
 		$index['date'] = collect(['from_date' => $from_date, 'to_date' => $to_date]);
 		$index['result'] = "";
+
+
+		// dd($ids);
+		
 		// dd($index);
 		return view('work_orders.report-print', $index);
 	}

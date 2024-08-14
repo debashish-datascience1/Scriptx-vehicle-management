@@ -9,7 +9,7 @@ class PartsInvoice extends Model {
 	use SoftDeletes;
 	protected $dates = ['deleted_at'];
 	protected $table = 'parts_invoice';
-	protected $fillable = ['user_id','billno','invoice','vendor_id','sub_total','chq_draft_amount','chq_draft_number','chq_draft_date','cash_amount','is_gst','cgst','cgst_amt','sgst','sgst_amt','grand_total',
+	protected $fillable = ['user_id','billno','invoice','vendor_id','sub_total','chq_draft_amount','chq_draft_number','chq_draft_date','cash_amount','is_gst','cgst','cgst_amt','sgst','sgst_amt','grand_total','date_of_purchase','tyre_numbers',
 	];
 
 	function vendor() {

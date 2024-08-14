@@ -46,6 +46,7 @@ return [
 	'transactions' => 'Transactions',
 	'addIncome' => 'Add Income',
 	'addExpense' => 'Add Expense',
+	'partSell' => 'Parts Sell',
 	'partTransaction' => 'Part Transaction',
 	'bookings' => 'Bookings',
 	'newbooking' => 'New Booking',

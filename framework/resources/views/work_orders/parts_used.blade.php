@@ -37,6 +37,7 @@
               <th>@lang('fleet.vehicle')</th>
               <th>@lang('fleet.description')</th>
               <th>@lang('fleet.part')</th>
+              <th>@lang('fleet.tyre_used')</th>
               <th>@lang('fleet.qty')</th>
               <th>@lang('fleet.unit_cost')</th>
               <th>@lang('fleet.part_price')</th>
@@ -55,6 +56,7 @@
                   {{ Helper::getFullPartName($row->part->id) }}
                 @endif
               </td>
+              <td>{{ $row->tyre_used}}</td>
               <td>{{ $row->qty }}</td>
               <td>{{ Hyvikk::get('currency')." ". $row->price }}</td>
               <td>{{Hyvikk::get('currency')." ". $row->total }}</td>
@@ -81,6 +83,7 @@
               <th>@lang('fleet.vehicle')</th>
               <th>@lang('fleet.description')</th>
               <th>@lang('fleet.part')</th>
+              <th>@lang('fleet.tyre_used')</th>
               <th>@lang('fleet.qty')</th>
               <th>@lang('fleet.unit_cost')</th>
               <th>@lang('fleet.part_price')</th>
@@ -103,6 +106,7 @@
                   {{ Helper::getFullPartName($row->part->id) }}
                 @endif
               </td>
+              <td> {{$row->non_stock_tyre_numbers}}</td>
               <td>{{ $row->qty }}</td>
               <td>{{ Hyvikk::get('currency')." ". $row->price }}</td>
               <td>{{Hyvikk::get('currency')." ". $row->total }}</td>

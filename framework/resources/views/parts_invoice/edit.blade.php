@@ -28,6 +28,22 @@
         {!! Form::open(['route' => ['parts-invoice.update',$data->id],'method'=>'PATCH','files'=>true]) !!}
         {!! Form::hidden("user_id",Auth::user()->id) !!}
         {!! Form::hidden("id",$data->id)!!}
+        <div class="row">
+        <div class="col-md-8"></div>
+        <div class="col-md-4">
+              <div class="form-group">
+                {!! Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']) !!}
+                <div class='input-group mb-3 date'>
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">
+                      <span class="fa fa-calendar"></span>
+                    </span>
+                  </div>
+                  {!! Form::text('dateofpurchase',$data->date_of_purchase,['class'=>'form-control dateofpurchase','required']) !!}
+                </div>
+              </div>
+            </div>
+        </div>
         
           <div class="row">
             <div class="col-md-4">
@@ -81,6 +97,12 @@
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
+                    {!! Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']) !!}
+                    {!! Form::text('tyre_number[]', $v->tyre_numbers, ['class' => 'form-control tyre_number', 'placeholder' => 'Enter comma-separated tyre numbers']) !!}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
                     {!! Form::label('total', __('fleet.total'), ['class' => 'form-label']) !!}
                     {!! Form::text('total[]',Helper::properDecimals($v->total),['class' => 'form-control total','onkeypress'=>'return isNumber(event,this)']) !!}
                   </div>
@@ -111,8 +133,13 @@
                     <div class="col-md-4">
                       <div class="form-group">
                         {!! Form::label('stock', __('fleet.quantity'), ['class' => 'form-label']) !!}
-                            {!! Form::text('stock[]', $v->quantity,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']) !!}
-                        
+                        {!! Form::text('stock[]', $v->quantity,['class' => 'form-control stock','required','onkeypress'=>'return isNumber(event,this)']) !!} 
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                          {!! Form::label('tyre_number', __('fleet.tyre_number'), ['class' => 'form-label']) !!}
+                          {!! Form::text('tyre_number[]', $v->tyre_numbers, ['class' => 'form-control tyre_number', 'placeholder' => 'Enter comma-separated tyre numbers']) !!}
                       </div>
                     </div>
                     <div class="col-md-4">
@@ -141,43 +168,6 @@
               <div class="form-group">
                 {!! Form::label('subtotal', __('fleet.sumtotal'), ['class' => 'form-label']) !!}
                 {!! Form::text('subtotal', Helper::properDecimals($data->sub_total),['class' => 'form-control subtotal','readonly','onkeypress'=>'return isNumber(event,this)']) !!}
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                {!! Form::label('cash_payment', __('fleet.cash_payment'), ['class' => 'form-label']) !!}
-                {!! Form::text('cash_payment', $data->cash_amount,['class' => 'form-control cash_payment','onkeypress'=>'return isNumber(event,this)']) !!}
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                {!! Form::label('cheque_draft', __('fleet.cheque_draft'), ['class' => 'form-label']) !!}
-                {!! Form::text('cheque_draft', $data->chq_draft_number,['class' => 'form-control cheque_draft']) !!}
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                    {!! Form::label('cheque_draft_amount', __('fleet.cheque_draft_amount'), ['class' => 'form-label']) !!}
-                    {!! Form::text('cheque_draft_amount', $data->chq_draft_amount,['class' => 'form-control cheque_draft_amount','onkeypress'=>'return isNumber(event,this)']) !!}
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                {!! Form::label('cheque_draft_date',__('fleet.cheque_draft_date'), ['class' => 'form-label']) !!}
-                {!! Form::text('cheque_draft_date',$data->chq_draft_date,['class'=>'form-control cheque_draft_date']) !!}
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                {!! Form::label('dateofpurchase',__('fleet.dateofpurchase'), ['class' => 'form-label']) !!}
-                <div class='input-group mb-3 date'>
-                  <div class="input-group-prepend">
-                    <span class="input-group-text">
-                      <span class="fa fa-calendar"></span>
-                    </span>
-                  </div>
-                  {!! Form::text('dateofpurchase',$data->created_at,['class'=>'form-control dateofpurchase','required']) !!}
-                </div>
               </div>
             </div>
             <div class="col-md-12">
@@ -268,51 +258,40 @@
   }
   $(function(){
       //add more
-      $('#button_addform').click(function(){
-        $.post('{{ url("admin/parts-invoice/getparts_form")}}',{_token:"{{csrf_token()}}"},function(result){
-          console.log(result)
-          $(".more_less").append(result);
-          $(".item:last").select2();
-        });
-      });
+      // $('#button_addform').click(function(){
+      //   $.post('{{ url("admin/parts-invoice/getparts_form")}}',{_token:"{{csrf_token()}}"},function(result){
+      //     console.log(result)
+      //     $(".more_less").append(result);
+      //     $(".item:last").select2();
+      //   });
+      // });
+
+      function initializeFormItems() {
+          $(".cal_div").each(function() {
+              var itemField = $(this).find('.item');
+              itemField.trigger('change');
+          });
+      }
 
       $("body").on("click",".remove",function(){
         if(confirm("Are you sure ?"))
           $(this).closest(".addmore_cont").remove();
           $(".unit_cost:first").keyup();
           $("#cgst").keyup();
-          // //After Removal set the Grand Total
-          // var sumtotal=0;
-          
-          // $(".total").each(function(i,e){
-          //   var thisval = $(this).val();
-          //   if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-          //     thisval=0.00;
-          //   }
-            
-          //   thisval = parseFloat(thisval);
-            
-          //   if(thisval!="")
-          //     sumtotal= parseFloat(sumtotal)+thisval;
-          
-          // })
-
-          // $(".subtotal").val(sumtotal.toFixed(2));
-          
       })
 
       $("#vendor_id").select2({placeholder:"@lang('fleet.select_vendor')"});
       $(".item").select2();
       
         // $("body").on("click",".dateofpurchase",function(){
-          $(".dateofpurchase").datetimepicker({format: 'DD-MM-YYYY',sideBySide: true,icons: {
+          $(".dateofpurchase").datetimepicker({format: 'YYYY-MM-DD',sideBySide: true,icons: {
                 previous: 'fa fa-arrow-left',
                 next: 'fa fa-arrow-right',
                 up: "fa fa-arrow-up",
                 down: "fa fa-arrow-down"
           }});
         // })
-        $(".cheque_draft_date").datetimepicker({format: 'DD-MM-YYYY',sideBySide: true,icons: {
+        $(".cheque_draft_date").datetimepicker({format: 'YYYY-MM-DD',sideBySide: true,icons: {
                 previous: 'fa fa-arrow-left',
                 next: 'fa fa-arrow-right',
                 up: "fa fa-arrow-up",
@@ -325,67 +304,41 @@
           radioClass   : 'iradio_flat-green'
         });
 
-        // $("body").on("keyup",".unit_cost,.stock",function(){
-        //   // alert($(this).closest('.cal_div').attr("class"));return false;
-        //   var stock  = $(this).closest('.cal_div').find('.stock').val();
-        //   // var stock  = $(this).parent().parent().find('.stock ').val();
-        //   var unit_cost  = $(this).closest('.cal_div').find('.unit_cost ').val();
-        //   var cash_payment=$('#cash_payment').val();
-        //     //var unit_cost  = $sss(this).parent().parent().find('.unit_cost ').val();
-        //     var total=parseFloat(stock)*parseFloat(unit_cost);
-        //     var totalamnt  = $(this).closest('.cal_div').find('.total').val(parseFloat(total).toFixed(2));
-        //     console.log(stock+" "+unit_cost+" "+total);
-        //     var sumtotal=0;
-        //     if(stock!="" && unit_cost!="")
-        //     {
-        //       $(".total").each(function(i,e){
-        //         var thisval = $(this).val();
-        //         if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-        //           thisval=0.00;
-        //         }
-                
-        //         thisval = parseFloat(thisval);
-                
-        //         if(thisval!="")
-        //           sumtotal= parseFloat(sumtotal)+thisval;
-              
-        //       })
+        $("body").on("keyup", ".unit_cost, .stock", function() {
+    var stock = $(this).closest('.cal_div').find('.stock').val();
+    var unit_cost = $(this).closest('.cal_div').find('.unit_cost').val();
 
-        //       $(".subtotal").val(sumtotal.toFixed(2));
-        //       $("#cgst").keyup()
-        //     }
-        // });
+    if (stock && unit_cost && !isNaN(stock) && !isNaN(unit_cost)) {
+      var total = parseFloat(stock) * parseFloat(unit_cost);
+      $(this).closest('.cal_div').find('.total').val(parseFloat(total).toFixed(2));
 
-        $("body").on("keyup",".total,.stock",function(){
-      // alert($(this).closest('.cal_div').attr("class"));return false;
-       var stock  = $(this).closest('.cal_div').find('.stock').val();
-       // var stock  = $(this).parent().parent().find('.stock ').val();
-       var total  = $(this).closest('.cal_div').find('.total ').val();
-      //  var cash_payment=$('#cash_payment').val();
-        // var total  = $(this).parent().parent().find('.total ').val();
-        if(total!=null && stock!=null){
-          var ucost=parseFloat(total)/parseFloat(stock);
-           $(this).closest('.cal_div').find('.unit_cost').val(parseFloat(ucost).toFixed(2));
-          console.log(stock+" "+ucost+" "+total);
-          var sumtotal=0;
-          if(stock!="" && total!="")
-          {
-            $(".total").each(function(i,e){
-              var thisval = $(this).val();
-              if((thisval=="" && typeof thisval=='string') || (thisval==0 && typeof thisval=='string')){
-                thisval=0.00;
-              }
-              
-              thisval = parseFloat(thisval);
-              
-              if(thisval!="")
-                sumtotal= parseFloat(sumtotal)+thisval;
-            })
-          }
-          $(".subtotal").val(sumtotal.toFixed(2));
-          $("#cgst").keyup()
-        }
+      updateSubtotal();
+    }
+  });
+
+  $("body").on("keyup", ".total", function() {
+    var stock = $(this).closest('.cal_div').find('.stock').val();
+    var total = $(this).val();
+
+    if (stock && total && !isNaN(stock) && !isNaN(total)) {
+      var ucost = parseFloat(total) / parseFloat(stock);
+      $(this).closest('.cal_div').find('.unit_cost').val(parseFloat(ucost).toFixed(2));
+
+      updateSubtotal();
+    }
+  });
+
+  function updateSubtotal() {
+    var sumtotal = 0;
+    $(".total").each(function(i, e) {
+      var thisval = $(this).val();
+      if (thisval && !isNaN(thisval)) {
+        sumtotal += parseFloat(thisval);
+      }
     });
+    $(".subtotal").val(sumtotal.toFixed(2));
+    $("#cgst").keyup();
+  }
 
         $("#is_gst").change(function(){
           var is_gst = $("#is_gst").val();
@@ -416,13 +369,6 @@
           $.post("{{route('work_order.wo_gstcalculate')}}",sendData).done(function(data){
             // console.log(data)
             console.table(data)
-            // if(!isNaN(data.total) && data.total!=0){
-            //   $(".smallfuel").show()
-            //   $(".fueltot").html(data.total)
-            // }else{
-            //   $(".smallfuel").hide()
-            //   $(".fueltot").html('')
-            // }
 
             if(!isNaN(data.cgstval) && data.cgstval!=0){
               $("#cgst_amt").val(data.cgstval)
@@ -445,6 +391,103 @@
               
           })
         })
+        $("body").on("keyup", ".stock", function() {
+        var stock = parseInt($(this).val());
+        var tyreNumberField = $(this).closest('.cal_div').find('.tyre_number');
+        var itemField = $(this).closest('.cal_div').find('.item');
+        
+        // Trigger the change event on the item field to re-evaluate the category
+        itemField.trigger('change');
+    });
+
+
+$("body").on("change", ".item", function() {
+    var itemId = $(this).val();
+    var calDiv = $(this).closest('.cal_div');
+    var tyreNumberField = calDiv.find('.tyre_number');
+    var stockField = calDiv.find('.stock');
+
+    if (itemId) {
+        $.ajax({
+            url: '{{ route("get.category.info") }}',
+            type: 'GET',
+            data: { item_id: itemId },
+            success: function(response) {
+                if (response.category_name.toLowerCase().includes('tyre')) {
+                    tyreNumberField.prop('disabled', false);
+                    updateTyreNumberPlaceholder(stockField, tyreNumberField);
+                } else {
+                    tyreNumberField.prop('disabled', true);
+                    tyreNumberField.val('');
+                    tyreNumberField.attr('placeholder', 'Not applicable for this item');
+                }
+            },
+            error: function() {
+                console.log('Error fetching category info');
+            }
+        });
+    } else {
+        tyreNumberField.prop('disabled', true);
+        tyreNumberField.val('');
+        tyreNumberField.attr('placeholder', 'Select an item first');
+    }
+});
+
+$("body").on("keyup", ".stock", function() {
+    var calDiv = $(this).closest('.cal_div');
+    var tyreNumberField = calDiv.find('.tyre_number');
+    
+    if (!tyreNumberField.prop('disabled')) {
+        updateTyreNumberPlaceholder($(this), tyreNumberField);
+    }
+});
+
+function updateTyreNumberPlaceholder(stockField, tyreNumberField) {
+    var stock = parseInt(stockField.val());
+    if (stock && !isNaN(stock) && stock > 0) {
+        tyreNumberField.attr('placeholder', 'Enter ' + stock + ' tyre numbers, comma-separated');
+    } else {
+        tyreNumberField.attr('placeholder', 'Enter comma-separated tyre numbers');
+    }
+}
+
+$("#savebtn").click(function(e) {
+    var isValid = true;
+    
+    $(".cal_div").each(function() {
+        var stockField = $(this).find('.stock');
+        var tyreNumberField = $(this).find('.tyre_number');
+        var itemField = $(this).find('.item');
+        var stock = parseInt(stockField.val());
+        var itemId = itemField.val();
+        
+        if (!tyreNumberField.prop('disabled') && stock > 0) {
+            var tyreNumbersArray = tyreNumberField.val().split(',').map(item => item.trim()).filter(item => item !== '');
+            
+            if (tyreNumbersArray.length !== stock) {
+                alert('The number of tyre numbers (' + tyreNumbersArray.length + ') does not match the current stock (' + stock + ') for one of the tyre items. Please adjust either the stock or the tyre numbers.');
+                isValid = false;
+                return false;
+            }
+            
+            tyreNumberField.attr('name', 'tyre_number[' + itemId + ']');
+        }
+    });
+
+    if (!isValid) {
+        e.preventDefault();
+    }
+});
+initializeFormItems();
+
+$('#button_addform').click(function(){
+    $.post('{{ url("admin/parts-invoice/getparts_form")}}', {_token:"{{csrf_token()}}"}, function(result){
+        $(".more_less").append(result);
+        $(".more_less .cal_div:last").find(".item").select2().trigger('change');  // Initialize Select2 for the new item only
+    });
+});
+
+    
   })
   
 </script>

@@ -63,10 +63,9 @@
                 <div class="dropdown-menu custom" role="menu">
                   <a class="dropdown-item vview" data-id="{{$row->id}}" data-toggle="modal" data-target="#PartsDetailsModal"> <span aria-hidden="true" class="fa fa-eye" style="color: green"></span> View</a>
                   <a class="dropdown-item vstock" data-id="{{$row->id}}" data-toggle="modal" data-target="#stockModal"> <span aria-hidden="true" class="fa fa-plus" style="color: green"></span> Add Stock</a>
-                  @if(Helper::isEligible($row->id,26))
                   <a class="dropdown-item" href="{{ url("admin/parts/".$row->id."/edit")}}"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')</a>
                   <a class="dropdown-item" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal"> <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> @lang('fleet.delete')</a>
-                 @endif
+                 
                 </div>
               </div>
               {!! Form::open(['url' => 'admin/parts/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'form_'.$row->id]) !!}

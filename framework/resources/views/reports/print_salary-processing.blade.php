@@ -31,7 +31,7 @@
   </style>
 </head>
 <body onload="window.print();">
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')@endphp
 
   <div class="wrapper">
   <!-- Main content -->
@@ -68,6 +68,13 @@
             </thead>
             <tbody>
             @foreach($salaries as $k=>$row) 
+                @php
+                  $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+                  $showRow = !$request['payment_type'] || 
+                             ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                             ($request['payment_type'] == 'cash' && empty($bankInfo));
+                @endphp
+                @if($showRow)
                 <tr>
                   <td>{{$k+1}}</td>
                   <td>
@@ -78,17 +85,17 @@
                     @endif
                   </td>
                   <td>
-                    @if($row->is_payroll)
-                      {{$row->driver->bank}}
+                    @if(!empty($bankInfo))
+                      {{$bankInfo}}
                     @else
-                      {{$row->bank}}
+                      Cash
                     @endif
                   </td>
                   <td>
                     @if($row->is_payroll)
-                      {{$row->driver->account_no}}
+                      {{$row->driver->account_no ?? 'N/A'}}
                     @else
-                      {{$row->account_no}}
+                      {{$row->account_no ?? 'N/A'}}
                     @endif
                   </td>
                   <td>
@@ -98,13 +105,26 @@
                     @endif
                   </td>
                 </tr>
+                @endif
             @endforeach
+            </tbody>
+          </table>
+          
+          @php
+            $totalPayableSalary = $salaries->filter(function($row) use ($request) {
+              $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
+              return !$request['payment_type'] || 
+                     ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                     ($request['payment_type'] == 'cash' && empty($bankInfo));
+            })->sum('payable_salary');
+          @endphp
+          
+          <table class="table">
             <tr>
               <th colspan="3"></th>
               <th><strong>Total Amount</strong></th>
-              <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('payable_salary'),1,2)}}</th>
+              <th>{{Hyvikk::get('currency')}} {{bcdiv($totalPayableSalary,1,2)}}</th>
             </tr>
-            </tbody>
           </table>
         </div>
       </div>

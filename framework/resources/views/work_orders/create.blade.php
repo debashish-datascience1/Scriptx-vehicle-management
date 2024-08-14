@@ -34,7 +34,21 @@
         {!! Form::open(['route' => 'work_order.store','method'=>'post','files'=>true]) !!}
         {!! Form::hidden('user_id',Auth::user()->id)!!}
         {!! Form::hidden('type','Created')!!}
+        <div class= "row">
+          <div class ="col-md-6"></div>
+          <div class ="col-md-6">
+          <div class="form-group">
+              {!! Form::label('required_by', "Date", ['class' => 'form-label']) !!}
+              <div class="input-group date">
+              <div class="input-group-prepend"><span class="input-group-text"><span class="fa fa-calendar"></span></div>
+              {!! Form::text('required_by',null,['class'=>'form-control','required','readonly']) !!}
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="row">
+          
           <div class="col-md-6">
             <div class="form-group">
               {!! Form::label('bill_image', "Bill/bill", ['class' => 'form-label']) !!}
@@ -49,13 +63,13 @@
                 @endforeach
               </select>
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group">
               {!! Form::label('required_by', "Date", ['class' => 'form-label']) !!}
               <div class="input-group date">
               <div class="input-group-prepend"><span class="input-group-text"><span class="fa fa-calendar"></span></div>
               {!! Form::text('required_by',null,['class'=>'form-control','required','readonly']) !!}
               </div>
-            </div>
+            </div> -->
             <div class="form-group">
               {!! Form::label('meter',Hyvikk::get('dis_format')." ".__('fleet.reading'), ['class' => 'form-label']) !!}
               <div class="input-group mb-3">
@@ -75,6 +89,12 @@
               {!! Form::label('bill_no',"Bill No", ['class' => 'form-label']) !!}
               {!! Form::text('bill_no',null,['class'=>'form-control bill_no','id'=>'bill_no','placeholder'=>'Enter Bill No...']) !!}
             </div>
+         
+            <!-- <div class="form-group">
+                {!! Form::label('is_own',"Own Stock ?", ['class' => 'form-label']) !!}
+                {!! Form::select('is_own[]',[2=>'No',1=>'Yes'],null,['class'=>'form-control is_own','id'=>'is_own','required']) !!}
+            </div> -->
+        
             <div class="form-group">
               {!! Form::label('vendor_id',__('fleet.vendor'), ['class' => 'form-label']) !!}
               <select id="vendor_id" name="vendor_id" class="form-control" required>
@@ -464,93 +484,6 @@ $(document).ready(function() {
     }
     getPartsPrices();
   })
-
-  // $("#price").keyup(function(){
-  //   console.log($(this).val())
-  //   var price = $(this).val();
-  //   $("#total_amount").val(parseFloat(price).toFixed(2));
-  // })
-  // $(document).on('keyup','.calc,.cprc,#price,#cgst,#sgst',function(){
-
-  //   var calcArray = $('.calc').map(function(){
-  //     return $(this).val()
-  //   }).get();
-  //   var cprcArray = $('.cprc').map(function(){
-  //     return $(this).val()
-  //   }).get();
-  //   var price = $("#price").val();
-  //   var cgst = $("#cgst").val();
-  //   // var cgst_amt = $("#cgst_amt").val();
-  //   var sgst = $("#sgst").val();
-  //   // var sgst_amt = $("#sgst_amt").val();
-  //   console.log(calcArray);
-  //   console.log(cprcArray);
-  //   // return false;
-  //   var sendData = {_token:"{{csrf_token()}}",price:price,calcArray:calcArray,cprcArray:cprcArray,cgst:cgst,sgst:sgst};
-  //   $.post("{{route('work_order.wo_gstcalculate')}}",sendData).done(function(data){
-  //     // console.log(data)
-  //     console.table(data)
-  //     // if(!isNaN(data.total) && data.total!=0){
-  //     //   $(".smallfuel").show()
-  //     //   $(".fueltot").html(data.total)
-  //     // }else{
-  //     //   $(".smallfuel").hide()
-  //     //   $(".fueltot").html('')
-  //     // }
-
-  //     if(!isNaN(data.cgstval) && data.cgstval!=0){
-  //       $("#cgst_amt").val(data.cgstval)
-  //     }else{
-  //       $("#cgst_amt").val('')
-  //     }
-
-  //     if(!isNaN(data.sgstval) && data.sgstval!=0){
-  //       $("#sgst_amt").val(data.sgstval)
-  //     }else{
-  //       $("#sgst_amt").val('')
-  //     }
-
-  //     if(!isNaN(data.grandtotal) && data.grandtotal!=0){
-  //       $("#total_amount").val(data.grandtotal)
-  //     }else{
-  //       $("#total_amount").val('')
-  //     }
-
-        
-  //   })
-  // })
-
-  //Flat green color scheme for iCheck
-  // $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
-  //   checkboxClass: 'icheckbox_flat-green',
-  //   radioClass   : 'iradio_flat-green'
-  // });
-
-  // $('.attach').on('click',function(){
-
-  //   var field = $('#select_part').val();
-  //   if(field == "" || field == null){
-  //     alert('Select Part');
-  //   }
-  //   else{
-  //     var qty=$('#select_part option:selected').attr('qty');
-  //     var title=$('#select_part option:selected').attr('title');
-  //     var price=$('#select_part option:selected').attr('price');
-  //     // alert($('#select_part option:selected').attr('title'));
-  //     // alert($('#select_part option:selected').attr('qty'));
-  //     $(".parts").append('<div class="row col-md-12 addedmore"><div class="col-md-4">  <div class="form-group"> <label class="form-label">@lang('fleet.selectPart')</label> <select  class="form-control" disabled>  <option value="'+field+'" selected >'+title+'</option> </select> </div></div> <div class="col-md-2">  <div class="form-group"> <label class="form-label">@lang('fleet.qty')</label> <input type="number" name="parts['+field+']" min="1" value="1" class="form-control calc" max='+qty+' required> </div></div><div class="col-md-2">  <div class="form-group"> <label class="form-label">@lang('fleet.unit_cost')</label> <input type="number" value="'+price+'" name="unit_cost['+field+']" class="form-control cprc" required> </div></div><div class="col-md-2">  <div class="form-group"> <label class="form-label">@lang('fleet.total_cost')</label> <input type="number" value="'+price+'" class="form-control total_cost" disabled id="'+field+'"> </div></div> <div class="col-md-2"> <div class="form-group" style="margin-top: 30px"><button class="btn btn-danger" type="button" onclick="removeAddMore($(this));">Remove</button> </div></div></div>');
-
-  //     $('.calc,.cprc').on('change',function(){
-  //       // alert(field)
-  //       // alert($(this).val()*price);
-  //       var qt = $(this).closest(".addedmore").find(".calc").val();
-  //       var pc = $(this).closest(".addedmore").find(".cprc").val();
-  //       $(this).closest(".addedmore").find('#'+field).val(qt*pc);
-  //     });
-  //     $('#select_part').val('').change();
-  //   }
-  // });
-
 });
 </script>
 @endsection

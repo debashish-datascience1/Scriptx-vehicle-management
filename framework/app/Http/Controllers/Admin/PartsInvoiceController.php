@@ -41,10 +41,25 @@ class PartsInvoiceController extends Controller
         return view("parts_invoice.create", $data);
     }
 
+    public function getCategoryInfo(Request $request)
+    {
+        $itemId = $request->input('item_id');
+        \Log::info('Requested Part ID: ' . $itemId);
+        $part = PartsModel::findOrFail($itemId);
+
+        $category = PartsCategoryModel::findOrFail($part->category_id);
+
+        return response()->json([
+            'category_name' => $category->name
+        ]);
+    }
+
     public function store(PartsRequest $request)
     {
         // dd($request->all());
         $parts = new PartsInvoice();
+        $allTyreNumbers = []; // Array to collect all tyre numbers
+
         // GST Calculations
         $total = empty($request->subtotal) ? null : (float) $request->subtotal;
         $cgst = empty($request->cgst) ? null : (float) $request->cgst;
@@ -93,15 +108,19 @@ class PartsInvoiceController extends Controller
         if ($request->file('invoice') && $request->file('invoice')->isValid()) {
             $this->upload_file($request->file('invoice'), "invoice", $id);
         }
-
-
-        // dd($request->availability);
-
-
-
+        
         foreach ($request->item as $k => $v) {
-            // print($request->number[$k]);
-            $category_id = PartsModel::find($v)->category_id;
+        
+            $partsModel = PartsModel::with('category')->find($v);
+            if (!$partsModel) {
+                continue;
+            }
+        
+            $category_id = $partsModel->category_id;
+        
+            $isTyre = $partsModel->category && stripos($partsModel->category->name, 'tyre') !== false;
+            
+        
             $eachArr = [
                 'parts_id' => $v,
                 'partsinv_id' => $id,
@@ -109,21 +128,58 @@ class PartsInvoiceController extends Controller
                 'unit_cost' => $request->unit_cost[$k],
                 'quantity' => $request->stock[$k],
                 'total' => $request->total[$k],
-                'date_of_purchase' => $dateofpurchase
+                'date_of_purchase' => $dateofpurchase,
+                'tyre_numbers' => null, // Initialize as null for all items
             ];
-            PartsDetails::create($eachArr);
-
+        
+            // Process tyre numbers if it's a tyre
+            if ($isTyre && isset($request->tyre_number[$v]) && $request->tyre_number[$v] !== '') {
+                $tyreNumbers = explode(',', $request->tyre_number[$v]);
+                $tyreNumbers = array_map('trim', $tyreNumbers);
+                $tyreNumbers = array_filter($tyreNumbers);
+        
+        
+                if (count($tyreNumbers) != $request->stock[$k]) {
+                    return redirect()->back()->withInput()->withErrors(['tyre_number' => 'The number of tyre numbers must match the quantity for tyre items.']);
+                }
+        
+                $eachArr['tyre_numbers'] = implode(',', $tyreNumbers);
+        
+                $existingTyreNumbers = $partsModel->tyre_numbers ? explode(',', $partsModel->tyre_numbers) : [];
+                $updatedTyreNumbers = array_unique(array_merge($existingTyreNumbers, $tyreNumbers));
+                $partsModel->tyre_numbers = implode(',', $updatedTyreNumbers);
+                $partsModel->tyres_used = implode(',', $updatedTyreNumbers);
+            } else {
+                \Log::info("Tyre number for item {$v}: not set");
+            }
+        
+            // Create PartsDetails
+            try {
+                $createdPart = PartsDetails::create($eachArr);
+            } catch (\Exception $e) {
+                \Log::error("Failed to create PartsDetails for item {$v}: " . $e->getMessage());
+            }
+        
+            // Update stock
             $data = [
                 'part_id' => $v,
                 'qty' => $request->stock[$k],
                 'param_id' => 46,
                 'from_id' => $id,
             ];
-            $old_stock = PartsModel::find($v)->stock;
+            $old_stock = $partsModel->stock;
             $newstock = $old_stock + $request->stock[$k];
-            $updated = PartsModel::where('id', $v)->update(['stock' => $newstock]);
-            if ($updated) Stock::create($data);
+            
+            try {
+                $updated = $partsModel->update(['stock' => $newstock]);
+                if ($updated) {
+                    Stock::create($data);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to update stock or create Stock record for item {$v}: " . $e->getMessage());
+            }
         }
+    
 
         $id_trans = Transaction::create([
             'type' => 24, //debit
@@ -161,14 +217,6 @@ class PartsInvoiceController extends Controller
     }
     public function destroy(Request $request)
     {
-        //    dd('delete');
-        //    dd($request->all());
-        // $form_id = DB::table('transactions')
-        //      ->select('id')
-        //      ->where('from_id','=', $request->get('id'))
-        //      ->where('param_id','=', 26)
-        //      ->where('type','=', 24)
-        //      ->firstOrFail()->id;
         $query = Transaction::where(['from_id' => $request->get('id'), 'param_id' => 26, 'type' => 24]);
         $from_id = empty($query->first()) ? null : $query->first()->from_id;
         // dd($from_id);
@@ -180,9 +228,30 @@ class PartsInvoiceController extends Controller
         $dt_list = PartsDetails::where('partsinv_id', $request->get('id'));
         foreach ($dt_list->get() as $dt) {
             // dd($dt);
-            $old_stock = PartsModel::find($dt->parts_id)->stock;
-            $newstock = $old_stock - $dt->quantity;
-            PartsModel::where('id', $dt->parts_id)->update(['stock' => $newstock]);
+            // $old_stock = PartsModel::find($dt->parts_id)->stock;
+            // $newstock = $old_stock - $dt->quantity;
+            // PartsModel::where('id', $dt->parts_id)->update(['stock' => $newstock]);
+            $part = PartsModel::find($dt->parts_id);
+            if ($part) {
+                // Update stock
+                $newstock = $part->stock - $dt->quantity;
+                
+                // Remove tyre numbers
+                $currentTyreNumbers = explode(',', $part->tyre_numbers);
+                $tyreNumbersToRemove = explode(',', $dt->tyre_numbers);
+                
+                $updatedTyreNumbers = array_diff($currentTyreNumbers, $tyreNumbersToRemove);
+                
+                $currentTyresUsed = explode(',', $part->tyres_used);
+                $updatedTyresUsed = array_diff($currentTyresUsed, $tyreNumbersToRemove);
+    
+                // Update the part
+                $part->update([
+                    'stock' => $newstock,
+                    'tyre_numbers' => implode(',', $updatedTyreNumbers),
+                    'tyres_used' => implode(',', $updatedTyresUsed)
+                ]);
+            }
         }
         $dt_list->delete();
         PartsInvoice::find($request->get('id'))->delete();
@@ -215,10 +284,15 @@ class PartsInvoiceController extends Controller
         // dd($id);
         $index['data'] = PartsInvoice::whereId($id)->first();
         $index['parts_details'] = PartsDetails::where('partsinv_id', $id)->get();
+        \Log::info('Requested Part ID: ' . $index['parts_details']);
         $index['vendors'] = Vendor::pluck('name', 'id');
         $index['categories'] = PartsCategoryModel::pluck('name', 'id');
         $index['is_gst'] = [1 => 'Yes', 2 => 'No'];
         $index['items'] = Helper::getAllParts();
+        // foreach ($index['parts_details'] as $part_detail) {
+        //     $partsModel = PartsModel::find($part_detail->parts_id);
+        //     $part_detail->tyre_numbers = $partsModel ? $partsModel->tyre_numbers : '';
+        // }
         // dd($index);
         return view("parts_invoice.edit", $index);
     }
@@ -231,10 +305,8 @@ class PartsInvoiceController extends Controller
 
     public function update(Request $request, PartsInvoice $partsInvoice)
     {
-        // dd($partsInvoice->partsDetails);
-        // dd($request->all());
+        $allTyreNumbers = []; // Array to collect all tyre numbers
         $part_id = $request->id;
-        // $partinv_id = $partsInvoice->id;
         $billno = $request->billno;
         $vendor_id = $request->vendor_id;
         $cash_payment = $request->cash_payment;
@@ -242,39 +314,99 @@ class PartsInvoiceController extends Controller
         $cheque_draft_amount = $request->cheque_draft_amount;
         $cheque_draft_date = $request->cheque_draft_date;
         $dateofpurchase = date("Y-m-d", strtotime($request->dateofpurchase));
-        // //delete previous part_details containing $part_id
-        // PartsDetails::where('partsinv_id',$partinv_id)->delete();
-        //resetting stocks in items table
+        
         foreach ($partsInvoice->partsDetails as $pd) {
-            $currentStock = PartsModel::find($pd->parts_id)->stock;
+            $partsModel = PartsModel::find($pd->parts_id);
+            $currentStock = $partsModel->stock;
             $newstock = $currentStock - $pd->quantity;
-            PartsModel::where('id', $pd->parts_id)->update(['stock' => $newstock]);
+            $partsModel->update(['stock' => $newstock]);
+            
+            // Remove tyre numbers associated with this invoice
+            $partsModel->update(['tyre_numbers' => null, 'tyres_used' => null]); // Update this line
+        
             PartsDetails::find($pd->id)->delete();
         }
-
-        //Insert new data
         foreach ($request->item as $key => $val) {
-            //update stock
-            $currentStock = PartsModel::find($val)->stock;
+        
+            $partsModel = PartsModel::with('category')->find($val);
+            if (!$partsModel) {
+                continue;
+            }
+        
+            $category_id = $partsModel->category_id;
+        
+            $isTyre = $partsModel->category && stripos($partsModel->category->name, 'tyre') !== false;
+        
+            $currentStock = $partsModel->stock;
             $newstock = $currentStock + $request->stock[$key];
+        
             $details_data = [
                 'parts_id' => $val,
                 'partsinv_id' => $part_id,
-                'parts_category' => $request->category_id[$key],
-                'number' => $request->number[$key],
-                'manufacture' => $request->manufacturer[$key],
-                'status' => $request->status[$key],
+                'parts_category' => $category_id,
                 'unit_cost' => $request->unit_cost[$key],
-                'availability' => $request->availability[$key],
                 'quantity' => $request->stock[$key],
                 'date_of_purchase' => $dateofpurchase,
                 'total' => bcdiv($request->total[$key], 1, 2),
+                'tyre_numbers' => null // Initialize as null for all items
             ];
+        
+            // Process tyre numbers if it's a tyre
+            if ($isTyre && isset($request->tyre_number[$val]) && $request->tyre_number[$val] !== '') {
+                $tyreNumbers = explode(',', $request->tyre_number[$val]);
+                $tyreNumbers = array_map('trim', $tyreNumbers);
+                $tyreNumbers = array_filter($tyreNumbers);
 
-            if (PartsDetails::create($details_data))
-                PartsModel::where('id', $val)->update(['stock' => $newstock]);
+                $tyreMumbers = PartsDetails::where('parts_id', $val)
+                ->where('parts_category', $partsModel->category_id)
+                ->whereNull('deleted_at')
+                ->pluck('tyre_numbers')
+                ->filter()
+                ->flatMap(function ($numbers) {
+                    return explode(',', $numbers);
+                })
+                ->unique()
+                ->values()
+                ->toArray();
+
+                $allTyreNumbers = array_unique(array_merge($tyreNumbers, $tyreMumbers));
+                $allTyreNumbers = array_filter($allTyreNumbers, 'strlen');
+                $uniqueTyreNumbers = implode(',', $allTyreNumbers);
+
+        
+                if (count($tyreNumbers) != $request->stock[$key]) {
+                    return redirect()->back()->withInput()->withErrors(['tyre_number' => 'The number of tyre numbers must match the quantity for tyre items.']);
+                }
+        
+                $details_data['tyre_numbers'] = implode(',', $tyreNumbers);
+                $partsModel->tyre_numbers = $uniqueTyreNumbers;
+                $partsModel->tyres_used = $uniqueTyreNumbers;
+            } else {
+                $partsModel->tyre_numbers = null;
+                $partsModel->tyres_used = null;
+            }
+        
+            // Create PartsDetails
+            try {
+                $createdPart = PartsDetails::create($details_data);
+        
+                // Update stock
+                $partsModel->stock = $newstock;
+                $updated = $partsModel->save();
+        
+                if ($updated) {
+                    $stockData = [
+                        'part_id' => $val,
+                        'qty' => $request->stock[$key],
+                        'param_id' => 46,
+                        'from_id' => $part_id,
+                    ];
+                    Stock::create($stockData);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to create PartsDetails or update stock for item {$val}: " . $e->getMessage());
+            }
         }
-
 
         // GST Calculations
         $total = empty($request->subtotal) ? null : (float) $request->subtotal;
@@ -318,6 +450,8 @@ class PartsInvoiceController extends Controller
             'chq_draft_number' => $cheque_draft,
             'chq_draft_amount' => $cheque_draft_amount,
             'chq_draft_date' => empty($cheque_draft_date) ? null : date('Y-m-d', strtotime($cheque_draft_date)),
+            'date_of_purchase' => $dateofpurchase, // Add this line
+
         ];
         PartsInvoice::where('id', $part_id)->update($partmod);
 

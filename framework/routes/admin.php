@@ -48,6 +48,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('delete-reminders', 'ServiceReminderController@bulk_delete');
         Route::post('delete-service-items', 'ServiceItemsController@bulk_delete');
         Route::post('delete-parts', 'PartsController@bulk_delete');
+        Route::post('delete-part', 'PartSellController@bulk_delete');
         Route::post('delete-work-orders', 'WorkOrdersController@bulk_delete');
         Route::post('delete-parts-category', 'PartsCategoryController@bulk_delete');
         Route::post('delete-users', 'CustomersController@bulk_delete');
@@ -106,6 +107,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('print-fuel-report', 'ReportsController@print_fuel');
         Route::get('print_booking_new/{id}', 'BookingsController@print_booking_new'); //new added 
         Route::post('print-booking-report', 'ReportsController@print_booking');
+        Route::post('print-stock-report', 'ReportsController@print_stock');
         Route::post('print-deliquent-report', 'ReportsController@print_deliquent');
         Route::post('print-monthly-report', 'ReportsController@print_monthly');
         // Route::get('print-bookings', 'BookingsController@print_bookings');
@@ -160,6 +162,9 @@ Route::namespace('Admin')->group(function () {
         Route::post('/work_order/wo_gstcalculate', 'WorkOrdersController@wo_gstcalculate')->name('work_order.wo_gstcalculate')->middleware('userpermission:3');
         Route::post('/work_order/wo_calcgst', 'WorkOrdersController@wo_calcgst')->name('work_order.wo_calcgst')->middleware('userpermission:3');
         Route::post('/work_order/othercalc', 'WorkOrdersController@othercalc')->name('work_order.othercalc')->middleware('userpermission:3');
+        Route::get('/get-tyre-numbers', 'WorkOrdersController@getTyreNumbers')->name('get.tyre.numbers')->middleware('userpermission:7');
+        Route::get('/get-part-category', 'WorkOrdersController@getPartCategory')->name('get.part.category')->middleware('userpermission:7');
+        Route::get('/get-edit-tyre-numbers', 'WorkOrdersController@getEditTyreNumbers')->name('get.edit.tyre.numbers')->middleware('userpermission:7');
         Route::resource('/work_order', 'WorkOrdersController')->middleware('userpermission:7');
         Route::resource('/work-order-category', 'WorkOrderCategoryController')->middleware('userpermission:7');
 
@@ -192,7 +197,12 @@ Route::namespace('Admin')->group(function () {
         Route::post('/parts/getparts_form', 'PartsController@get_parts_form')->name('parts.get_parts_form')->middleware('userpermission:14');
         Route::get('/parts/view_event/{id}', 'PartsController@view_event')->middleware('userpermission:14');
         Route::post('/parts/parts_gstcalculate', 'PartsController@parts_gstcalculate')->name('fuel.parts_gstcalculate')->middleware('userpermission:3');
-
+        // Route::resource('/parts-sell', 'PartSellController')->middleware('userpermission:14');
+        Route::resource('/parts-sell', 'PartSellController')->except(['show'])->middleware('userpermission:14');
+        Route::get('parts-sell/{id}/edit', 'PartSellController@edit')->name('parts-sell.edit');
+        // Route::get('parts-sell/print-all', 'PartSellController@printAll')->name('parts-sell.print-all')->middleware('userpermission:14');
+        Route::get('parts-sell/get-all-data', 'PartSellController@getAllData')->name('parts-sell.get-all-data')->middleware('userpermission:14');
+        // Route::get('admin/parts-sell/get-all-data', [PartsSellController::class, 'getAllData'])->name('parts-sell.get-all-data');
         //debi start
 
         Route::get('/reports/view_fuel_details/{id}', 'ReportsController@view_fuel_details')->middleware('userpermission:5');
@@ -257,6 +267,8 @@ Route::namespace('Admin')->group(function () {
         Route::post('/parts-invoice/pi_gstcalculate', 'PartsInvoiceController@pi_gstcalculate')->name('parts-invoice.pi_gstcalculate')->middleware('userpermission:3');
         Route::get('/parts-invoice/view_event/{id}', 'PartsInvoiceController@view_event')->name('parts-invoice.view_event')->middleware('userpermission:1');
         Route::resource('/parts-invoice', 'PartsInvoiceController')->middleware('userpermission:S');
+        Route::get('/get-category-info', 'PartsInvoiceController@getCategoryInfo')->name('get.category.info')->middleware('userpermission:4');
+        // Route::get('/get-tyre-numbers', 'WorkOrdersController@getTyreNumbers')->name('get.tyre.numbers')->middleware('userpermission:7');
 
 
 
@@ -357,6 +369,8 @@ Route::namespace('Admin')->group(function () {
         Route::get("reports/salary-report", "ReportsController@salaryReport")->name("reports.salary-report")->middleware('userpermission:4');
         Route::post("reports/salary-report", "ReportsController@salaryReport_post")->name("reports.salary-report")->middleware('userpermission:4');
         Route::post("print-salary-report", "ReportsController@salaryReport_print")->middleware('userpermission:4');
+        Route::post("export-salary-report", "ReportsController@exportReport_print")->middleware('userpermission:4');
+        Route::post("export-salary-processing", "ReportsController@salaryProcessing_export")->middleware('userpermission:4');
 
         Route::get("reports/vehicle-advance/vehicle-head-advance-report/{id}", "ReportsController@vehicleHeadAdvance")->name("reports.vehicle-head-advance-report")->middleware('userpermission:4');
         Route::post("print-vehicle-head-advance-report", "ReportsController@vehicleHeadAdvance_print")->middleware('userpermission:4');
@@ -381,6 +395,7 @@ Route::namespace('Admin')->group(function () {
         Route::get("reports/customers", "ReportsController@customers")->name("reports.customers")->middleware('userpermission:4');
         Route::post("reports/customers", "ReportsController@customers_post")->name("reports.customers")->middleware('userpermission:4');
         Route::get("/reports/booking", "ReportsController@booking")->name("reports.booking")->middleware('userpermission:4');
+        Route::get("/reports/stock", "ReportsController@stock")->name("reports.stock")->middleware('userpermission:4');
         //vendor payment
         Route::get("/reports/vendor-payment", "ReportsController@vendorPayment")->name("reports.vendorPayment")->middleware('userpermission:4');
         Route::post("/reports/vendor-payment", "ReportsController@vendorPayment_post")->name("reports.vendorPayment")->middleware('userpermission:4');
@@ -397,6 +412,7 @@ Route::namespace('Admin')->group(function () {
 
         Route::get("/reports/vehicle", "ReportsController@vehicle")->name("reports.vehicle");
         Route::post("/reports/booking", "ReportsController@booking_post")->name("reports.booking")->middleware('userpermission:4');
+        Route::post("/reports/stock", "ReportsController@stock_post")->name("reports.stock")->middleware('userpermission:4');
         Route::post("/reports/fuel", "ReportsController@fuel_post")->name("reports.fuel_post")->middleware('userpermission:4');
         Route::get("/reports/fuel", "ReportsController@fuel")->name("reports.fuel")->middleware('userpermission:4');
         Route::get("/reports/yearly", "ReportsController@yearly")->name("reports.yearly")->middleware('userpermission:4');
@@ -430,6 +446,7 @@ Route::namespace('Admin')->group(function () {
 
         Route::post("/reports/monthly", "ReportsController@monthly_post")->name("reports.monthly")->middleware('userpermission:4');
         Route::post("/reports/booking", "ReportsController@booking_post")->name("reports.booking")->middleware('userpermission:4');
+        Route::post("/reports/stock", "ReportsController@stock_post")->name("reports.stock")->middleware('userpermission:4');
         Route::post("/reports/delinquent", "ReportsController@delinquent_post")->name("reports.delinquent")->middleware('userpermission:4');
         Route::get("/send-email", "SettingsController@send_email")->middleware('userpermission:S');
         Route::post("/email-settings", "SettingsController@email_settings")->middleware('userpermission:S');
