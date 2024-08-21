@@ -31,7 +31,9 @@
   </style>
 </head>
 <body onload="window.print();">
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+@endphp
 
   <div class="wrapper">
   <!-- Main content -->
@@ -72,41 +74,46 @@
               <th style="width: 150px;">Payable Amount</th>
             </thead>
             <tbody>
-              @foreach($salaries as $k=>$row)
-              <tr>
-                <td>{{$k+1}}</td>
-                <td>
-                  @if($row->is_payroll)
-                  {{$row->driver->name}}
-                  @else
-                  {{$row->driver}}
-                  @endif
-                </td>
-                <td>
-                  @if($row->is_payroll)
-                  {{$row->driver->driver_vehicle->vehicle->license_plate}}
-                  @else
-                  {{$row->vehicle}}
-                  @endif
-                </td>
-                <td>{{$row->days_present}}/{{$row->days_absent}}</td>
-                <td>{{bcdiv($row->gross_salary,1,2)}}</td>
-                <td>{{bcdiv($row->bookingAdvance,1,2)}}</td>
-                <td>{{bcdiv($row->salary_advance,1,2)}}</td>
-                <td>{{bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)}}</td>
-                <td>{{bcdiv($row->deduct_amount,1,2)}}</td>
-                <td style="word-wrap: break-word;">{{bcdiv($row->payable_salary,1,2)}}</td>
-              </tr>
+              @php
+              $slNo = 1;
+              @endphp
+              @foreach($salaries as $row)
+                @if($row->active_status == 1)
+                  <tr>
+                    <td>{{$slNo++}}</td>
+                    <td>
+                      @if($row->is_payroll)
+                        {{$row->driver->name}}
+                      @else
+                        {{$row->driver}}
+                      @endif
+                    </td>
+                    <td>
+                      @if($row->is_payroll)
+                        {{$row->driver->driver_vehicle->vehicle->license_plate}}
+                      @else
+                        {{$row->vehicle}}
+                      @endif
+                    </td>
+                    <td>{{$row->days_present}}/{{$row->days_absent}}</td>
+                    <td>{{bcdiv($row->gross_salary,1,2)}}</td>
+                    <td>{{bcdiv($row->bookingAdvance,1,2)}}</td>
+                    <td>{{bcdiv($row->salary_advance,1,2)}}</td>
+                    <td>{{bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)}}</td>
+                    <td>{{bcdiv($row->deduct_amount,1,2)}}</td>
+                    <td style="word-wrap: break-word;">{{bcdiv($row->payable_salary,1,2)}}</td>
+                  </tr>
+                @endif
               @endforeach
               <tr>
                 <th colspan="3"></th>
                 <th><strong>Total Amount(s)</strong></th>
-                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('gross_salary'),1,2)}}</th>
-                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('bookingAdvance'),1,2)}}</th>
-                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('salary_advance'),1,2)}}</th>
-                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('bookingAdvance') + $salaries->sum('salary_advance'), 1, 2)}}</th>
-                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('deduct_amount'),1,2)}}</th>
-                <th style="word-wrap: break-word;">{{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('payable_salary'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('gross_salary'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('bookingAdvance'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('salary_advance'),1,2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('bookingAdvance') + $salaries->where('active_status', 1)->sum('salary_advance'), 1, 2)}}</th>
+                <th>{{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('deduct_amount'),1,2)}}</th>
+                <th style="word-wrap: break-word;">{{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('payable_salary'),1,2)}}</th>
               </tr>
             </tbody>
           </table>

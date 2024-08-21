@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+@endphp
 
 @section("breadcrumb")
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -109,36 +111,39 @@
             </tr>
           </thead>
           <tbody>
-            @foreach($salaries as $k=>$row) 
-            <tr>
-              <td>{{$k+1}}</td>
-              <td>
-                @if($row->is_payroll)
-                  {{$row->driver->name}}
-                @else
-                  {{$row->driver}}
-                @endif
-              </td>
-              <td>
-                @if($row->is_payroll)
-                  {{$row->driver->driver_vehicle->vehicle->license_plate}}
-                @else
-                  {{$row->vehicle}}
-                @endif
-              </td>
-              <td>{{$row->days_present}}/{{$row->days_absent}}</td>
-              <td>{{bcdiv($row->gross_salary,1,2)}}</td>
-              <td>{{bcdiv($row->bookingAdvance,1,2)}}</td>
-              <td>{{bcdiv($row->salary_advance,1,2)}}</td>
-              <td>{{bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)}}</td> 
-              <td>{{bcdiv($row->deduct_amount,1,2)}}</td>
-              <td>
-                {{bcdiv($row->payable_salary,1,2)}}
-                @if($row->is_payroll)
-                <span title="Paid" class="check"><i class="fa fa-check"></i></span>
-                @endif
-              </td>
-            </tr>
+            @php $slNo = 1; @endphp
+            @foreach($salaries as $row) 
+              @if($row->active_status == 1)
+                <tr>
+                  <td>{{$slNo++}}</td>
+                  <td>
+                    @if($row->is_payroll)
+                      {{$row->driver->name}}
+                    @else
+                      {{$row->driver}}
+                    @endif
+                  </td>
+                  <td>
+                    @if($row->is_payroll)
+                      {{$row->driver->driver_vehicle->vehicle->license_plate}}
+                    @else
+                      {{$row->vehicle}}
+                    @endif
+                  </td>
+                  <td>{{$row->days_present}}/{{$row->days_absent}}</td>
+                  <td>{{bcdiv($row->gross_salary,1,2)}}</td>
+                  <td>{{bcdiv($row->bookingAdvance,1,2)}}</td>
+                  <td>{{bcdiv($row->salary_advance,1,2)}}</td>
+                  <td>{{bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)}}</td> 
+                  <td>{{bcdiv($row->deduct_amount,1,2)}}</td>
+                  <td>
+                    {{bcdiv($row->payable_salary,1,2)}}
+                    @if($row->is_payroll)
+                    <span title="Paid" class="check"><i class="fa fa-check"></i></span>
+                    @endif
+                  </td>
+                </tr>
+              @endif
             @endforeach
           </tbody>
            <tfoot>
@@ -158,7 +163,7 @@
         </table>
         <br>
         <table class="table">
-          <tr> <th style="float:right">Total Payable Salary : {{Hyvikk::get('currency')}} {{bcdiv($salaries->sum('payable_salary'),1,2)}}</th>
+          <tr> <th style="float:right">Total Payable Salary : {{Hyvikk::get('currency')}} {{bcdiv($salaries->where('active_status', 1)->sum('payable_salary'),1,2)}}</th>
           </tr>
       </table>
       </div>

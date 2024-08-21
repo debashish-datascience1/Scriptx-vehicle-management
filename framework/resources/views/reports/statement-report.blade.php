@@ -88,28 +88,36 @@
                 <tr>
                   <td>{{$k+1}}</td>
                   <td nowrap>{{Helper::getCanonicalDate($t->dateof,'default')}}</td>
-                  <td>{{$t->transaction->transaction_id}}</td>
-                  <td>{{$t->method->label}}</td>
-                  <td>{{$t->transaction->pay_type->label}}</td>
+                  <td>{{ $t->transaction->transaction_id ?? 'N/A' }}</td>
+                  <td>{{$t->method->label ?? 'N/A'}}</td>
+                  <td>{{$t->transaction->pay_type->label ?? 'N/A'}}</td>
                   <td>
-                    @if($t->transaction->param_id==18 && $t->transaction->advance_for==21)
-                      {{Hyvikk::get('currency')}}  {{$t->transaction->booking->advance_pay}} advance given to {{$t->transaction->booking->driver->name}} for Booking references <strong>{{Helper::getTransaction($t->transaction->from_id,$t->transaction->param_id)->transaction_id}}</strong>   on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
-                    @elseif($t->transaction->param_id==18 && $t->transaction->advance_for==22)
-                      {{Hyvikk::get('currency')}}  {{$t->transaction->booking->payment_amount}} paid by {{$t->transaction->booking->customer->name}} for Booking on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
-                    @elseif($t->transaction->param_id==19)
-                      {{Hyvikk::get('currency')}} {{bcdiv($t->transaction->total,1,2)}} {{$t->transaction->pay_type->label}}ed towards {{$t->transaction->payroll->driver->name}} for the month of <strong>{{date('F-Y',strtotime($t->transaction->payroll->for_date))}}/{{date('m-Y',strtotime($t->transaction->payroll->for_date))}}</strong>  {{$t->transaction->type==23 ? "to" : "from"}} {{$t->transaction->params->label}} on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
-                    @elseif($t->transaction->param_id==20)
-                      {{Hyvikk::get('currency')}} {{bcdiv($t->transaction->total,1,2)}} {{$t->transaction->pay_type->label}}ed towards {{$t->transaction->fuel->vendor->name}} for <strong>{{$t->transaction->fuel->vehicle_data->license_plate}}</strong> {{$t->transaction->type==23 ? "to" : "from"}}  {{$t->transaction->params->label}} on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
-                    @else
-                      {{Hyvikk::get('currency')}} {{bcdiv($t->transaction->total,1,2)}} {{$t->transaction->pay_type->label}}ed {{$t->transaction->type==23 ? "to" : "from"}} {{$t->transaction->params->label}} on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
-                    @endif
+                      @if($t->transaction)
+                          @if($t->transaction->param_id==18 && $t->transaction->advance_for==21)
+                              {{Hyvikk::get('currency')}}  {{$t->transaction->booking->advance_pay ?? 'N/A'}} advance given to {{$t->transaction->booking->driver->name ?? 'N/A'}} for Booking references <strong>{{Helper::getTransaction($t->transaction->from_id,$t->transaction->param_id)->transaction_id ?? 'N/A'}}</strong>   on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
+                          @elseif($t->transaction->param_id==18 && $t->transaction->advance_for==22)
+                              {{Hyvikk::get('currency')}}  {{$t->transaction->booking->payment_amount ?? 'N/A'}} paid by {{$t->transaction->booking->customer->name ?? 'N/A'}} for Booking on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
+                          @elseif($t->transaction->param_id==19)
+                              {{Hyvikk::get('currency')}} {{bcdiv($t->transaction->total,1,2)}} {{$t->transaction->pay_type->label ?? 'N/A'}}ed towards {{$t->transaction->payroll->driver->name ?? 'N/A'}} for the month of <strong>{{date('F-Y',strtotime($t->transaction->payroll->for_date))}}/{{date('m-Y',strtotime($t->transaction->payroll->for_date))}}</strong>  {{$t->transaction->type==23 ? "to" : "from"}} {{$t->transaction->params->label ?? 'N/A'}} on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
+                          @elseif($t->transaction->param_id==20)
+                              {{Hyvikk::get('currency')}} {{bcdiv($t->transaction->total,1,2)}} {{$t->transaction->pay_type->label ?? 'N/A'}}ed towards {{$t->transaction->fuel->vendor->name ?? 'N/A'}} for <strong>{{$t->transaction->fuel->vehicle_data->license_plate ?? 'N/A'}}</strong> {{$t->transaction->type==23 ? "to" : "from"}}  {{$t->transaction->params->label ?? 'N/A'}} on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
+                          @else
+                              {{Hyvikk::get('currency')}} {{bcdiv($t->transaction->total,1,2)}} {{$t->transaction->pay_type->label ?? 'N/A'}}ed {{$t->transaction->type==23 ? "to" : "from"}} {{$t->transaction->params->label ?? 'N/A'}} on <strong>{{Helper::getCanonicalDate($t->dateof,'default')}}</strong>
+                          @endif
+                      @else
+                          N/A
+                      @endif
                   </td>
                   <td>
-                    @if (!in_array($t->transaction->param_id,[18,20,26]))
-                      {{bcdiv($t->transaction->total,1,2)}}
-                    @else
-                      {{bcdiv($t->amount,1,2)}}
-                    @endif
+                      @if($t->transaction)
+                          @if (!in_array($t->transaction->param_id,[18,20,26]))
+                              {{bcdiv($t->transaction->total,1,2)}}
+                          @else
+                              {{bcdiv($t->amount,1,2)}}
+                          @endif
+                      @else
+                          N/A
+                      @endif
                   </td>
                 </tr>
             @endforeach

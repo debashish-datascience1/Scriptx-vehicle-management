@@ -3166,6 +3166,11 @@ class ReportsController extends Controller
 		// $filtered = strtotime($start)==strtotime($end) ? $filtered->whereBetween('dateof',["$start 00:00:00","$end 23:59:59"]) : $filtered->whereBetween('dateof',[$start,$end]);
 		$filtered = $filtered->whereBetween('dateof', [$start, $end]);
 
+		$filtered = $filtered->filter(function($item) {
+			return $item->transaction !== null;
+		});
+	
+
 		// dd($filtered);
 		$data['transactions'] = $filtered->flatten();
 		$data['result'] = "";
@@ -3469,6 +3474,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3587,6 +3593,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3627,6 +3634,7 @@ class ReportsController extends Controller
 
 		return view('reports.print_salary-report', $data);
 	}
+
 	public function exportReport_print(Request $request)
 	{
 		$driver_ids = $request->driver_id;
@@ -3642,6 +3650,13 @@ class ReportsController extends Controller
 		
 		$arrayList = [];
 		foreach ($driver_ids as $did) {
+			$userData =  User::where('id', $did)->first();
+			
+			// Skip inactive drivers
+			if (!$userData->is_active) {
+				continue;
+			}
+
 			$payroll = Payroll::where('for_date', $search_date)->where('user_id', $did);
 
 			//Working Days
@@ -3666,7 +3681,6 @@ class ReportsController extends Controller
 			
 			$bookingAdvance = !empty($booking_ids) ? AdvanceDriver::whereIn('booking_id', $booking_ids)->where('param_id', 7)->sum('value') : 0;
 
-			$userData =  User::where('id', $did)->first();
 			$gross_salary = $userData->salary;
 			$user_vehicle =  !empty($userData->driver_vehicle->vehicle) ? $userData->driver_vehicle->vehicle->license_plate : "-";
 			$payable_salary = $gross_salary - ($salary_advance + $bookingAdvance);
@@ -3695,7 +3709,8 @@ class ReportsController extends Controller
 				$newArray = [
 					"id" => $primaryID,
 					"user_id" => $did,
-					"driver" =>  User::find($did)->name,
+					"driver" =>  $userData->name,
+					"active_status" =>  $userData->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3740,10 +3755,11 @@ class ReportsController extends Controller
 			$file = fopen('php://output', 'w');
 			fputcsv($file, $columns);
 
-			foreach ($finalList as $index => $row) {
+			$slNo = 1;
+			foreach ($finalList as $row) {
 				$totalAdvance = bcdiv($row->bookingAdvance, 1, 2) + bcdiv($row->salary_advance, 1, 2);
 				fputcsv($file, [
-					$index + 1,
+					$slNo++,
 					$row->is_payroll ? $row->driver->name : $row->driver,
 					$row->is_payroll ? $row->driver->driver_vehicle->vehicle->license_plate : $row->vehicle,
 					$row->days_present . '/' . $row->days_absent,
@@ -3987,6 +4003,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -4085,9 +4102,11 @@ class ReportsController extends Controller
 			}
 
 			$bankInfo = $userData->bank;
-			$showRow = !$request->payment_type || 
+			$active_status = $userData->is_active;
+			$showRow = ($active_status == 1) && 
+					(!$request->payment_type || 
 					($request->payment_type == 'bank' && !empty($bankInfo)) || 
-					($request->payment_type == 'cash' && empty($bankInfo));
+					($request->payment_type == 'cash' && empty($bankInfo)));
 
 			if ($showRow) {
 				if ($payroll->exists()) {
@@ -4101,6 +4120,7 @@ class ReportsController extends Controller
 						"id" => $primaryID,
 						"user_id" => $did,
 						"driver" =>  User::find($did)->name,
+						"active_status" =>  $active_status,
 						"vehicle" =>  $user_vehicle,
 						"salary" => $gross_salary,
 						"date" => $search_date,
@@ -4137,9 +4157,11 @@ class ReportsController extends Controller
 			$index = 1;
 			foreach ($finalList as $row) {
 				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-				$showRow = !$request->payment_type || 
+				$active_status = $row->is_payroll ? $row->driver->is_active : $row->active_status;
+				$showRow = ($active_status == 1) && 
+						(!$request->payment_type || 
 						($request->payment_type == 'bank' && !empty($bankInfo)) || 
-						($request->payment_type == 'cash' && empty($bankInfo));
+						($request->payment_type == 'cash' && empty($bankInfo)));
 
 				if ($showRow) {
 					fputcsv($file, [
@@ -4156,9 +4178,11 @@ class ReportsController extends Controller
 			// Add total row
 			$totalPayableSalary = $finalList->sum(function ($row) use ($request) {
 				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-				$showRow = !$request->payment_type || 
+				$active_status = $row->is_payroll ? $row->driver->is_active : $row->active_status;
+				$showRow = ($active_status == 1) && 
+						(!$request->payment_type || 
 						($request->payment_type == 'bank' && !empty($bankInfo)) || 
-						($request->payment_type == 'cash' && empty($bankInfo));
+						($request->payment_type == 'cash' && empty($bankInfo)));
 				return $showRow ? $row->payable_salary : 0;
 			});
 

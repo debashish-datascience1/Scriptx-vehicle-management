@@ -1,4 +1,6 @@
-<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+?>
 
 <?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -111,41 +113,44 @@
             </tr>
           </thead>
           <tbody>
-            <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
-            <tr>
-              <td><?php echo e($k+1); ?></td>
-              <td>
-                <?php if($row->is_payroll): ?>
-                  <?php echo e($row->driver->name); ?>
+            <?php $slNo = 1; ?>
+            <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
+              <?php if($row->active_status == 1): ?>
+                <tr>
+                  <td><?php echo e($slNo++); ?></td>
+                  <td>
+                    <?php if($row->is_payroll): ?>
+                      <?php echo e($row->driver->name); ?>
 
-                <?php else: ?>
-                  <?php echo e($row->driver); ?>
+                    <?php else: ?>
+                      <?php echo e($row->driver); ?>
 
-                <?php endif; ?>
-              </td>
-              <td>
-                <?php if($row->is_payroll): ?>
-                  <?php echo e($row->driver->driver_vehicle->vehicle->license_plate); ?>
+                    <?php endif; ?>
+                  </td>
+                  <td>
+                    <?php if($row->is_payroll): ?>
+                      <?php echo e($row->driver->driver_vehicle->vehicle->license_plate); ?>
 
-                <?php else: ?>
-                  <?php echo e($row->vehicle); ?>
+                    <?php else: ?>
+                      <?php echo e($row->vehicle); ?>
 
-                <?php endif; ?>
-              </td>
-              <td><?php echo e($row->days_present); ?>/<?php echo e($row->days_absent); ?></td>
-              <td><?php echo e(bcdiv($row->gross_salary,1,2)); ?></td>
-              <td><?php echo e(bcdiv($row->bookingAdvance,1,2)); ?></td>
-              <td><?php echo e(bcdiv($row->salary_advance,1,2)); ?></td>
-              <td><?php echo e(bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)); ?></td> 
-              <td><?php echo e(bcdiv($row->deduct_amount,1,2)); ?></td>
-              <td>
-                <?php echo e(bcdiv($row->payable_salary,1,2)); ?>
+                    <?php endif; ?>
+                  </td>
+                  <td><?php echo e($row->days_present); ?>/<?php echo e($row->days_absent); ?></td>
+                  <td><?php echo e(bcdiv($row->gross_salary,1,2)); ?></td>
+                  <td><?php echo e(bcdiv($row->bookingAdvance,1,2)); ?></td>
+                  <td><?php echo e(bcdiv($row->salary_advance,1,2)); ?></td>
+                  <td><?php echo e(bcdiv($row->bookingAdvance + $row->salary_advance, 1, 2)); ?></td> 
+                  <td><?php echo e(bcdiv($row->deduct_amount,1,2)); ?></td>
+                  <td>
+                    <?php echo e(bcdiv($row->payable_salary,1,2)); ?>
 
-                <?php if($row->is_payroll): ?>
-                <span title="Paid" class="check"><i class="fa fa-check"></i></span>
-                <?php endif; ?>
-              </td>
-            </tr>
+                    <?php if($row->is_payroll): ?>
+                    <span title="Paid" class="check"><i class="fa fa-check"></i></span>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endif; ?>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
           </tbody>
            <tfoot>
@@ -165,7 +170,7 @@
         </table>
         <br>
         <table class="table">
-          <tr> <th style="float:right">Total Payable Salary : <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->sum('payable_salary'),1,2)); ?></th>
+          <tr> <th style="float:right">Total Payable Salary : <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($salaries->where('active_status', 1)->sum('payable_salary'),1,2)); ?></th>
           </tr>
       </table>
       </div>
