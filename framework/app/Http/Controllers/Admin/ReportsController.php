@@ -2894,15 +2894,10 @@ class ReportsController extends Controller
 
 	public function statement_post(Request $request)
 	{
-		// dd($request->all());
 		$incomeExpense = IncomeExpense::orderBy("id", "ASC")->get();
-		// $transaction = Transaction::get();
 
 		foreach ($incomeExpense as $key => $tr) {
-			// dd($tr,$tr->transaction_id,$tr->transaction);
-
 			$trash = $tr->transaction;
-			// dd($trash);
 			if (!$trash == null) {
 				//Booking,PartsInvoice,Fuel (Break and Continue)
 				if (($trash->param_id == 18 || $trash->param_id == 20 || $trash->param_id == 26 || $trash->param_id == 28) && $tr->amount == 0) { //check for advance_for=21
@@ -2910,82 +2905,14 @@ class ReportsController extends Controller
 					continue;
 				}
 				$transaction_data = Helper::getActualTransactionDate($trash->from_id, $trash->param_id);
-				// if ($trash->id == 6575) dd($transaction_data);
-				// if ($transaction_data->date == "0000-00-00") dd($trash->from_id, $trash->param_id);
 				$tr->dateof = $transaction_data->date;
 
-				// if ($trash->param_id == 18) { //bookings
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = Bookings::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	} else { //for driver advance
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date . " 00:00:00" : null;
-				// 	}
-				// } else if ($trash->param_id == 19) { //payroll
-				// 	$shalom = Payroll::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 20) { //fuel
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = FuelModel::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 25) { //salary advance
-				// 	$shalom = DailyAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 26) { //parts invoice
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = PartsInvoice::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 27) { //advance driver refund
-				// 	// $shalom = AdvanceDriver::where('id',$trash->from_id);
-				// 	// $tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	$tr->dateof = $trash->created_at;
-				// } else if ($trash->param_id == 28) { //work order
-				// 	$shalom = WorkOrders::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 29) { //starting amount
-				// 	$shalom = BankAccount::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->updated_at : null;
-				// } else if ($trash->param_id == 30) { //deposit
-				// 	$shalom = BankTransaction::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 31) { //revised
-				// 	$shalom = BankTransaction::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 32) { //driver liability
-				// 	$shalom = DailyAdvance::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 35) { //document renew
-				// 	$shalom = VehicleDocs::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 43) { //other advance
-				// 	$shalom = OtherAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 44) { //advance refund
-				// 	$shalom = OtherAdjust::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 49) { //down payment
-				// 	$shalom = PurchaseInfo::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->purchase_date : null;
-				// } else if ($trash->param_id == 50) { //emi date
-				// 	$shalom = EmiModel::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// }
 				$tr->type = $trash->type;
-				// if ($trash->id == 6575) dd($tr);
 			}
 		}
-		// dd($transaction->reverse()->toArray());
-		// $filtered = $transaction;
+		
 		$filtered = $incomeExpense->where('dateof', '!=', null)->sortBy('dateof')->flatten();
-		// $filtered1 = $incomeExpense->where('dateof','=',null)->flatten();
-		// dd($incomeExpense, $filtered);
-		// dd($filtered->first());
+		
 		if ($request->get('date1') == null)
 			$start = !empty($filtered) ? $filtered->first()->dateof : null;
 		else
@@ -2998,16 +2925,10 @@ class ReportsController extends Controller
 
 		$start = date('Y-m-d', strtotime($start));
 		$end = date('Y-m-d', strtotime($end));
-		// dd($filtered);
-		// dd($filtered->get(count($filtered)-2));
-		// dd($filtered->first(),$filtered->reverse()->first());
-		// dd($start,$end);
-		//Opening Balance and closing balance
+		
 		$openingCredit = $filtered->where('dateof', '<', $start)->where('type', 23)->sum('amount'); //DOUBT X
 		$openingDebit = $filtered->where('dateof', '<', $start)->where('type', 24)->sum('amount');
 		$openingBalance = $openingCredit - $openingDebit;
-		// dd($openingCredit,$openingDebit,$openingBalance);
-
 		$closingCredit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 23)->sum('amount');
 		$closingDebit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 24)->sum('amount');
 		$closingAmount = $closingCredit - $closingDebit;
@@ -3018,9 +2939,6 @@ class ReportsController extends Controller
 			$closingBalance = $openingBalance + $closingAmount;
 		}
 
-		// dd($openingBalance,$closingCredit,$closingDebit,$closingAmount,$closingBalance); //DOUBT X
-
-		// $filtered = strtotime($start)==strtotime($end) ? $filtered->whereBetween('dateof',["$start 00:00:00","$end 23:59:59"]) : $filtered->whereBetween('dateof',[$start,$end]);
 		$filtered = $filtered->whereBetween('dateof', [$start, $end]);
 
 		// dd($filtered);
@@ -3032,8 +2950,7 @@ class ReportsController extends Controller
 		$data['openingBalance'] = $openingBalance;
 		$data['closingBalance'] = $closingBalance;
 		$data['request'] = $request->all();
-		// dd($data);
-		// dd($data['transactions']->first());
+		
 		return view('reports.statement', $data);
 	}
 
@@ -3041,13 +2958,8 @@ class ReportsController extends Controller
 	{
 		// dd($request->all());
 		$incomeExpense = IncomeExpense::orderBy("id", "ASC")->get();
-		// $transaction = Transaction::get();
-
 		foreach ($incomeExpense as $key => $tr) {
-			// dd($tr,$tr->transaction_id,$tr->transaction);
-
 			$trash = $tr->transaction;
-			// dd($trash);
 			if (!$trash == null) {
 				//Booking,PartsInvoice,Fuel (Break and Continue)
 				if (($trash->param_id == 18 || $trash->param_id == 20 || $trash->param_id == 26 || $trash->param_id == 28) && $tr->amount == 0) { //check for advance_for=21
@@ -3055,80 +2967,11 @@ class ReportsController extends Controller
 					continue;
 				}
 				$transaction_data = Helper::getActualTransactionDate($trash->from_id, $trash->param_id);
-				// if ($trash->id == 6575) dd($transaction_data);
 				$tr->dateof = $transaction_data->date;
-
-				// if ($trash->param_id == 18) { //bookings
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = Bookings::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	} else { //for driver advance
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date . " 00:00:00" : null;
-				// 	}
-				// } else if ($trash->param_id == 19) { //payroll
-				// 	$shalom = Payroll::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 20) { //fuel
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = FuelModel::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 25) { //salary advance
-				// 	$shalom = DailyAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 26) { //parts invoice
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = PartsInvoice::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 27) { //advance driver refund
-				// 	// $shalom = AdvanceDriver::where('id',$trash->from_id);
-				// 	// $tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	$tr->dateof = $trash->created_at;
-				// } else if ($trash->param_id == 28) { //work order
-				// 	$shalom = WorkOrders::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 29) { //starting amount
-				// 	$shalom = BankAccount::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->updated_at : null;
-				// } else if ($trash->param_id == 30) { //deposit
-				// 	$shalom = BankTransaction::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 31) { //revised
-				// 	$shalom = BankTransaction::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 32) { //driver liability
-				// 	$shalom = DailyAdvance::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 35) { //document renew
-				// 	$shalom = VehicleDocs::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 43) { //other advance
-				// 	$shalom = OtherAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 44) { //advance refund
-				// 	$shalom = OtherAdjust::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 49) { //down payment
-				// 	$shalom = PurchaseInfo::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->purchase_date : null;
-				// } else if ($trash->param_id == 50) { //emi date
-				// 	$shalom = EmiModel::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// }
 				$tr->type = $trash->type;
-				// if ($trash->id == 6575) dd($tr);
 			}
 		}
-		// dd($transaction->reverse()->toArray());
-		// $filtered = $transaction;
 		$filtered = $incomeExpense->where('dateof', '!=', null)->sortBy('dateof')->flatten();
-		// $filtered1 = $incomeExpense->where('dateof','=',null)->flatten();
-		// dd($incomeExpense,$filtered,$filtered1);
 		if ($request->get('date1') == null)
 			$start = !empty($filtered) ? $filtered->first()->dateof : null;
 		else
@@ -3141,16 +2984,9 @@ class ReportsController extends Controller
 
 		$start = date('Y-m-d', strtotime($start));
 		$end = date('Y-m-d', strtotime($end));
-		// dd($filtered);
-		// dd($filtered->get(count($filtered)-2));
-		// dd($filtered->first(),$filtered->reverse()->first());
-		// dd($start,$end);
-		//Opening Balance and closing balance
 		$openingCredit = $filtered->where('dateof', '<', $start)->where('type', 23)->sum('amount'); //DOUBT X
 		$openingDebit = $filtered->where('dateof', '<', $start)->where('type', 24)->sum('amount');
 		$openingBalance = $openingCredit - $openingDebit;
-		// dd($openingCredit,$openingDebit,$openingBalance);
-
 		$closingCredit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 23)->sum('amount');
 		$closingDebit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 24)->sum('amount');
 		$closingAmount = $closingCredit - $closingDebit;
@@ -3160,18 +2996,12 @@ class ReportsController extends Controller
 		} else {
 			$closingBalance = $openingBalance + $closingAmount;
 		}
-
-		// dd($openingBalance,$closingCredit,$closingDebit,$closingAmount,$closingBalance); //DOUBT X
-
-		// $filtered = strtotime($start)==strtotime($end) ? $filtered->whereBetween('dateof',["$start 00:00:00","$end 23:59:59"]) : $filtered->whereBetween('dateof',[$start,$end]);
 		$filtered = $filtered->whereBetween('dateof', [$start, $end]);
 
 		$filtered = $filtered->filter(function($item) {
 			return $item->transaction !== null;
 		});
 	
-
-		// dd($filtered);
 		$data['transactions'] = $filtered->flatten();
 		$data['result'] = "";
 		$data['dates'] = [$start, $end];
@@ -3181,7 +3011,6 @@ class ReportsController extends Controller
 		$data['closingBalance'] = $closingBalance;
 		$data['request'] = $request->all();
 		$data['closingAmount'] = $closingAmount;
-		// dd($data);
 		return view('reports.statement-report', $data);
 	}
 

@@ -32,7 +32,9 @@
   </style>
 </head>
 <body onload="window.print();">
-<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+?>
 
   <div class="wrapper">
   <!-- Main content -->
@@ -84,22 +86,20 @@
                   <td><?php echo e($t->method->label ?? 'N/A'); ?></td>
                   <td><?php echo e($t->transaction->pay_type->label ?? 'N/A'); ?></td>
                   <td>
-                      <?php if($t->transaction): ?>
-                          <?php if($t->transaction->param_id==18 && $t->transaction->advance_for==21): ?>
-                              <?php echo e(Hyvikk::get('currency')); ?>  <?php echo e($t->transaction->booking->advance_pay ?? 'N/A'); ?> advance given to <?php echo e($t->transaction->booking->driver->name ?? 'N/A'); ?> for Booking references <strong><?php echo e(Helper::getTransaction($t->transaction->from_id,$t->transaction->param_id)->transaction_id ?? 'N/A'); ?></strong>   on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
-                          <?php elseif($t->transaction->param_id==18 && $t->transaction->advance_for==22): ?>
-                              <?php echo e(Hyvikk::get('currency')); ?>  <?php echo e($t->transaction->booking->payment_amount ?? 'N/A'); ?> paid by <?php echo e($t->transaction->booking->customer->name ?? 'N/A'); ?> for Booking on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
-                          <?php elseif($t->transaction->param_id==19): ?>
-                              <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->transaction->total,1,2)); ?> <?php echo e($t->transaction->pay_type->label ?? 'N/A'); ?>ed towards <?php echo e($t->transaction->payroll->driver->name ?? 'N/A'); ?> for the month of <strong><?php echo e(date('F-Y',strtotime($t->transaction->payroll->for_date))); ?>/<?php echo e(date('m-Y',strtotime($t->transaction->payroll->for_date))); ?></strong>  <?php echo e($t->transaction->type==23 ? "to" : "from"); ?> <?php echo e($t->transaction->params->label ?? 'N/A'); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
-                          <?php elseif($t->transaction->param_id==20): ?>
-                              <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->transaction->total,1,2)); ?> <?php echo e($t->transaction->pay_type->label ?? 'N/A'); ?>ed towards <?php echo e($t->transaction->fuel->vendor->name ?? 'N/A'); ?> for <strong><?php echo e($t->transaction->fuel->vehicle_data->license_plate ?? 'N/A'); ?></strong> <?php echo e($t->transaction->type==23 ? "to" : "from"); ?>  <?php echo e($t->transaction->params->label ?? 'N/A'); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
-                          <?php else: ?>
-                              <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->transaction->total,1,2)); ?> <?php echo e($t->transaction->pay_type->label ?? 'N/A'); ?>ed <?php echo e($t->transaction->type==23 ? "to" : "from"); ?> <?php echo e($t->transaction->params->label ?? 'N/A'); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
-                          <?php endif; ?>
-                      <?php else: ?>
-                          N/A
-                      <?php endif; ?>
-                  </td>
+                    <?php if($t->transaction->param_id==18 && $t->transaction->advance_for==21): ?>
+                      <?php echo e(Hyvikk::get('currency')); ?>  <?php echo e($t->transaction->booking->advance_pay); ?> advance given to <?php echo e($t->transaction->booking->driver->name); ?> for Booking references <strong><?php echo e(!empty(Helper::getTransaction($t->transaction->from_id,$t->transaction->param_id)) ? Helper::getTransaction($t->transaction->from_id,$t->transaction->param_id)->transaction_id : 'n/a'); ?> </strong>  on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
+                    <?php elseif($t->transaction->param_id==18 && $t->transaction->advance_for==22): ?>
+                      <?php echo e(Hyvikk::get('currency')); ?>  <?php echo e($t->transaction->booking->payment_amount); ?> paid by <?php echo e($t->transaction->booking->customer->name); ?> for Booking on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
+                    <?php elseif($t->transaction->param_id==18): ?>
+                      <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->amount,1,2)); ?> <?php echo e($t->transaction->pay_type->label); ?>ed <?php echo e($t->transaction->type==23 ? "to" : "from"); ?> <?php echo e($t->transaction->params->label); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
+                    <?php elseif($t->transaction->param_id==19): ?>
+                      <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->transaction->total,1,2)); ?> <?php echo e($t->transaction->pay_type->label); ?>ed towards <?php echo e($t->transaction->payroll->driver->name); ?> for the month of <strong><?php echo e(date('F-Y',strtotime($t->transaction->payroll->for_date))); ?>/<?php echo e(date('m-Y',strtotime($t->transaction->payroll->for_date))); ?></strong>  <?php echo e($t->transaction->type==23 ? "to" : "from"); ?> <?php echo e($t->transaction->params->label); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
+                    <?php elseif($t->transaction->param_id==20): ?>
+                      <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->transaction->total,1,2)); ?> <?php echo e($t->transaction->pay_type->label); ?>ed towards <?php echo e($t->transaction->fuel->vendor->name); ?> for <strong><?php echo e($t->transaction->fuel->vehicle_data->license_plate); ?></strong> <?php echo e($t->transaction->type==23 ? "to" : "from"); ?>  <?php echo e($t->transaction->params->label); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
+                    <?php else: ?>
+                      <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(bcdiv($t->transaction->total,1,2)); ?> <?php echo e($t->transaction->pay_type->label); ?>ed <?php echo e($t->transaction->type==23 ? "to" : "from"); ?> <?php echo e($t->transaction->params->label); ?> on <strong><?php echo e(Helper::getCanonicalDate($t->dateof,'default')); ?></strong>
+                    <?php endif; ?>
+							    </td>
                   <td>
                       <?php if($t->transaction): ?>
                           <?php if(!in_array($t->transaction->param_id,[18,20,26])): ?>
