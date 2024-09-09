@@ -47,6 +47,7 @@ return [
 	'addIncome' => 'Add Income',
 	'addExpense' => 'Add Expense',
 	'partSell' => 'Parts Sell',
+	'fastag' => 'Fastag',
 	'partTransaction' => 'Part Transaction',
 	'bookings' => 'Bookings',
 	'newbooking' => 'New Booking',

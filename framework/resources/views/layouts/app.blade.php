@@ -558,14 +558,14 @@
               </li>
             </ul>
           </li> @endif
-          @if(Request::is('admin/accounting*') || Request::is('admin/bank-account*') || Request::is('admin/ob-balance*'))
+          @if(Request::is('admin/accounting*') || Request::is('admin/bank-account*') || Request::is('admin/ob-balance*') ||  Request::is('admin/fastag*'))
             @php($class="menu-open")
             @php($active="active")
 
             @else
             @php($class="")
             @php($active="")
-            @endif
+          @endif
           @if(in_array(1,$modules)) <li class="nav-item has-treeview {{$class}}">
             <a href="#" class="nav-link {{$active}}">
               <i class="nav-icon fa fa-money"></i>
@@ -603,6 +603,12 @@
                 <a href="{{ route('bulk_pay.manage')}}" class="nav-link @if(Request::is('admin/bank-account/bulk_pay/manage')) active @endif">
                   <i class="fa fa-newspaper-o nav-icon"></i>
                   <p>@lang('menu.manageBulkPay')</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('fastag.index')}}" class="nav-link @if(Request::is('admin/fastag*')) active @endif">
+                  <i class="fa fa-newspaper-o nav-icon"></i>
+                  <p>@lang('menu.fastag')</p>
                 </a>
               </li>
               {{-- <li class="nav-item">

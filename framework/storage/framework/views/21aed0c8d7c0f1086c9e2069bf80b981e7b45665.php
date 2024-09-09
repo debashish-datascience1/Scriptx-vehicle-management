@@ -518,14 +518,14 @@
               </li>
             </ul>
           </li> <?php endif; ?>
-          <?php if(Request::is('admin/accounting*') || Request::is('admin/bank-account*') || Request::is('admin/ob-balance*')): ?>
+          <?php if(Request::is('admin/accounting*') || Request::is('admin/bank-account*') || Request::is('admin/ob-balance*') ||  Request::is('admin/fastag*')): ?>
             <?php ($class="menu-open"); ?>
             <?php ($active="active"); ?>
 
             <?php else: ?>
             <?php ($class=""); ?>
             <?php ($active=""); ?>
-            <?php endif; ?>
+          <?php endif; ?>
           <?php if(in_array(1,$modules)): ?> <li class="nav-item has-treeview <?php echo e($class); ?>">
             <a href="#" class="nav-link <?php echo e($active); ?>">
               <i class="nav-icon fa fa-money"></i>
@@ -563,6 +563,12 @@
                 <a href="<?php echo e(route('bulk_pay.manage')); ?>" class="nav-link <?php if(Request::is('admin/bank-account/bulk_pay/manage')): ?> active <?php endif; ?>">
                   <i class="fa fa-newspaper-o nav-icon"></i>
                   <p><?php echo app('translator')->getFromJson('menu.manageBulkPay'); ?></p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?php echo e(route('fastag.index')); ?>" class="nav-link <?php if(Request::is('admin/fastag*')): ?> active <?php endif; ?>">
+                  <i class="fa fa-newspaper-o nav-icon"></i>
+                  <p><?php echo app('translator')->getFromJson('menu.fastag'); ?></p>
                 </a>
               </li>
               

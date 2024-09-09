@@ -19,54 +19,64 @@ use Helper;
 
 class DailyAdvanceController extends Controller
 {
+    // public function index()
+    // {
+    //     //Updating previous advance to driver details to transaction
+    //     // $advances = AdvanceDriver::where('param_id', 7)->whereRaw("value IS NOT NULL")->get();
+    //     // // dd($advances);
+    //     // foreach ($advances as $advance) {
+    //     //     $driver_id = Bookings::find($advance->booking_id)->driver_id;
+    //     //     $pick_date = date("Y-m-d", strtotime(Bookings::find($advance->booking_id)->pickup));
+    //     //     $array = ['driver_id' => $driver_id, 'date' => $pick_date, 'amount' => $advance->value, 'remarks' => $advance->remarks];
+    //     //     // dd($array);
+    //     //     $dailyid = DailyAdvance::create($array)->id;
+
+    //     //     // dd($array);
+
+    //     //     // Accounting
+    //     //     if (!empty($advance->value)) {
+    //     //         $account['from_id'] = $dailyid; //daily advance id
+    //     //         $account['type'] = 24; //Debit 
+    //     //         $account['bank_id'] = 1; //SELF CASH Bank Account
+    //     //         $account['param_id'] = 25; //From Daily Advance
+    //     //         $account['advance_for'] = 21; //Driver Advance in Daily Advance
+    //     //         $account['total'] = bcdiv($advance->value, 1, 2);
+
+
+    //     //         $transid = Transaction::create($account)->id;
+    //     //         $trash = ['type' => 24, 'from' => 25, 'id' => $transid];
+    //     //         $transaction_id = Helper::transaction_id($trash);
+    //     //         Transaction::find($transid)->update(['transaction_id' => $transaction_id]);
+
+    //     //         $income['transaction_id'] = $transid;
+    //     //         $income['payment_method'] = 17;
+    //     //         $income['date'] = $pick_date;
+    //     //         $income['amount'] = bcdiv($advance->value, 1, 2);
+    //     //         $income['remaining'] = 0;
+    //     //         $income['remarks'] = $advance->remarks;
+
+    //     //         IncomeExpense::create($income);
+    //     //     }
+    //     // }
+
+
+    //     $index['dailys'] = DailyAdvance::orderBy('id', 'DESC')->get();
+    //     foreach ($index['dailys'] as $d) {
+    //         $trash = Transaction::where(['from_id' => $d->id, 'param_id' => 25]);
+    //         $d->is_transaction = $trash->exists() ? true : false;
+    //     }
+    //     // dd($index);
+    //     return view('daily_advance.index', $index);
+    // }
     public function index()
     {
-        //Updating previous advance to driver details to transaction
-        // $advances = AdvanceDriver::where('param_id', 7)->whereRaw("value IS NOT NULL")->get();
-        // // dd($advances);
-        // foreach ($advances as $advance) {
-        //     $driver_id = Bookings::find($advance->booking_id)->driver_id;
-        //     $pick_date = date("Y-m-d", strtotime(Bookings::find($advance->booking_id)->pickup));
-        //     $array = ['driver_id' => $driver_id, 'date' => $pick_date, 'amount' => $advance->value, 'remarks' => $advance->remarks];
-        //     // dd($array);
-        //     $dailyid = DailyAdvance::create($array)->id;
+        $dailys = DailyAdvance::orderBy('id', 'DESC')->paginate(50); // Adjust the number as needed
 
-        //     // dd($array);
-
-        //     // Accounting
-        //     if (!empty($advance->value)) {
-        //         $account['from_id'] = $dailyid; //daily advance id
-        //         $account['type'] = 24; //Debit 
-        //         $account['bank_id'] = 1; //SELF CASH Bank Account
-        //         $account['param_id'] = 25; //From Daily Advance
-        //         $account['advance_for'] = 21; //Driver Advance in Daily Advance
-        //         $account['total'] = bcdiv($advance->value, 1, 2);
-
-
-        //         $transid = Transaction::create($account)->id;
-        //         $trash = ['type' => 24, 'from' => 25, 'id' => $transid];
-        //         $transaction_id = Helper::transaction_id($trash);
-        //         Transaction::find($transid)->update(['transaction_id' => $transaction_id]);
-
-        //         $income['transaction_id'] = $transid;
-        //         $income['payment_method'] = 17;
-        //         $income['date'] = $pick_date;
-        //         $income['amount'] = bcdiv($advance->value, 1, 2);
-        //         $income['remaining'] = 0;
-        //         $income['remarks'] = $advance->remarks;
-
-        //         IncomeExpense::create($income);
-        //     }
-        // }
-
-
-        $index['dailys'] = DailyAdvance::orderBy('id', 'DESC')->get();
-        foreach ($index['dailys'] as $d) {
-            $trash = Transaction::where(['from_id' => $d->id, 'param_id' => 25]);
-            $d->is_transaction = $trash->exists() ? true : false;
+        foreach ($dailys as $d) {
+            $d->is_transaction = Transaction::where(['from_id' => $d->id, 'param_id' => 25])->exists();
         }
-        // dd($index);
-        return view('daily_advance.index', $index);
+
+        return view('daily_advance.index', compact('dailys'));
     }
 
     public function create()
@@ -98,7 +108,7 @@ class DailyAdvanceController extends Controller
                 // dd($array);
                 $dailyid = DailyAdvance::create($array)->id;
 
-                // dd($array);
+                
 
                 // Accounting
                 if (!empty($request->amount)) {
@@ -109,8 +119,8 @@ class DailyAdvanceController extends Controller
                     $account['advance_for'] = 21; //Driver Advance in Daily Advance
                     $account['total'] = $request->amount;
 
-
                     $transid = Transaction::create($account)->id;
+
                     $trash = ['type' => 24, 'from' => 25, 'id' => $transid];
                     $transaction_id = Helper::transaction_id($trash);
                     Transaction::find($transid)->update(['transaction_id' => $transaction_id]);
@@ -121,8 +131,8 @@ class DailyAdvanceController extends Controller
                     $income['amount'] = $request->amount;
                     $income['remaining'] = 0;
                     $income['remarks'] = $request->remarks[$id];
-
                     IncomeExpense::create($income);
+
                 }
             }
         }

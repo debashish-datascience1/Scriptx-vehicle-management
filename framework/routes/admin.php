@@ -333,6 +333,8 @@ Route::namespace('Admin')->group(function () {
 
         Route::get("/bank-account/view_event/{id}", "BankAccountController@view_event")->middleware('userpermission:4');
         Route::resource('/bank-account', 'BankAccountController')->middleware('userpermission:S');
+        Route::resource('/fastag', 'FastagController')->middleware('userpermission:14');
+
         Route::get("/ob-balance/view_event/{id}", "OBBalanceController@view_event")->middleware('userpermission:4');
         Route::resource('/ob-balance', 'OBBalanceController')->middleware('userpermission:S');
         Route::get('/leave/get_remarks/{id}', 'LeaveController@get_remarks');
