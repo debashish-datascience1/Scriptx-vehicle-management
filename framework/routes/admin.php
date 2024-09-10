@@ -445,6 +445,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('/bookings/dropofftime', 'BookingsController@dropofftime')->name("bookings.dropofftime")->middleware('userpermission:4');
         Route::post('/bookings/timeperltr', 'BookingsController@timeperltr')->name("bookings.timeperltr")->middleware('userpermission:4');
         Route::post('/greater', 'BookingsController@greater')->name("bookings.greater")->middleware('userpermission:4');
+        Route::post('/bookings/{id}/undo-complete', 'BookingsController@undoComplete')->name('bookings.undoComplete')->middleware('userpermission:4');
 
         Route::post("/reports/monthly", "ReportsController@monthly_post")->name("reports.monthly")->middleware('userpermission:4');
         Route::post("/reports/booking", "ReportsController@booking_post")->name("reports.booking")->middleware('userpermission:4');

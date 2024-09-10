@@ -478,23 +478,49 @@ class BookingsController extends Controller
         return view("bookings.edit", $index);
     }
 
-    public function destroy(Request $request)
+    // public function destroy(Request $request)
+    // {
+    //     // dd($request->get('id'));
+    //     $id = $request->id;
+    //     $trns = Transaction::where(['from_id' => $id, 'param_id' => 18]);
+    //     // dd($trns);
+    //     $trns_id = $trns->first()->id;
+    //     // dd($trns_id);
+    //     $trns->delete();
+    //     IncomeExpense::where('transaction_id', $trns_id)->delete();
+    //     Bookings::find($id)->delete();
+    //     //Advance Customer Ends
+    //     // Helper::toJSON(['param_id' => 18]);
+    //     // return redirect()->route('bookings.index');
+    //     $sessionArray = Session::get('globalSearch');
+    //     return redirect()->back()->withInput($sessionArray);
+    // }
+    public function destroy(Request $request, $id)
     {
-        // dd($request->get('id'));
-        $id = $request->id;
-        $trns = Transaction::where(['from_id' => $id, 'param_id' => 18]);
-        $trns_id = $trns->first()->id;
-        $trns->delete();
-        // dd($trns_id);
-        IncomeExpense::where('transaction_id', $trns_id)->delete();
-        Bookings::find($id)->delete();
-        //Advance Customer Ends
-        // Helper::toJSON(['param_id' => 18]);
-        // return redirect()->route('bookings.index');
-        $sessionArray = Session::get('globalSearch');
-        return redirect()->back()->withInput($sessionArray);
+        // Find the booking
+        $booking = Bookings::find($id);
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+    
+        // Find the transaction
+        $trns = Transaction::where(['from_id' => $id, 'param_id' => 18])->first();
+        
+        if ($trns) {
+            $trns_id = $trns->id;
+            
+            // Delete related IncomeExpense
+            IncomeExpense::where('transaction_id', $trns_id)->delete();
+            
+            // Delete the transaction
+            $trns->delete();
+        }
+        
+        // Delete the booking
+        $booking->delete();
+    
+        return response()->json(['success' => true, 'message' => 'Booking deleted successfully']);
     }
-
     protected function check_booking($pickup, $dropoff, $vehicle)
     {
 
@@ -1217,5 +1243,19 @@ class BookingsController extends Controller
     {
         $response = ['advance' => Helper::greater($request->enter, $request->purse)];
         return response()->json($response);
+    }
+
+    public function undoComplete($id)
+    {
+        $booking = Bookings::findOrFail($id);
+        $booking->ride_status = 'Upcoming';
+        $booking->status = 0;  // Assuming 0 means not completed
+        $booking->receipt = 0; // Assuming 0 means no receipt generated
+        $booking->save();
+    
+        // You might need to update or delete related records as well
+        // For example, if you have a separate table for completed bookings
+    
+        return redirect()->back()->with('success', 'Booking status has been reverted to Upcoming.');
     }
 }

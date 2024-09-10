@@ -108,41 +108,36 @@
                 </td>
                 
                 <td style="width: 10% !important">
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-                      <span class="fa fa-gear"></span>
-                      <span class="sr-only">Toggle Dropdown</span>
-                    </button>
-                    <div class="dropdown-menu custom" role="menu">
-                      <a class="dropdown-item vbook" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal2"  style="cursor:pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> <?php echo app('translator')->getFromJson('fleet.viewBookingDetails'); ?></a>
-                      <a href="print_booking_new/<?php echo e($row->id); ?>" class="dropdown-item" data-id="<?php echo e($row->id); ?>" style="cursor:pointer;" target="_blank"> <span aria-hidden="true" class="fa fa-print" style="color: #1114b4;"></span> Print</a>
-                      
-                      <?php if($row->ride_status == 'Completed'): ?>
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+                        <span class="fa fa-gear"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                      </button>
+                      <div class="dropdown-menu custom" role="menu">
+                        <a class="dropdown-item vbook" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal2"  style="cursor:pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> <?php echo app('translator')->getFromJson('fleet.viewBookingDetails'); ?></a>
+                        <a href="print_booking_new/<?php echo e($row->id); ?>" class="dropdown-item" data-id="<?php echo e($row->id); ?>" style="cursor:pointer;" target="_blank"> <span aria-hidden="true" class="fa fa-print" style="color: #1114b4;"></span> Print</a>
+                        
+                        <?php if($row->ride_status == 'Completed'): ?>
+                        <a class="dropdown-item vUndo" data-id="<?php echo e($row->id); ?>" style="cursor: pointer;">
+                          <span class="fa fa-undo" aria-hidden="true" style="color: #0d9c00"></span> Undo Complete
+                          <span class="fa fa-spinner fa-spin" style="display: none;"></span>
+                        </a>     
+                        <?php endif; ?>
                         <a class="dropdown-item" href="<?php echo e(url('admin/bookings/'.$row->id.'/edit')); ?>"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
-                        <a class="dropdown-item vRoute" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
-                      <?php else: ?>
-                        <?php if($row->status==0 && $row->ride_status != "Cancelled" && !empty($row->transid) && $row->inc_rows<2 && Helper::isEligible($row->id,18)): ?>
-                          <a class="dropdown-item" href="<?php echo e(url('admin/bookings/'.$row->id.'/edit')); ?>"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
-                          <a class="dropdown-item vtype" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal" style="cursor:pointer;"> <span class="fa fa-trash" aria-hidden="true" style="color: #dd4b39;"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?></a>
+                        
+                        <?php if($row->ride_status != 'Completed'): ?>
+                          <a class="dropdown-item vtype" data-id="<?php echo e($row->id); ?>" style="cursor:pointer;">
+                            <span class="fa fa-trash" aria-hidden="true" style="color: #dd4b39;"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?>
+                          </a>
                           <a class="dropdown-item vDriverAdvanceLater" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalDriverAdvanceLater" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-inr" aria-hidden="true" style="color: #0d9c00"></span> Late Driver Advance</a>
                           <?php if($row->receipt != 1): ?>
-                            
+                            <a class="dropdown-item vcomplete" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalComplete" data-backdrop='static' data-keyboard='false' style="cursor:pointer;"> <span class="fa fa-check" aria-hidden="true" style="color: #0d9c00;"></span> Mark as Complete</a>
                           <?php endif; ?>
                         <?php endif; ?>
-                        <?php if($row->vehicle_id != null): ?>
-                          <?php if($row->status==0 && $row->receipt != 1): ?>
-                            <?php if(Auth::user()->user_type != "C" && $row->ride_status != "Cancelled"): ?>
-                              <a class="dropdown-item vcomplete" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalComplete" data-backdrop='static' data-keyboard='false' style="cursor:pointer;"> <span class="fa fa-check" aria-hidden="true" style="color: #0d9c00;"></span> Mark as Complete</a>
-                              <a class="dropdown-item vRoute" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
-                            <?php endif; ?>
-                          <?php elseif($row->receipt == 1): ?>
-                            
-                            
-                          <?php endif; ?>
-                        <?php endif; ?>
-                      <?php endif; ?>
+                        
+                        <a class="dropdown-item vRoute" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
+                      </div>
                     </div>
-                  </div>
                 <?php echo Form::open(['url' => 'admin/bookings/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'book_'.$row->id]); ?>
 
                 <?php echo Form::hidden("id",$row->id); ?>
@@ -915,6 +910,91 @@ $(".sum").change(function(){
         return false;
     })
   })
+  $(document).ready(function() {
+    $(".vUndo").click(function(){
+        var id = $(this).data('id');
+        var $button = $(this);
+        var $spinner = $button.find('.fa-spinner');
+        
+        if(confirm("Are you sure you want to undo this completed booking?")) {
+            // Show spinner and disable button immediately
+            $spinner.show();
+            $button.prop('disabled', true);
+            
+            // Start a page reload immediately
+            location.reload();
+            
+            // Perform the AJAX request in the background
+            $.ajax({
+                url: '<?php echo e(url("admin/bookings")); ?>/' + id + '/undo-complete',
+                type: 'POST',
+                data: {
+                    _token: '<?php echo e(csrf_token()); ?>'
+                },
+                success: function(response) {
+                    // The page is already reloading, so we don't need to do anything here
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
+                    // The page is already reloading, so we don't need to do anything here
+                }
+            });
+        }
+    });
+});
+$(document).ready(function() {
+    $("body").on("click", ".vtype", function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        var row = $(this).closest('tr');
+        
+        if (confirm("Are you sure you want to delete this booking?")) {
+            $.ajax({
+                url: '<?php echo e(url("admin/bookings")); ?>/' + id,
+                type: 'DELETE',
+                data: {
+                    _token: '<?php echo e(csrf_token()); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Remove the deleted row from the table
+                        row.remove();
+                        // Show success message
+                        new PNotify({
+                            title: 'Success!',
+                            text: response.message,
+                            type: 'success'
+                        });
+                        
+                        // Update row numbers
+                        updateRowNumbers();
+                    } else {
+                        // Show error message
+                        new PNotify({
+                            title: 'Error!',
+                            text: response.message,
+                            type: 'error'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
+                    new PNotify({
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the booking.',
+                        type: 'error'
+                    });
+                }
+            });
+        }
+    });
+
+    function updateRowNumbers() {
+        $('#data_table12 tbody tr').each(function(index) {
+            $(this).find('td:eq(1)').text(index + 1);
+        });
+    }
+});
 </script>
 <?php $__env->stopSection(); ?>
 

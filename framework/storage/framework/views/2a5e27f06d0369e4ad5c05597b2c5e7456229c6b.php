@@ -1,21 +1,15 @@
 <div role="tabpanel" style="margin-bottom: 10px;">
     <ul class="nav nav-pills">
-        <li class="nav-item"><a href="#info-tab" data-toggle="tab" class="nav-link custom_padding active" style="margin-bottom: 10px;"> General Information <i class="fa"></i></a>
-        </li>
-
-        <li class="nav-item"><a href="#load-tab" data-toggle="tab" class="nav-link custom_padding"> Load Details <i class="fa"></i></a>
-        </li>
-
-        <li class="nav-item"><a href="#journey-tab" data-toggle="tab" class="nav-link custom_padding"> Journey Details <i class="fa"></i></a>
-        </li>
+        <li class="nav-item"><a href="#info-tab" data-toggle="tab" class="nav-link custom_padding active" style="margin-bottom: 10px;"> General Information <i class="fa"></i></a></li>
+        <li class="nav-item"><a href="#load-tab" data-toggle="tab" class="nav-link custom_padding"> Load Details <i class="fa"></i></a></li>
+        <li class="nav-item"><a href="#journey-tab" data-toggle="tab" class="nav-link custom_padding"> Journey Details <i class="fa"></i></a></li>
         <?php if($booking->status==1): ?>
-        <li class="nav-item adexist"><a href="#advance-tab" data-toggle="tab" class="nav-link custom_padding"> Advance <i class="fa"></i></a>
-        </li>
+        <li class="nav-item adexist"><a href="#advance-tab" data-toggle="tab" class="nav-link custom_padding"> Advance <i class="fa"></i></a></li>
         <?php endif; ?>
     </ul>
 
     <div class="tab-content">
-    <!-- General Information Tab-->
+        <!-- General Information, Load, and Journey tabs remain unchanged -->
         <div class="tab-pane active" id="info-tab">
             <table class="table table-striped">
                 <tr>
@@ -158,37 +152,46 @@
         <?php if($booking->status==1): ?>
         <div class="tab-pane" id="advance-tab">
             <table class="table table-striped">
-            <?php if($advances->count()>0): ?>
-                <?php $__currentLoopData = $advances; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $advance): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php if($advances->count() > 0): ?>
+                <?php
+                    $groupedAdvances = $advances->groupBy('param_id');
+                    $totalAdvance = 0;
+                ?>
+                <?php $__currentLoopData = $groupedAdvances; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $paramId => $advanceGroup): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
+                        // Get the advance with the highest id (assuming it's the most recent)
+                        $latestAdvance = $advanceGroup->sortByDesc('id')->first();
+                        $totalAdvance += $latestAdvance->value;
+                    ?>
                     <tr>
-                        <th><?php echo e($advance->param_name->label); ?></th>
+                        <th><?php echo e($latestAdvance->param_name->label); ?></th>
                         <td>
-                            <?php if($advance->value!=''): ?>
-                                <i class="fa fa-inr"></i> <?php echo e($advance->value); ?>
+                            <?php if($latestAdvance->value != ''): ?>
+                                <i class="fa fa-inr"></i> <?php echo e($latestAdvance->value); ?>
 
                             <?php else: ?>
                                 <span class="badge badge-warning">N/A</span>
                             <?php endif; ?>
                         </td>
-                        <td><?php echo e($advance->remarks); ?></td>
+                        <td><?php echo e($latestAdvance->remarks); ?></td>
                     </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <tr style="border-top:2px solid #4fb765;">
                     <th>Grand Total Advance</th>
                     <th>
-                        <?php echo e(Hyvikk::get('currency')); ?><?php echo e($advTotal); ?>
+                        <?php echo e(Hyvikk::get('currency')); ?><?php echo e($totalAdvance); ?>
 
                     </th>
                     <th></th>
                 </tr>
             <?php else: ?>
                 <tr>
-                    <td colspan="2" align="center" style="color: red"><i>No Advances were given in this booking...</i></td>
+                    <td colspan="3" align="center" style="color: red"><i>No Advances were given in this booking...</i></td>
                 </tr>
             <?php endif; ?>
             </table>
         </div>
-        <?php endif; ?>    
+        <?php endif; ?>
     </div>
 </div>
 

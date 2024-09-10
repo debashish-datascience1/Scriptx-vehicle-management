@@ -70,10 +70,15 @@ class FastagController extends Controller
         } else {
             $data['vehicles'] = VehicleModel::where([['group_id', $user], ['in_service', '1']])->get();
         }
-        $data['bank_accounts'] = BankAccount::all();
+        
+        // Filter bank accounts to only include those with 'fastag' in the bank name
+        $data['bank_accounts'] = BankAccount::where(function ($query) {
+            $query->whereRaw('LOWER(bank) LIKE ?', ['%fastag%'])
+                ->orWhereRaw('LOWER(bank) LIKE ?', ['%fast tag%']);
+        })->get();
+        
         return view('fastag.create', $data);
     }
-
     // public function store(Request $request)
     // {
     //     \Log::info('Fastag Data:', $request->all());  // Add this line
@@ -148,8 +153,8 @@ class FastagController extends Controller
         ]);
     }
 
-    public function edit($id)
-    {
+   public function edit($id)
+   {
         $fastag = Fastag::findOrFail($id);
         $user = Auth::user()->group_id;
         
@@ -159,12 +164,17 @@ class FastagController extends Controller
             $data['vehicles'] = VehicleModel::where([['group_id', $user], ['in_service', '1']])->get();
         }
         
-        $data['bank_accounts'] = BankAccount::all();
+        // Filter bank accounts to only include those with 'fastag' in the bank name
+        $data['bank_accounts'] = BankAccount::where(function ($query) {
+            $query->whereRaw('LOWER(bank) LIKE ?', ['%fastag%'])
+                ->orWhereRaw('LOWER(bank) LIKE ?', ['%fast tag%']);
+        })->get();
+        
         $data['fastag'] = $fastag;
         $data['fastagEntries'] = Fastag::where('transaction_id', $fastag->transaction_id)->get();
         
         return view('fastag.edit', $data);
-    }
+   }
 
     public function update(Request $request, $id)
     {
