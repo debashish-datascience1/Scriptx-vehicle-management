@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+@endphp
 @section('extra_css')
 <style type="text/css">
   .mybtn1
@@ -119,6 +121,7 @@ input:checked + .slider:before {
               <th>Driver</th>
               <th>Vehicle</th>
               <th>Salary</th>
+              <th>Last Paid</th>
               {{-- <th>@lang('fleet.email')</th> --}}
               <th>@lang('fleet.action')</th>
             </tr>
@@ -145,6 +148,17 @@ input:checked + .slider:before {
 
               </td>
               <td><span class="fa fa-inr"> {{number_format($row->salary)}}</span></td>
+              <td>
+                  @if(isset($latestPayrolls[$row->id]))
+                      @php
+                          $lastPayroll = $latestPayrolls[$row->id];
+                          $monthName = date('F', mktime(0, 0, 0, $lastPayroll->for_month, 10));
+                      @endphp
+                      {{ $monthName }} - {{ $lastPayroll->for_year }}
+                  @else
+                      Not paid yet
+                  @endif
+              </td>
               <td>
               <div class="btn-group">
                 <a class="vpay btn btn-success" data-id="{{$row->id}}" data-toggle="modal" data-target="#viewModal" title="@lang('fleet.view')" style="color: #fff">Pay</a>
@@ -176,6 +190,7 @@ input:checked + .slider:before {
               <th>@lang('fleet.name')</th>
               <th>@lang('fleet.vehicle')</th>
               <th>@lang('fleet.salary')</th>
+              <th>Last Paid</th>
               {{-- <th>@lang('fleet.email')</th> --}}
               {{-- <th>@lang('fleet.forMonth')</th>
               <th>@lang('fleet.date')</th> --}}

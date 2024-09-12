@@ -59,15 +59,15 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <?php echo Form::label('vehicle_id',__('fleet.selectVehicle'), ['class' => 'form-label']); ?>
+                            <?php echo Form::label('fastag', 'Fastag Number', ['class' => 'form-label required']); ?>
 
-                            <select name="vehicle_id" class="form-control vehicle-select" required>
-                                <option value="">-</option>
-                                <?php $__currentLoopData = $vehicles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($vehicle->id); ?>" <?php echo e($fastag->registration_number == "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}" ? 'selected' : ''); ?>>
-                                    <?php echo e($vehicle->make); ?> - <?php echo e($vehicle->model); ?> - <?php echo e($vehicle->license_plate); ?>
+                            <select name="fastag" class="form-control fastag-select" required>
+                                <option value="">Select Fastag</option>
+                                <?php $__currentLoopData = $bank_accounts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $account): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($account->id); ?>" <?php echo e($fastag->fastag == "{$account->bank} - {$account->account_no}" ? 'selected' : ''); ?>>
+                                        <?php echo e($account->bank); ?> - <?php echo e($account->account_no); ?>
 
-                                </option>
+                                    </option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
@@ -79,15 +79,15 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <?php echo Form::label('fastag[]', 'Fastag Number', ['class' => 'form-label required']); ?>
+                                    <?php echo Form::label('vehicle_id[]',__('fleet.selectVehicle'), ['class' => 'form-label']); ?>
 
-                                    <select name="fastag[]" class="form-control fastag-select" required>
-                                        <option value="">Select Fastag</option>
-                                        <?php $__currentLoopData = $bank_accounts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $account): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($account->id); ?>" <?php echo e($entry->fastag == "{$account->bank} - {$account->account_no}" ? 'selected' : ''); ?>>
-                                                <?php echo e($account->bank); ?> - <?php echo e($account->account_no); ?>
+                                    <select name="vehicle_id[]" class="form-control vehicle-select" required>
+                                        <option value="">-</option>
+                                        <?php $__currentLoopData = $vehicles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($vehicle->id); ?>" <?php echo e($entry->registration_number == "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}" ? 'selected' : ''); ?>>
+                                            <?php echo e($vehicle->make); ?> - <?php echo e($vehicle->model); ?> - <?php echo e($vehicle->license_plate); ?>
 
-                                            </option>
+                                        </option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
@@ -177,11 +177,11 @@ $(document).ready(function() {
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="fastag_${index}" class="form-label required">Fastag Number</label>
-                            <select name="fastag[]" id="fastag_${index}" class="form-control fastag-select" required>
-                                <option value="">Select Fastag</option>
-                                <?php $__currentLoopData = $bank_accounts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $account): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($account->id); ?>"><?php echo e($account->bank); ?> - <?php echo e($account->account_no); ?></option>
+                            <label for="vehicle_id_${index}" class="form-label">Select Vehicle</label>
+                            <select name="vehicle_id[]" id="vehicle_id_${index}" class="form-control vehicle-select" required>
+                                <option value="">-</option>
+                                <?php $__currentLoopData = $vehicles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($vehicle->id); ?>"><?php echo e($vehicle->make); ?> - <?php echo e($vehicle->model); ?> - <?php echo e($vehicle->license_plate); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
@@ -216,7 +216,7 @@ $(document).ready(function() {
 
     function initializeSelect2(context = $('body')) {
         context.find('.vehicle-select').select2({placeholder: "<?php echo app('translator')->getFromJson('fleet.selectVehicle'); ?>"});
-        context.find('.fastag-select').select2({placeholder: "Select Fastag"});
+        $('.fastag-select').select2({placeholder: "Select Fastag"});
     }
 
     function initializeDatepicker(context = $('body')) {

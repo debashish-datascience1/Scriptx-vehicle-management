@@ -32,22 +32,21 @@ class FastagController extends Controller
     public function index()
     {
         $perPage = 4; // Number of groups per page
-    
+
         $fastags = Fastag::orderBy('created_at', 'desc')
-                         ->get()
-                         ->groupBy('transaction_id');
-    
+                        ->get()
+                        ->groupBy('fastag');
+
         // Calculate totals for each group
         $fastags = $fastags->map(function ($group) {
             return [
                 'entries' => $group,
                 'total' => $group->sum('amount'),
-                'vehicle' => $group->first()->registration_number,
-                'transaction_id' => $group->first()->transaction_id,
+                'fastag' => $group->first()->fastag,
                 'date' => $group->first()->created_at,
             ];
         });
-    
+
         // Manual pagination
         $page = request()->get('page', 1);
         $slicedData = $fastags->slice(($page - 1) * $perPage, $perPage);
@@ -58,7 +57,7 @@ class FastagController extends Controller
             $page,
             ['path' => request()->url(), 'query' => request()->query()]
         );
-    
+
         return view('fastag.index', compact('paginatedData'));
     }
 
@@ -98,27 +97,29 @@ class FastagController extends Controller
     public function store(Request $request)
     {
         \Log::info('Fastag Data:', $request->all());
-
+    
         $validatedData = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'fastag' => 'required|array',
-            'fastag.*' => 'required|exists:bank_account,id',
+            'vehicle_id' => 'required|array',
+            'vehicle_id.*' => 'exists:vehicles,id',
+            'fastag' => 'required|exists:bank_account,id',
             'date' => 'required|array',
             'date.*' => 'required|date',
             'toll_gate_name' => 'required|array',
             'toll_gate_name.*' => 'required|string|max:255',
             'amount' => 'required|array',
             'amount.*' => 'required|numeric|min:0',
+            'grand_total' => 'required|numeric|min:0',
         ]);
-
-        // Fetch the vehicle registration number
-        $vehicle = VehicleModel::findOrFail($validatedData['vehicle_id']);
-        $registrationNumber = "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}";
-        $transaction_id = 'SALE'.uniqid();
+    
+        $transaction_id = 'SALE' . uniqid();
         $total = $request->grand_total;
-
-        // Create Fastag entries
-        foreach ($validatedData['fastag'] as $key => $fastagId) {
+        $fastagId = $validatedData['fastag'];
+    
+        foreach ($validatedData['vehicle_id'] as $key => $vehicleId) {
+            // Fetch the vehicle registration number
+            $vehicle = VehicleModel::findOrFail($vehicleId);
+            $registrationNumber = "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}";
+    
             $this->createFastagEntry(
                 $validatedData['toll_gate_name'][$key],
                 $validatedData['amount'][$key],
@@ -129,7 +130,7 @@ class FastagController extends Controller
                 $total
             );
         }
-
+    
         return redirect()->route('fastag.index')
             ->with('success', 'Fastag entries created successfully.');
     }
@@ -179,31 +180,32 @@ class FastagController extends Controller
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'fastag' => 'required|array',
-            'fastag.*' => 'required|exists:bank_account,id',
+            'vehicle_id' => 'required|array',
+            'vehicle_id.*' => 'exists:vehicles,id',
+            'fastag' => 'required|exists:bank_account,id',
             'date' => 'required|array',
             'date.*' => 'required|date',
             'toll_gate_name' => 'required|array',
             'toll_gate_name.*' => 'required|string|max:255',
             'amount' => 'required|array',
             'amount.*' => 'required|numeric|min:0',
+            'grand_total' => 'required|numeric|min:0',
         ]);
 
         $fastag = Fastag::findOrFail($id);
         $transaction_id = $fastag->transaction_id;
 
-        // Fetch the vehicle registration number
-        $vehicle = VehicleModel::findOrFail($validatedData['vehicle_id']);
-        $registrationNumber = "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}";
-
         // Delete existing entries for this transaction
         Fastag::where('transaction_id', $transaction_id)->delete();
 
         $total = $request->grand_total;
+        $fastagId = $validatedData['fastag'];
 
-        // Create new Fastag entries
-        foreach ($validatedData['fastag'] as $key => $fastagId) {
+        foreach ($validatedData['vehicle_id'] as $key => $vehicleId) {
+            // Fetch the vehicle registration number
+            $vehicle = VehicleModel::findOrFail($vehicleId);
+            $registrationNumber = "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}";
+
             $this->createFastagEntry(
                 $validatedData['toll_gate_name'][$key],
                 $validatedData['amount'][$key],

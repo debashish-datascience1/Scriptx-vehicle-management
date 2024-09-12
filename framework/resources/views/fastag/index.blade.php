@@ -26,16 +26,16 @@
         <table class="table" id="data_table">
           <thead class="thead-inverse">
             <tr>
-              <th>Vehicle</th>
+              <th>Fastag</th>
               <th>Entries</th>
               <th>Grand Total</th>
               <th>@lang('fleet.action')</th>
             </tr>
           </thead>
           <tbody>
-          @foreach($paginatedData as $registrationNumber => $group)
+          @foreach($paginatedData as $fastagGroup)
             <tr>
-              <td>{{ $group['vehicle'] }}</td>
+              <td>{{ $fastagGroup['fastag'] }}</td>
               <td>
                 <table class="table table-bordered">
                   <thead>
@@ -43,22 +43,22 @@
                       <th>Date</th>
                       <th>Toll Gate Name</th>
                       <th>Amount</th>
-                      <th>Fastag</th>
+                      <th>Vehicle</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach($group['entries'] as $entry)
+                    @foreach($fastagGroup['entries'] as $entry)
                       <tr>
                         <td>{{ $entry->date }}</td>
                         <td>{{ $entry->toll_gate_name }}</td>
                         <td>{{ number_format($entry->amount, 2) }}</td>
-                        <td>{{ $entry->fastag }}</td>
+                        <td>{{ $entry->registration_number }}</td>
                       </tr>
                     @endforeach
                   </tbody>
                 </table>
               </td>
-              <td>{{ number_format($group['total'], 2) }}</td>
+              <td>{{ number_format($fastagGroup['total'], 2) }}</td>
               <td>
                 <div class="btn-group">
                   <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
@@ -66,11 +66,11 @@
                     <span class="sr-only">Toggle Dropdown</span>
                   </button>
                   <div class="dropdown-menu custom" role="menu">
-                    <a class="dropdown-item" href="{{ route('fastag.edit', $group['entries']->first()->id) }}">
+                    <a class="dropdown-item" href="{{ route('fastag.edit', $fastagGroup['entries']->first()->id) }}">
                       <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')
                     </a>
-                    {!! Form::open(['url' => 'admin/fastag/'.$group['entries']->first()->id, 'method' => 'DELETE', 'class' => 'form-horizontal', 'id' => 'form_'.$group['entries']->first()->id]) !!}
-                    <a class="dropdown-item" data-id="{{$group['entries']->first()->id}}" data-toggle="modal" data-target="#myModal">
+                    {!! Form::open(['url' => 'admin/fastag/'.$fastagGroup['entries']->first()->id, 'method' => 'DELETE', 'class' => 'form-horizontal', 'id' => 'form_'.$fastagGroup['entries']->first()->id]) !!}
+                    <a class="dropdown-item" data-id="{{$fastagGroup['entries']->first()->id}}" data-toggle="modal" data-target="#myModal">
                       <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> @lang('fleet.delete')
                     </a>
                     {!! Form::close() !!}

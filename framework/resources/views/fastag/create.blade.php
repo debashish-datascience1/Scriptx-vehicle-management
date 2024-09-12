@@ -59,11 +59,11 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            {!! Form::label('vehicle_id',__('fleet.selectVehicle'), ['class' => 'form-label']) !!}
-                            <select name="vehicle_id" class="form-control vehicle-select" required>
-                                <option value="">-</option>
-                                @foreach($vehicles as $vehicle)
-                                <option value="{{$vehicle->id}}">{{$vehicle->make}} - {{$vehicle->model}} - {{$vehicle->license_plate}}</option>
+                            {!! Form::label('fastag', 'Fastag Number', ['class' => 'form-label required']) !!}
+                            <select name="fastag" class="form-control fastag-select" required>
+                                <option value="">Select Fastag</option>
+                                @foreach($bank_accounts as $account)
+                                    <option value="{{ $account->id }}">{{ $account->bank }} - {{ $account->account_no }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -74,11 +74,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    {!! Form::label('fastag[]', 'Fastag Number', ['class' => 'form-label required']) !!}
-                                    <select name="fastag[]" class="form-control fastag-select" required>
-                                        <option value="">Select Fastag</option>
-                                        @foreach($bank_accounts as $account)
-                                            <option value="{{ $account->id }}">{{ $account->bank }} - {{ $account->account_no }}</option>
+                                    {!! Form::label('vehicle_id[]',__('fleet.selectVehicle'), ['class' => 'form-label']) !!}
+                                    <select name="vehicle_id[]" class="form-control vehicle-select" required>
+                                        <option value="">-</option>
+                                        @foreach($vehicles as $vehicle)
+                                        <option value="{{$vehicle->id}}">{{$vehicle->make}} - {{$vehicle->model}} - {{$vehicle->license_plate}}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -154,11 +154,11 @@ $(document).ready(function() {
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="fastag_${index}" class="form-label required">Fastag Number</label>
-                            <select name="fastag[]" id="fastag_${index}" class="form-control fastag-select" required>
-                                <option value="">Select Fastag</option>
-                                @foreach($bank_accounts as $account)
-                                    <option value="{{ $account->id }}">{{ $account->bank }} - {{ $account->account_no }}</option>
+                            <label for="vehicle_id_${index}" class="form-label">Select Vehicle</label>
+                            <select name="vehicle_id[]" id="vehicle_id_${index}" class="form-control vehicle-select" required>
+                                <option value="">-</option>
+                                @foreach($vehicles as $vehicle)
+                                <option value="{{$vehicle->id}}">{{$vehicle->make}} - {{$vehicle->model}} - {{$vehicle->license_plate}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -193,7 +193,7 @@ $(document).ready(function() {
 
     function initializeSelect2(context = $('body')) {
         context.find('.vehicle-select').select2({placeholder: "@lang('fleet.selectVehicle')"});
-        context.find('.fastag-select').select2({placeholder: "Select Fastag"});
+        $('.fastag-select').select2({placeholder: "Select Fastag"});
     }
 
     function initializeDatepicker(context = $('body')) {
@@ -216,9 +216,7 @@ $(document).ready(function() {
             total += parseFloat($(this).val()) || 0;
         });
         $('#grand-total').text(total.toFixed(2));
-
         $('#grand_total_input').val(total.toFixed(2));
-
     }
 });
 </script>

@@ -25,16 +25,16 @@
         <table class="table" id="data_table">
           <thead class="thead-inverse">
             <tr>
-              <th>Vehicle</th>
+              <th>Fastag</th>
               <th>Entries</th>
               <th>Grand Total</th>
               <th><?php echo app('translator')->getFromJson('fleet.action'); ?></th>
             </tr>
           </thead>
           <tbody>
-          <?php $__currentLoopData = $paginatedData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $registrationNumber => $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+          <?php $__currentLoopData = $paginatedData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fastagGroup): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <tr>
-              <td><?php echo e($group['vehicle']); ?></td>
+              <td><?php echo e($fastagGroup['fastag']); ?></td>
               <td>
                 <table class="table table-bordered">
                   <thead>
@@ -42,22 +42,22 @@
                       <th>Date</th>
                       <th>Toll Gate Name</th>
                       <th>Amount</th>
-                      <th>Fastag</th>
+                      <th>Vehicle</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <?php $__currentLoopData = $group['entries']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php $__currentLoopData = $fastagGroup['entries']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                       <tr>
                         <td><?php echo e($entry->date); ?></td>
                         <td><?php echo e($entry->toll_gate_name); ?></td>
                         <td><?php echo e(number_format($entry->amount, 2)); ?></td>
-                        <td><?php echo e($entry->fastag); ?></td>
+                        <td><?php echo e($entry->registration_number); ?></td>
                       </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                   </tbody>
                 </table>
               </td>
-              <td><?php echo e(number_format($group['total'], 2)); ?></td>
+              <td><?php echo e(number_format($fastagGroup['total'], 2)); ?></td>
               <td>
                 <div class="btn-group">
                   <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
@@ -65,12 +65,12 @@
                     <span class="sr-only">Toggle Dropdown</span>
                   </button>
                   <div class="dropdown-menu custom" role="menu">
-                    <a class="dropdown-item" href="<?php echo e(route('fastag.edit', $group['entries']->first()->id)); ?>">
+                    <a class="dropdown-item" href="<?php echo e(route('fastag.edit', $fastagGroup['entries']->first()->id)); ?>">
                       <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?>
                     </a>
-                    <?php echo Form::open(['url' => 'admin/fastag/'.$group['entries']->first()->id, 'method' => 'DELETE', 'class' => 'form-horizontal', 'id' => 'form_'.$group['entries']->first()->id]); ?>
+                    <?php echo Form::open(['url' => 'admin/fastag/'.$fastagGroup['entries']->first()->id, 'method' => 'DELETE', 'class' => 'form-horizontal', 'id' => 'form_'.$fastagGroup['entries']->first()->id]); ?>
 
-                    <a class="dropdown-item" data-id="<?php echo e($group['entries']->first()->id); ?>" data-toggle="modal" data-target="#myModal">
+                    <a class="dropdown-item" data-id="<?php echo e($fastagGroup['entries']->first()->id); ?>" data-toggle="modal" data-target="#myModal">
                       <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?>
                     </a>
                     <?php echo Form::close(); ?>

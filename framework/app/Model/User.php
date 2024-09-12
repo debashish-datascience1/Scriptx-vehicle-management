@@ -76,4 +76,10 @@ class User extends Authenticatable
 	{
 		return $query->orderBy('name', 'ASC');
 	}
+
+	public function payrolls()
+	{
+		return $this->hasMany(Payroll::class, 'user_id');
+	}
+	
 }

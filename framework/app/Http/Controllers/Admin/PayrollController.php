@@ -26,12 +26,32 @@ class PayrollController extends Controller
         // dd($index);
         return view('payroll.manage', $index);
     }
+    // public function index()
+    // {
+    //     // $index['data'] = Payroll::orderBy('id','desc')->get();
+    //     $index['data'] = User::where('user_type', 'D')->orderBy('name', 'asc')->get();
+    //     // dd($index['data']);
+    //     // $payroll = Payroll::find(1);
+    //     return view('payroll.index', $index);
+    // }
     public function index()
     {
-        // $index['data'] = Payroll::orderBy('id','desc')->get();
-        $index['data'] = User::where('user_type', 'D')->orderBy('name', 'asc')->get();
-        // dd($index['data']);
-        // $payroll = Payroll::find(1);
+        $index['data'] = User::where('user_type', 'D')
+            ->orderBy('name', 'asc')
+            ->get();
+    
+        // Get the latest payroll for each user
+        $latestPayrolls = Payroll::select('user_id', 
+                            \DB::raw('MAX(CONCAT(for_year, LPAD(for_month, 2, "0"))) as latest_date'))
+                        ->groupBy('user_id');
+    
+        $index['latestPayrolls'] = Payroll::joinSub($latestPayrolls, 'latest', function ($join) {
+                $join->on('payroll.user_id', '=', 'latest.user_id')
+                     ->whereRaw('CONCAT(payroll.for_year, LPAD(payroll.for_month, 2, "0")) = latest.latest_date');
+            })
+            ->get()
+            ->keyBy('user_id');
+    
         return view('payroll.index', $index);
     }
 
