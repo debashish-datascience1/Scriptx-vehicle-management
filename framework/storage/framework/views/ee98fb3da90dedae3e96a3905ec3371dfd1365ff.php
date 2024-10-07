@@ -148,6 +148,19 @@
                   </div>
                 </div>
 
+                <div class="form-group">
+                  <?php echo Form::label('wheel_id', __('fleet.wheel'), ['class' => 'col-xs-5 control-label']); ?>
+
+                  <div class="col-xs-6">
+                    <select name="wheel_id" class="form-control" required id="wheel_id">
+                      <option value="">Select Wheel</option>
+                      <?php $__currentLoopData = $wheels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $wheel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($wheel->id); ?>" <?php if($vehicle->wheel == $wheel->id): ?> selected <?php endif; ?>><?php echo e($wheel->name); ?></option>
+                      <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                  </div>
+                </div>
+
               <div class="form-group">
                 <div class="row">
                   <div class="col-md-6">
@@ -920,6 +933,8 @@ function isWholeNumber(evt) {
 $(document).ready(function() {
   $('#group_id').select2({placeholder: "<?php echo app('translator')->getFromJson('fleet.selectGroup'); ?>"});
   $('#type_id').select2({placeholder:"<?php echo app('translator')->getFromJson('fleet.type'); ?>"});
+  $('#wheel_id').select2({placeholder: "Select Wheel"});
+
   <?php if(isset($_GET['tab']) && $_GET['tab']!=""): ?>
     $('.nav-pills a[href="#<?php echo e($_GET['tab']); ?>"]').tab('show')
   <?php endif; ?>

@@ -1,18 +1,17 @@
-@extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
-@section('extra_css')
-<link rel="stylesheet" href="{{asset('assets/css/bootstrap-datepicker.min.css')}}">
+<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php $__env->startSection('extra_css'); ?>
+<link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
 <style>
 	.fullsize{width: 100% !important;}
 	.newrow{margin: 0 auto;width: 100%;margin-bottom: 15px;}
 	.dateShow{padding-right: 13px;}
 </style>
-@endsection
-@section("breadcrumb")
-<li class="breadcrumb-item"><a href="#">@lang('menu.reports')</a></li>
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection("breadcrumb"); ?>
+<li class="breadcrumb-item"><a href="#"><?php echo app('translator')->getFromJson('menu.reports'); ?></a></li>
 <li class="breadcrumb-item active">Vehicle Overview Report</li>
-@endsection
-@section('content')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('content'); ?>
 <div class="row">
 	<div class="col-md-12">
 		<div class="card card-info">
@@ -22,32 +21,39 @@
 			</div>
 
 			<div class="card-body">
-				{!! Form::open(['route' => 'reports.vehicles-overview','method'=>'post','class'=>'form-block']) !!}
+				<?php echo Form::open(['route' => 'reports.vehicles-overview','method'=>'post','class'=>'form-block']); ?>
+
 				<div class="row newrow">
 					<div class="col-md-4">
-                        {{-- {{dd($vehicles)}} --}}
+                        
 						<div class="form-group">
-							{!! Form::label('vehicle_id', __('fleet.vehicle'), ['class' => 'form-label']) !!}
-							{!! Form::select('vehicle_id',$vehicles,$request['vehicle_id'] ?? null,['class'=>'form-control','id'=>'vehicle_id','placeholder'=>'Select Vehicle','required']) !!}
+							<?php echo Form::label('vehicle_id', __('fleet.vehicle'), ['class' => 'form-label']); ?>
+
+							<?php echo Form::select('vehicle_id',$vehicles,$request['vehicle_id'] ?? null,['class'=>'form-control','id'=>'vehicle_id','placeholder'=>'Select Vehicle','required']); ?>
+
 						</div>
 					</div>
 					<div class="col-md-3">
 						<div class="form-group">
-							{!! Form::label('date1','From',['class' => 'form-label dateShow']) !!}
+							<?php echo Form::label('date1','From',['class' => 'form-label dateShow']); ?>
+
 							<div class="input-group">
 								<div class="input-group-prepend">
 								<span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-								{!! Form::text('date1', $request['date1'] ?? null,['class' => 'form-control','placeholder'=>__('fleet.start_date'),'readonly']) !!}
+								<?php echo Form::text('date1', $request['date1'] ?? null,['class' => 'form-control','placeholder'=>__('fleet.start_date'),'readonly']); ?>
+
 							</div>
 						</div>
 					</div>
 					<div class="col-md-3">
 						<div class="form-group" style="margin-right: 5px">
-							{!! Form::label('date2','To',['class' => 'form-label dateShow']) !!}
+							<?php echo Form::label('date2','To',['class' => 'form-label dateShow']); ?>
+
 							<div class="input-group">
 							  <div class="input-group-prepend">
 							  <span class="input-group-text"><i class="fa fa-calendar"></i></span></div>
-							  {!! Form::text('date2', $request['date2'] ?? null,['class' => 'form-control','placeholder'=>__('fleet.end_date'),'readonly']) !!}
+							  <?php echo Form::text('date2', $request['date2'] ?? null,['class' => 'form-control','placeholder'=>__('fleet.end_date'),'readonly']); ?>
+
 							</div>
 						</div>
 					</div>
@@ -56,32 +62,33 @@
 					
 				<div class="row newrow">
 					<div class="col-md-12">
-						<button type="submit" class="btn btn-info" style="margin-right: 10px">@lang('fleet.generate_report')</button>
-						<button type="submit" formaction="{{url('admin/print-vehicle-overview-report')}}" formtarget="_blank" class="btn btn-danger"><i class="fa fa-print"></i> @lang('fleet.print')</button>
+						<button type="submit" class="btn btn-info" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
+						<button type="submit" formaction="<?php echo e(url('admin/print-vehicle-overview-report')); ?>" formtarget="_blank" class="btn btn-danger"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>
 					</div>
 				</div>
-				{!! Form::close() !!}
+				<?php echo Form::close(); ?>
+
 			</div>
 		</div>
 	</div>
 </div>
 
-@if(isset($result))
+<?php if(isset($result)): ?>
 <div class="row">
     <div class="col-md-12">
         <div class="card card-info">
             <div class="card-header">
                 <h3 class="card-title">
-                    @if(isset($all_vehicles))
+                    <?php if(isset($all_vehicles)): ?>
                         Fleet Overview Report
-                    @else
+                    <?php else: ?>
                         Vehicle Overview Report
-                    @endif
+                    <?php endif; ?>
                 </h3>
             </div>
 
             <div class="card-body table-responsive">
-                @if(isset($all_vehicles))
+                <?php if(isset($all_vehicles)): ?>
                     <table class="table table-bordered table-striped table-hover" id="fleetOverviewTable">
                         <thead>
                             <tr>
@@ -96,56 +103,57 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($summary as $vehicle_data)
+                            <?php $__currentLoopData = $summary; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle_data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr>
                                 <td>
-                                    {{$vehicle_data['vehicle']->make}}-{{$vehicle_data['vehicle']->model}}
+                                    <?php echo e($vehicle_data['vehicle']->make); ?>-<?php echo e($vehicle_data['vehicle']->model); ?>
+
                                     <br>
-                                    <small class="text-muted">{{$vehicle_data['vehicle']->license_plate}}</small>
+                                    <small class="text-muted"><?php echo e($vehicle_data['vehicle']->license_plate); ?></small>
                                 </td>
-                                <td>{{$vehicle_data['bookings_count']}}</td>
-                                <td>{{number_format($vehicle_data['total_kms'], 2)}} {{Hyvikk::get('dis_format')}}</td>
-                                <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['total_revenue'], 2)}}</td>
-                                <td>{{number_format($vehicle_data['fuel_qty'], 2)}} {{Hyvikk::get('fuel_unit')}}</td>
-                                <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['fuel_cost'], 2)}}</td>
+                                <td><?php echo e($vehicle_data['bookings_count']); ?></td>
+                                <td><?php echo e(number_format($vehicle_data['total_kms'], 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td>
+                                <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['total_revenue'], 2)); ?></td>
+                                <td><?php echo e(number_format($vehicle_data['fuel_qty'], 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td>
+                                <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['fuel_cost'], 2)); ?></td>
                                 <td>
-                                    {{$vehicle_data['work_orders']}} orders
+                                    <?php echo e($vehicle_data['work_orders']); ?> orders
                                     <br>
-                                    <small class="text-muted">{{Hyvikk::get('currency')}} {{number_format($vehicle_data['maintenance_cost'], 2)}}</small>
+                                    <small class="text-muted"><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['maintenance_cost'], 2)); ?></small>
                                 </td>
-                                <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['net_profit'], 2)}}</td>
+                                <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['net_profit'], 2)); ?></td>
                             </tr>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                         <tfoot>
                             <tr class="table-info">
                                 <th>Total</th>
-                                <th>{{collect($summary)->sum('bookings_count')}}</th>
-                                <th>{{number_format(collect($summary)->sum('total_kms'), 2)}} {{Hyvikk::get('dis_format')}}</th>
-                                <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('total_revenue'), 2)}}</th>
-                                <th>{{number_format(collect($summary)->sum('fuel_qty'), 2)}} {{Hyvikk::get('fuel_unit')}}</th>
-                                <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('fuel_cost'), 2)}}</th>
-                                <th>{{collect($summary)->sum('work_orders')}} orders</th>
-                                <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('net_profit'), 2)}}</th>
+                                <th><?php echo e(collect($summary)->sum('bookings_count')); ?></th>
+                                <th><?php echo e(number_format(collect($summary)->sum('total_kms'), 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></th>
+                                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('total_revenue'), 2)); ?></th>
+                                <th><?php echo e(number_format(collect($summary)->sum('fuel_qty'), 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></th>
+                                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('fuel_cost'), 2)); ?></th>
+                                <th><?php echo e(collect($summary)->sum('work_orders')); ?> orders</th>
+                                <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('net_profit'), 2)); ?></th>
                             </tr>
                         </tfoot>
                     </table>
-                @else
+                <?php else: ?>
 				<div class="card-body table-responsive">
 					<table class="table table-bordered table-striped table-hover"  id="myTable1">
-						{{-- Vehicle Overview Report --}}
+						
 						<tr>
 							<td align="center" style="font-size:23px;">
-								<strong>{{$vehicle->make}}-{{$vehicle->model}}-{{$vehicle->license_plate}}</strong>
-								@if(!empty($vehicle->driver))
-									<br><span>{{ucwords(strtolower($vehicle->driver->assigned_driver->name))}}</span>
-								@endif
-								@if(!empty($vehicle->driver))
-									<h6>{{Helper::getCanonicalDate($from_date)}} - {{Helper::getCanonicalDate($to_date)}}</h6>
-								@endif
+								<strong><?php echo e($vehicle->make); ?>-<?php echo e($vehicle->model); ?>-<?php echo e($vehicle->license_plate); ?></strong>
+								<?php if(!empty($vehicle->driver)): ?>
+									<br><span><?php echo e(ucwords(strtolower($vehicle->driver->assigned_driver->name))); ?></span>
+								<?php endif; ?>
+								<?php if(!empty($vehicle->driver)): ?>
+									<h6><?php echo e(Helper::getCanonicalDate($from_date)); ?> - <?php echo e(Helper::getCanonicalDate($to_date)); ?></h6>
+								<?php endif; ?>
 							</td>
 						</tr>
-						{{-- Fuel,Booking,Driver Advance,Expenes, Income --}}
+						
 						<tr>
 							<table class="table table-bordered table-striped">
 								
@@ -161,18 +169,18 @@
 									</tr>
 								</thead>
 								<tbody>
-									@if($book->totalbooking!=0 && !empty($book->totalbooking))
+									<?php if($book->totalbooking!=0 && !empty($book->totalbooking)): ?>
 									<tr>
-										<td>{{$book->totalbooking}} bookings</td>
-										<td>{{$book->totalkms}} {{Hyvikk::get('dis_format')}}</td>
-										<td>{{$book->totalfuel}} {{Hyvikk::get('fuel_unit')}}</td>
-										<td>{{Hyvikk::get('currency')}} {{$book->totalprice}}</td>
+										<td><?php echo e($book->totalbooking); ?> bookings</td>
+										<td><?php echo e($book->totalkms); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td>
+										<td><?php echo e($book->totalfuel); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td>
+										<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e($book->totalprice); ?></td>
 									</tr>
-									@else
+									<?php else: ?>
 									<tr>
 										<td colspan="4" align='center' style="color: red">No Records Found...</td>
 									</tr>
-									@endif
+									<?php endif; ?>
 								</tbody>
 							</table>
 						</tr>
@@ -191,20 +199,20 @@
 									</tr>
 								</thead>
 								<tbody>
-									@if(!empty($fuels))
-									@foreach($fuels as $k=>$fs)
+									<?php if(!empty($fuels)): ?>
+									<?php $__currentLoopData = $fuels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$fs): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 									<tr>
-										<td>{{$k}}</td>
-										<td>{{count($fs->id)}} time(s)</td>
-										<td>{{array_sum($fs->ltr)}} {{ $k!='Lubricant' ? Hyvikk::get('fuel_unit') : 'pc'}}</td>
-										<td>{{Hyvikk::get('currency')}} {{Helper::properDecimals(array_sum($fs->total))}}</td>
+										<td><?php echo e($k); ?></td>
+										<td><?php echo e(count($fs->id)); ?> time(s)</td>
+										<td><?php echo e(array_sum($fs->ltr)); ?> <?php echo e($k!='Lubricant' ? Hyvikk::get('fuel_unit') : 'pc'); ?></td>
+										<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals(array_sum($fs->total))); ?></td>
 									</tr>
-									@endforeach
-									@else
+									<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+									<?php else: ?>
 									<tr>
 										<td colspan="4" align='center' style="color: red">No Records Found...</td>
 									</tr>
-									@endif
+									<?php endif; ?>
 								</tbody>
 							</table>
 						</tr>
@@ -217,11 +225,10 @@
 									</tr>
 								</thead>
 								<tbody>
-									@if(!empty($advances->details))
-									{{-- @foreach($advances as $k=>$ad) --}}
+									<?php if(!empty($advances->details)): ?>
+									
 									<tr>
-										{{-- <td rowspan="{{array_sum($advances->details)}}">{{$advances->times}} times</td>
-										<td>{{array_sum($advances->amount)}}</td> --}}
+										
 										<td>
 											<table class="table tabl-bordered table-striped">
 												<thead>
@@ -231,28 +238,28 @@
 													<th>Amount</th>
 												</thead>
 												<tbody>
-													@foreach($advances->details as $k=>$det)
+													<?php $__currentLoopData = $advances->details; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$det): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 													<tr>
-														<td>{{$k+1}}</td>
-														<td>{{$det->label}}</td>
-														<td>{{$det->times}}</td>
-														<td>{{Hyvikk::get('currency')}} {{!empty($det->amount) ? Helper::properDecimals($det->amount) : Helper::properDecimals(0)}}</td>
+														<td><?php echo e($k+1); ?></td>
+														<td><?php echo e($det->label); ?></td>
+														<td><?php echo e($det->times); ?></td>
+														<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(!empty($det->amount) ? Helper::properDecimals($det->amount) : Helper::properDecimals(0)); ?></td>
 													</tr>
-													@endforeach
+													<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 													<tr>
 														<th colspan="3" style="text-align:right;">Total</th>
-														<th>{{Hyvikk::get('currency')}} {{!empty($advances->amount) ? Helper::properDecimals(array_sum($advances->amount)) : Helper::properDecimals(0)}}</th>
+														<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(!empty($advances->amount) ? Helper::properDecimals(array_sum($advances->amount)) : Helper::properDecimals(0)); ?></th>
 													</tr>
 												</tbody>
 											</table>
 										</td>
 									</tr>
-									{{-- @endforeach --}}
-									@else
+									
+									<?php else: ?>
 									<tr>
 										<td colspan="4" align='center' style="color: red">No Records Found...</td>
 									</tr>
-									@endif
+									<?php endif; ?>
 								</tbody>
 							</table>
 						</tr>
@@ -273,32 +280,32 @@
 									</tr>
 								</thead>
 								<tbody>
-									@if(!empty($wo->count) && $wo->count!=0)
-									{{-- @foreach($wo as $k=>$w) --}}
+									<?php if(!empty($wo->count) && $wo->count!=0): ?>
+									
 									<tr>
-										<td>{{$wo->count}}</td>
+										<td><?php echo e($wo->count); ?></td>
 										<td>
 											<table class="table table-striped">
 												<tr>
 													<th>CGST</th>
-													<td>{{Hyvikk::get('currency')}} {{Helper::properDecimals($wo->cgst)}}</td>
+													<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals($wo->cgst)); ?></td>
 												</tr>
 												<tr>
 													<th>SGST</th>
-													<td>{{Hyvikk::get('currency')}} {{Helper::properDecimals($wo->sgst)}}</td>
+													<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals($wo->sgst)); ?></td>
 												</tr>
 											</table>
 										</td>
-										<td>{{Hyvikk::get('currency')}} {{Helper::properDecimals($wo->grand_total)}}</td>
-										<td>{{$wo->vendors}}</td>
+										<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals($wo->grand_total)); ?></td>
+										<td><?php echo e($wo->vendors); ?></td>
 										<td>
 											<table class="table table-striped">
-												@foreach($wo->status as $k=>$s)
+												<?php $__currentLoopData = $wo->status; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 												<tr>
-													<th>{{$k}}</th>
-													<td>{{count($s)}}</td>
+													<th><?php echo e($k); ?></th>
+													<td><?php echo e(count($s)); ?></td>
 												</tr>
-												@endforeach
+												<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 											</table>
 										</td>
 										<td>
@@ -311,39 +318,39 @@
 													</tr>
 												</thead>
 												<tbody>
-													@if(empty($partsUsed))
-													@foreach($partsUsed as $pu)
+													<?php if(empty($partsUsed)): ?>
+													<?php $__currentLoopData = $partsUsed; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pu): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 													<tr>
-														<td>{{$pu->part->title}}</td>
-														<td>{{$pu->qty}}</td>
-														<td>{{Hyvikk::get('currency')}} {{Helper::properDecimals($pu->total)}}</td>
+														<td><?php echo e($pu->part->title); ?></td>
+														<td><?php echo e($pu->qty); ?></td>
+														<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals($pu->total)); ?></td>
 													</tr>
-													@endforeach
-													@else
+													<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+													<?php else: ?>
 													<tr>
 														<td colspan="3" align='center' style="color: red">No Parts Used...</td>
 													</tr>
-													@endif
+													<?php endif; ?>
 												</tbody>
 											</table>
 										</td>
 									</tr>
-									{{-- @endforeach --}}
-									@else
+									
+									<?php else: ?>
 									<tr>
 										<td colspan="6" align='center' style="color: red">No Records Found...</td>
 									</tr>
-									@endif
+									<?php endif; ?>
 							</tbody>
 						</table>
 					</tr>
 				</table>
-				@endif
+				<?php endif; ?>
 			</div>
 		</div>
 	</div>
 </div>
-@endif
+<?php endif; ?>
 
 <div class="modal fade" id="wheelPriceModal" tabindex="-1" role="dialog" aria-labelledby="wheelPriceModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
@@ -376,12 +383,12 @@
     </div>
   </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section("script")
-<script src="{{ asset('assets/js/moment.js') }}"></script>
+<?php $__env->startSection("script"); ?>
+<script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
 <!-- bootstrap datepicker -->
-<script src="{{asset('assets/js/bootstrap-datepicker.min.js')}}"></script>
+<script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
 <script type="text/javascript">
   $(document).ready(function() {
     $('#date1').datepicker({
@@ -394,10 +401,10 @@
     });
   });
 </script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/jszip.min.js')}}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/pdfmake.min.js')}}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/vfs_fonts.js')}}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/cdn/buttons.html5.min.js')}}"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/jszip.min.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/pdfmake.min.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/vfs_fonts.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/buttons.html5.min.js')); ?>"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#vehicle_id").select2();
@@ -419,7 +426,7 @@
 	        ],
 
 	        "language": {
-	                 "url": '{{ __("fleet.datatable_lang") }}',
+	                 "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
 	              },
 	        "initComplete": function() {
 	                myTable.columns().every(function () {
@@ -455,7 +462,7 @@
                     'copy', 'csv', 'excel', 'pdf'
                 ],
                 "language": {
-                    "url": '{{ __("fleet.datatable_lang") }}',
+                    "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
                 }
             });
         }
@@ -530,4 +537,5 @@
 
 	
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/vehicles/report.blade.php ENDPATH**/ ?>

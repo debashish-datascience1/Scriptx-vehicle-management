@@ -141,6 +141,18 @@ input:checked + .slider:before {
               </div>
 
               <div class="form-group">
+                {!! Form::label('wheel_id', __('fleet.wheel'), ['class' => 'col-xs-5 control-label']) !!}
+                <div class="col-xs-6">
+                  <select name="wheel_id" class="form-control" required id="wheel_id">
+                    <option value="">Select Wheel</option>
+                    @foreach($wheels as $wheel)
+                      <option value="{{ $wheel->id }}">{{ $wheel->name }}</option>
+                    @endforeach
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
                 <div class="row">
                   <div class="col-md-6">
                     {!! Form::label('average', __('fleet.average')." (".__('fleet.mpg').")", ['class' =>'']) !!}
@@ -349,6 +361,7 @@ input:checked + .slider:before {
     $(document).ready(function() {
       $('#group_id').select2({placeholder: "@lang('fleet.selectGroup')"});
       $('#type_id').select2({placeholder:"@lang('fleet.type')"});
+      $('#wheel_id').select2({placeholder: "Select Wheel"});
       $('#start_date').datepicker({
           autoclose: true,
           format: 'dd-mm-yyyy'

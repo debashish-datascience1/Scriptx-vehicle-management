@@ -245,7 +245,7 @@ Route::namespace('Admin')->group(function () {
         Route::get('/daily-advance/view_event/{id}', 'DailyAdvanceController@view_event')->middleware('userpermission:1');
         Route::get('/daily-advance/get_remarks/{id}', 'DailyAdvanceController@get_remarks');
 
-
+        Route::get('reports/get-wheels', 'VehiclesController@getWheels')->name('admin.get-wheels');
         Route::get('/reports/other-adjust', 'ReportsController@otherAdjust')->name('reports.other-adjust')->middleware('userpermission:4');
         Route::post('/reports/other-adjust', 'ReportsController@otherAdjust_post')->name('reports.other-adjust')->middleware('userpermission:4');
         Route::post('print-other-adjust-report', 'ReportsController@otherAdjust_print');

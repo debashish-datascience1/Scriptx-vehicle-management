@@ -159,6 +159,7 @@ return [
     'pollutionExpDate' => 'Pollution Certificate Expiry Date',
     'fastTagNumber' => 'Fast Tag Number',
     'fastag' => 'Fastag',
+    'wheel' => 'Wheel',
     'fastTagDoc' => 'Fast Tag Documents',
     'fastTagExpDate' => 'Fast Tag Expiration Date',
     'gpsNumber' => 'GPS Number',
