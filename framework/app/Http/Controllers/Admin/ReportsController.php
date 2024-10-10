@@ -3211,6 +3211,75 @@ class ReportsController extends Controller
 		return view('reports.vehicleheadadvance_print', $index);
 	}
 
+	public function cashBook(Request $request)
+	{
+		$data['date'] = $request->get('date', date('Y-m-d'));
+		$data['request'] = $request;
+
+		if ($request->isMethod('post')) {
+			$data['cashBookEntries'] = []; 
+		}
+
+		return view('reports.cash-book', $data);
+	}
+
+	public function cashBook_post(Request $request)
+	{
+		$date = $request->date;
+		$date = Helper::ymd($date); 
+
+		$bookings = Bookings::whereDate('pickup', $date)->get();
+
+		$total_income = 0;
+		$total_expenses = 0; 
+
+		foreach ($bookings as $booking) {
+			$total_income += $booking->getMeta('total_price');
+		}
+
+		$cash_balance = $total_income - $total_expenses;
+
+		$data = [
+			'date' => $date,
+			'total_income' => round($total_income, 2),
+			'total_expenses' => round($total_expenses, 2),
+			'cash_balance' => round($cash_balance, 2),
+			'bookings' => $bookings,
+			'request' => $request->all(),
+		];
+
+		return view("reports.cash-book", $data);
+	}
+
+	public function cashBook_print(Request $request)
+	{
+		$date = $request->date;
+		$date = Helper::ymd($date); // Convert to your standard date format
+
+		// Fetch bookings for the specified date
+		$bookings = Bookings::whereDate('pickup', $date)->get();
+
+		$total_income = 0;
+		$total_expenses = 0; // You might want to add expenses calculation later
+
+		foreach ($bookings as $booking) {
+			$total_income += $booking->getMeta('total_price');
+			// If you have any expense data related to bookings, you can calculate it here
+			// $total_expenses += $booking->getMeta('some_expense_field');
+		}
+
+		$cash_balance = $total_income - $total_expenses;
+
+		$data = [
+			'date' => $date,
+			'total_income' => round($total_income, 2),
+			'total_expenses' => round($total_expenses, 2),
+			'cash_balance' => round($cash_balance, 2),
+			'bookings' => $bookings,
+		];
+
+		return view("reports.cash-book-print", $data);
+	}
 
 	public function salaryReport()
 	{
@@ -4865,8 +4934,9 @@ class ReportsController extends Controller
 			session(['wheel_prices' => $request->get('wheel_prices')]);
 			
 			// Get all vehicles for processing
-			$vehicles = VehicleModel::orderBy('id');
-			
+			$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
+			->select('vehicles.*', 'wheels.name as wheel_name')
+			->orderBy('vehicles.id');			
 			// If it's an export request, get all records
 			if($request->has('export')) {
 				$vehicles = $vehicles->get();
@@ -4892,6 +4962,22 @@ class ReportsController extends Controller
 					$totalFuel += (float)$booking->getMeta('pet_required');
 					$totalPrice += (float)$booking->getMeta('total_price');
 				}
+				$wheelName = $vehicle->wheel_name ?? 'N/A';
+				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
+                ->where('till', '>', $end)
+                ->whereNull('deleted_at')
+                ->select('param_id', DB::raw('MAX(till) as max_till'))
+                ->groupBy('param_id')
+                ->get()
+                ->map(function ($doc) use ($vehicle, $end) {
+                    return VehicleDocs::where('vehicle_id', $vehicle->id)
+                        ->where('param_id', $doc->param_id)
+                        ->where('till', $doc->max_till)
+                        ->where('till', '>', $end)
+                        ->whereNull('deleted_at')
+                        ->value('amount') ?? 0;
+                })
+                ->sum();
 
 				$tyreCost = 0;
 				if ($vehicle->wheel) {
@@ -4900,7 +4986,12 @@ class ReportsController extends Controller
 				}
 				// dd($updatedWheelPrices);
 
-				
+				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+				$driver_salary = 0;
+				if ($driver) {
+					$userData = User::where('id', $driver->driver_id)->first();
+					$driver_salary = $userData ? $userData->salary : 0;
+				}
 				// Get fuel data
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
 					->whereBetween('date', [$start, $end])
@@ -4945,7 +5036,8 @@ class ReportsController extends Controller
 				
 				$summary[] = [
 					'vehicle' => $vehicle,
-					'bookings_count' => $bookings->count(),
+					// 'bookings_count' => $bookings->count(),
+					'wheel_name' => $wheelName,
 					'total_kms' => $totalKms,
 					'total_fuel_used' => $totalFuel,
 					'total_revenue' => $totalPrice,
@@ -4956,7 +5048,11 @@ class ReportsController extends Controller
 					'work_orders' => $workorders->count(),
 					'maintenance_cost' => $maintenanceCost,
 					'driver_advance' => $totalAdvance,
-					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost,
+					'legal_cost' => $legalCost,
+					'driver_salary' => $driver_salary,
+					'other' => $totalAdvance,
+                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+                	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
 					'avg_revenue_per_km' => $totalKms > 0 ? $totalPrice / $totalKms : 0,
 					'avg_fuel_cost_per_km' => $totalKms > 0 ? $totalFuelCost / $totalKms : 0
 				];
@@ -5098,7 +5194,11 @@ class ReportsController extends Controller
 			$data['vehicle'] = null;
 			
 			// Get all vehicles
-			$vehicles = VehicleModel::orderBy('id')->get();
+			// $vehicles = VehicleModel::orderBy('id')->get();
+			$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
+			->select('vehicles.*', 'wheels.name as wheel_name')
+			->orderBy('vehicles.id')
+			->get();		
 			
 			$summary = [];
 			// $updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
@@ -5125,6 +5225,22 @@ class ReportsController extends Controller
 					$wheelPrice = $updatedWheelPrices[$vehicle->wheel] ?? Wheel::find($vehicle->wheel)->price;
 					$tyreCost = $totalKms * $wheelPrice;
 				}
+				$wheelName = $vehicle->wheel_name ?? 'N/A';
+				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
+                ->where('till', '>', $end)
+                ->whereNull('deleted_at')
+                ->select('param_id', DB::raw('MAX(till) as max_till'))
+                ->groupBy('param_id')
+                ->get()
+                ->map(function ($doc) use ($vehicle, $end) {
+                    return VehicleDocs::where('vehicle_id', $vehicle->id)
+                        ->where('param_id', $doc->param_id)
+                        ->where('till', $doc->max_till)
+                        ->where('till', '>', $end)
+                        ->whereNull('deleted_at')
+                        ->value('amount') ?? 0;
+                })
+                ->sum();
 				// dd($updatedWheelPrices);
 				
 				// Get fuel data
@@ -5139,7 +5255,12 @@ class ReportsController extends Controller
 					$totalFuelCost += $f->qty * $f->cost_per_unit;
 					$totalFuelQty += $f->qty;
 				}
-				
+				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+				$driver_salary = 0;
+				if ($driver) {
+					$userData = User::where('id', $driver->driver_id)->first();
+					$driver_salary = $userData ? $userData->salary : 0;
+				}
 				// Get work orders
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
 					->whereBetween('required_by', [$start, $end])
@@ -5149,10 +5270,24 @@ class ReportsController extends Controller
 				foreach ($workorders as $wo) {
 					$maintenanceCost += empty($wo->grand_total) ? $wo->price : $wo->grand_total;
 				}
+
+				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
+                ->whereBetween('pickup', [$start, $end])
+                ->meta()
+                ->where(function ($query) {
+                    $query->where('bookings_meta.key', '=', 'advance_pay')
+                        ->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+                })->get();
+            
+				$totalAdvance = 0;
+				foreach ($advanceBookings as $ad) {
+					$totalAdvance += !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				}
 				
 				$summary[] = [
 					'vehicle' => $vehicle,
-					'bookings_count' => $bookings->count(),
+					'wheel_name' => $wheelName,
+					// 'bookings_count' => $bookings->count(),
 					'total_kms' => $totalKms,
 					'total_fuel_used' => $totalFuel,
 					'total_revenue' => $totalPrice,
@@ -5161,7 +5296,12 @@ class ReportsController extends Controller
 					'tyre_cost' => $tyreCost,
 					'work_orders' => $workorders->count(),
 					'maintenance_cost' => $maintenanceCost,
-					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost
+					'legal_cost' => $legalCost,
+					'driver_salary' => $driver_salary,
+					'other' => $totalAdvance,
+                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+                	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
+					// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost,	
 				];
 			}
 			

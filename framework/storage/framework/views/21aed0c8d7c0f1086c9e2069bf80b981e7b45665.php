@@ -770,6 +770,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                  <a href="<?php echo e(route('reports.cash-book')); ?>" class="nav-link <?php if(Request::is('admin/reports/cash-book')): ?> active <?php endif; ?>">
+                      <i class="fa fa-money nav-icon"></i>
+                      <p>Cash Book</p>
+                  </a>
+              </li>
+              <li class="nav-item">
                 <a href="<?php echo e(route('reports.customerPayment')); ?>" class="nav-link <?php if(Request::is('admin/reports/customer-payment')): ?> active <?php endif; ?>">
                   <i class="fa fa-book nav-icon"></i>
                   <p><?php echo app('translator')->getFromJson('menu.customerPayment'); ?></p>

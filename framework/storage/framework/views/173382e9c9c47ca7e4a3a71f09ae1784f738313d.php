@@ -28,6 +28,33 @@
     body {
       height: auto;
     }
+    @media  print {
+    .fleet-table {
+      font-size: 10px;
+      width: 100%;
+      page-break-inside: auto;
+    }
+    
+    .fleet-table th,
+    .fleet-table td {
+      padding: 4px;
+      vertical-align: top;
+    }
+    
+    .fleet-table tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    
+    .fleet-table tfoot {
+      display: table-row-group;
+    }
+    
+    .fleet-table tfoot tr {
+      page-break-inside: avoid;
+    }
+  
+}
   </style>
 </head>
 <body onload="window.print();">
@@ -55,7 +82,7 @@
       <div class="col-md-12 text-center">
         <h3>
           <?php if(isset($all_vehicles)): ?>
-            Fleet Overview Report
+            Vehicle Overview Report
           <?php else: ?>
             Vehicle Overview Report
           <?php endif; ?>
@@ -76,14 +103,17 @@
               <thead>
                 <tr>
                   <th>Vehicle</th>
-                  <th>Bookings</th>
-                  <th>Total KM</th>
-                  <th>Revenue</th>
-                  <th>Fuel Usage</th>
+									<th>Model (Wheel)</th>
+                  <!-- <th>Total KM</th> -->
+                  <th>Total Income</th>
+                  <!-- <th>Fuel Usage</th> -->
                   <th>Fuel Cost</th>
-                  <th>Maintenance</th>
+                  <th>Driver Salary</th>
+                  <th>Other</th>
+                  <!-- <th>Maintenance</th> -->
                   <th>Tyre Cost</th>
-                  <th>Net Profit</th>
+                  <th>Legal</th>
+                  <th>Net Profit/loss</th>
                 </tr>
               </thead>
               <tbody>
@@ -95,17 +125,23 @@
                     <br>
                     <small class="text-muted"><?php echo e($vehicle_data['vehicle']->license_plate); ?></small>
                   </td>
-                  <td><?php echo e($vehicle_data['bookings_count']); ?></td>
-                  <td><?php echo e(number_format($vehicle_data['total_kms'], 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td>
-                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['total_revenue'], 2)); ?></td>
-                  <td><?php echo e(number_format($vehicle_data['fuel_qty'], 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td>
-                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['fuel_cost'], 2)); ?></td>
                   <td>
+									<?php echo e($vehicle_data['wheel_name']); ?>
+
+									</td> 
+                  <!-- <td><?php echo e(number_format($vehicle_data['total_kms'], 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td> -->
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['total_revenue'], 2)); ?></td>
+                  <!-- <td><?php echo e(number_format($vehicle_data['fuel_qty'], 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td> -->
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['fuel_cost'], 2)); ?></td>
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['driver_salary'], 2)); ?></td>
+                  <!-- <td>
                     <?php echo e($vehicle_data['work_orders']); ?> orders
                     <br>
                     <small class="text-muted"><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['maintenance_cost'], 2)); ?></small>
-                  </td>
+                  </td> -->
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['other'], 2)); ?></td>
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['tyre_cost'], 2)); ?></td>
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['legal_cost'], 2)); ?></td>
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['net_profit'], 2)); ?></td>
                 </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -113,13 +149,16 @@
               <tfoot>
                 <tr class="total-row">
                   <th>Total</th>
-                  <th><?php echo e(collect($summary)->sum('bookings_count')); ?></th>
-                  <th><?php echo e(number_format(collect($summary)->sum('total_kms'), 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></th>
+									<th></th>
+                  <!-- <th><?php echo e(number_format(collect($summary)->sum('total_kms'), 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></th> -->
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('total_revenue'), 2)); ?></th>
-                  <th><?php echo e(number_format(collect($summary)->sum('fuel_qty'), 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></th>
+                  <!-- <th><?php echo e(number_format(collect($summary)->sum('fuel_qty'), 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></th> -->
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('fuel_cost'), 2)); ?></th>
-                  <th><?php echo e(collect($summary)->sum('work_orders')); ?> orders</th>
+                  <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('driver_salary'), 2)); ?></th>
+                  <!-- <th><?php echo e(collect($summary)->sum('work_orders')); ?> orders</th> -->
+                  <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('other'), 2)); ?></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('tyre_cost'), 2)); ?></th>
+                  <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('legal_cost'), 2)); ?></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('net_profit'), 2)); ?></th>
                 </tr>
               </tfoot>

@@ -843,6 +843,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                  <a href="{{ route('reports.cash-book') }}" class="nav-link @if(Request::is('admin/reports/cash-book')) active @endif">
+                      <i class="fa fa-money nav-icon"></i>
+                      <p>Cash Book</p>
+                  </a>
+              </li>
+              <li class="nav-item">
                 <a href="{{ route('reports.customerPayment') }}" class="nav-link @if(Request::is('admin/reports/customer-payment')) active @endif">
                   <i class="fa fa-book nav-icon"></i>
                   <p>@lang('menu.customerPayment')</p>

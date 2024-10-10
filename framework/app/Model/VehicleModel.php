@@ -85,6 +85,6 @@ class VehicleModel extends Model
 
     public function wheel()
     {
-        return $this->belongsTo(Wheel::class);
+        return $this->belongsTo(Wheel::class, 'wheel_id');
     }
 }

@@ -364,6 +364,10 @@ Route::namespace('Admin')->group(function () {
         Route::post("reports/drivers-report", "ReportsController@driverspayroll_post")->name("reports.drivers-report")->middleware('userpermission:4');
         Route::post("print-drivers-report", "ReportsController@driverspayroll_print")->middleware('userpermission:4');
 
+        Route::get("reports/cash-book", "ReportsController@cashBook")->name("reports.cash-book")->middleware('userpermission:4');
+        Route::post("reports/cash-book", "ReportsController@cashBook_post")->name("reports.cash-book")->middleware('userpermission:4');
+        Route::post("print-cash-book", "ReportsController@cashBook_print")->name("reports.cash-book.print")->middleware('userpermission:4');
+        
         Route::get("reports/drivers-advance-report", "ReportsController@driversAdvance")->name("reports.drivers-advance-report")->middleware('userpermission:4');
         Route::post("reports/drivers-advance-report", "ReportsController@driversAdvance_post")->name("reports.drivers-advance-report")->middleware('userpermission:4');
         Route::post("print-drivers-advance-report", "ReportsController@driversAdvance_print")->middleware('userpermission:4');

@@ -90,57 +90,69 @@
 				<div class="card-body table-responsive">
 					<?php if(isset($all_vehicles)): ?>
 						<table class="table table-bordered table-striped table-hover" id="fleetOverviewTable">
-							<thead>
-								<tr>
-									<th>Vehicle</th>
-									<th>Bookings</th>
-									<th>Total KM</th>
-									<th>Revenue</th>
-									<th>Fuel Usage</th>
-									<th>Fuel Cost</th>
-									<th>Maintenance</th>
-									<th>Tyre Cost</th>
-									<th>Net Profit</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php $__currentLoopData = $summary; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle_data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-								<tr>
-									<td>
-										<?php echo e($vehicle_data['vehicle']->make); ?>-<?php echo e($vehicle_data['vehicle']->model); ?>
+                            <thead>
+                                <tr>
+                                    <th>Vehicle</th>
+									<th>Model (Wheel)</th>
+                                    <!-- <th>Total KM</th> -->
+                                    <th>Total Income</th>
+                                    <!-- <th>Fuel Usage</th> -->
+                                    <th>Fuel Cost</th>
+									<th>Driver Salary</th>
+                                    <!-- <th>Maintenance</th> -->
+									<th>Other</th>
+                                    <th>Tyre Cost</th>
+                                    <th>Legal</th>
+                                    <th>Net Profit/Loss</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $__currentLoopData = $summary; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle_data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <tr>
+                                    <td>
+                                        <?php echo e($vehicle_data['vehicle']->make); ?>-<?php echo e($vehicle_data['vehicle']->model); ?>
 
-										<br>
-										<small class="text-muted"><?php echo e($vehicle_data['vehicle']->license_plate); ?></small>
-									</td>
-									<td><?php echo e($vehicle_data['bookings_count']); ?></td>
-									<td><?php echo e(number_format($vehicle_data['total_kms'], 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td>
-									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['total_revenue'], 2)); ?></td>
-									<td><?php echo e(number_format($vehicle_data['fuel_qty'], 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td>
-									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['fuel_cost'], 2)); ?></td>
+                                        <br>
+                                        <small class="text-muted"><?php echo e($vehicle_data['vehicle']->license_plate); ?></small>
+                                    </td>
 									<td>
-										<?php echo e($vehicle_data['work_orders']); ?> orders
-										<br>
-										<small class="text-muted"><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['maintenance_cost'], 2)); ?></small>
-									</td>
-									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['tyre_cost'], 2)); ?></td>
-									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['net_profit'], 2)); ?></td>
-								</tr>
-								<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-							</tbody>
-							<tfoot>
-								<tr class="table-info">
-									<th>Total</th>
-									<th><?php echo e(collect($summary)->sum('bookings_count')); ?></th>
-									<th><?php echo e(number_format(collect($summary)->sum('total_kms'), 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></th>
-									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('total_revenue'), 2)); ?></th>
-									<th><?php echo e(number_format(collect($summary)->sum('fuel_qty'), 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></th>
-									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('fuel_cost'), 2)); ?></th>
-									<th><?php echo e(collect($summary)->sum('work_orders')); ?> orders</th>
-									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('tyre_cost'), 2)); ?></th>
-									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('net_profit'), 2)); ?></th>
-								</tr>
-							</tfoot>
-						</table>
+									<?php echo e($vehicle_data['wheel_name']); ?>
+
+									</td> 
+						           <!-- <td><?php echo e(number_format($vehicle_data['total_kms'], 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td> -->
+                                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['total_revenue'], 2)); ?></td>
+                                    <!-- <td><?php echo e(number_format($vehicle_data['fuel_qty'], 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td> -->
+                                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['fuel_cost'], 2)); ?></td>
+									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['driver_salary'], 2)); ?></td>
+                                    <!-- <td>
+                                        <?php echo e($vehicle_data['work_orders']); ?> orders
+                                        <br>
+                                        <small class="text-muted"><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['maintenance_cost'], 2)); ?></small>
+                                    </td> -->
+									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['other'], 2)); ?></td>
+                                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['tyre_cost'], 2)); ?></td>
+                                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['legal_cost'], 2)); ?></td>
+                                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['net_profit'], 2)); ?></td>
+                                </tr>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-info">
+                                    <th>Total</th>
+									<th></th>
+                                    <!-- <th><?php echo e(number_format(collect($summary)->sum('total_kms'), 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></th> -->
+                                    <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('total_revenue'), 2)); ?></th>
+                                    <!-- <th><?php echo e(number_format(collect($summary)->sum('fuel_qty'), 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></th> -->
+                                    <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('fuel_cost'), 2)); ?></th>
+									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('driver_salary'), 2)); ?></th>
+                                    <!-- <th><?php echo e(collect($summary)->sum('work_orders')); ?> orders</th> -->
+									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('other'), 2)); ?></th>
+                                    <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('tyre_cost'), 2)); ?></th>
+                                    <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('legal_cost'), 2)); ?></th>
+                                    <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('net_profit'), 2)); ?></th>
+                                </tr>
+                            </tfoot>
+                        </table>
 						<div class="mt-4">
 						<?php if(!isset($request['export'])): ?>
 							<?php if(isset($pagination) && method_exists($pagination, 'links')): ?>
@@ -582,11 +594,12 @@ function exportFullData(type) {
 		$('form.form-block').attr('action', url).submit();
 	});
 	$(document).ready(function() {
-    // Store the original form
-    var originalForm = $('form.form-block').get(0);
-    
-    // Function to handle report generation
-    function handleReportGeneration(e, isPrint) {
+    // Store the original form action
+    var originalFormAction = $('form.form-block').attr('action');
+    var printFormAction = $('button[formaction][formtarget="_blank"]').attr('formaction');
+
+    // Function to handle report generation and print
+    function handleReportAction(e, isPrint) {
         e.preventDefault();
         loadWheelPrices(isPrint);
         return false;
@@ -594,11 +607,11 @@ function exportFullData(type) {
 
     // Attach event handlers to both buttons
     $('#generateReport').on('click', function(e) {
-        handleReportGeneration(e, false);
+        handleReportAction(e, false);
     });
 
     $('button[formaction][formtarget="_blank"]').on('click', function(e) {
-        handleReportGeneration(e, true);
+        handleReportAction(e, true);
     });
 
     function loadWheelPrices(isPrint) {
@@ -654,17 +667,25 @@ function exportFullData(type) {
         $('#wheelPriceModal').modal('hide');
 
         var isPrint = $('#wheelPriceModal').data('isPrint');
+        var $form = $('form.form-block');
+
         if (isPrint) {
             // For print, submit the form to the print URL
-            $('form.form-block').attr('action', $('button[formaction][formtarget="_blank"]').attr('formaction'));
-            $('form.form-block').attr('target', '_blank');
+            $form.attr('action', printFormAction);
+            $form.attr('target', '_blank');
         } else {
             // For generate report, use the default form action
-            $('form.form-block').attr('action', originalForm.action);
-            $('form.form-block').removeAttr('target');
+            $form.attr('action', originalFormAction);
+            $form.removeAttr('target');
         }
 
-        $('form.form-block').off('submit').submit();
+        $form.off('submit').submit();
+
+        // Reset form action and target after submission
+        setTimeout(function() {
+            $form.attr('action', originalFormAction);
+            $form.removeAttr('target');
+        }, 100);
     });
 });
 </script>
