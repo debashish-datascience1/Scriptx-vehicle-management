@@ -1,133 +1,126 @@
-<?php
-$date_format_setting = (Hyvikk::get('date_format')) ? Hyvikk::get('date_format') : 'd-m-Y'
-?>
-
-<?php $__env->startSection("breadcrumb"); ?>
-<li class="breadcrumb-item"><a href="#">Reports</a></li>
-<li class="breadcrumb-item active">Cash Book</li>
-<?php $__env->stopSection(); ?>
-
 <?php $__env->startSection('extra_css'); ?>
 <link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
-<style type="text/css">
-    .form-label {
-        display: block !important;
-    }
+<style>
+    .card { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border: none; margin-bottom: 20px; }
+    .card-header { background-color: #4a5568; color: white; }
+    .btn-generate { background-color: #4299e1; border-color: #4299e1; }
+    .btn-generate:hover { background-color: #3182ce; border-color: #3182ce; }
+    .btn-print { background-color: #ed8936; border-color: #ed8936; }
+    .btn-print:hover { background-color: #dd6b20; border-color: #dd6b20; }
+    .summary-section { border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
+    .summary-section:last-child { border-bottom: none; }
+    .summary-title { color: #2d3748; font-weight: bold; margin-bottom: 10px; }
+    .summary-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .summary-item strong { color: #4a5568; }
+    .cash-balance { font-size: 1.25rem; color: #2b6cb0; }
 </style>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('content'); ?>
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-info">
-            <div class="card-header">
-                <h3 class="card-title">Cash Book Report</h3>
-            </div>
+<div class="container">
+    <h1 class="text-center mb-4" style="color: #2d3748;">Cash Book Report</h1>
 
-            <div class="card-body">
-                <?php echo Form::open(['route' => 'reports.cash-book', 'method' => 'post', 'class' => 'form-inline']); ?>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title m-0">Generate Report</h3>
+        </div>
+        <div class="card-body">
+            <?php echo Form::open(['route' => 'reports.cash-book', 'method' => 'post']); ?>
 
-                <div class="row w-100">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <?php echo Form::label('date', __('fleet.date'), ['class' => 'form-label']); ?>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-group">
+                        <?php echo Form::label('date', __('fleet.date'), ['class' => 'form-label font-weight-bold']); ?>
 
-                            <div class="input-group date">
-                                <div class="input-group-prepend"><span class="input-group-text"><span class="fa fa-calendar"></span></span></div>
-                                <?php echo Form::text('date', $date, ['class' => 'form-control', 'required', 'id' => 'date']); ?>
-
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-calendar"></i></span>
                             </div>
+                            <?php echo Form::text('date', $date, ['class' => 'form-control', 'required', 'id' => 'date']); ?>
+
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-info" style="margin-right: 10px"><?php echo app('translator')->getFromJson('fleet.generate_report'); ?></button>
-                        <button type="submit" formaction="<?php echo e(route('reports.cash-book.print')); ?>" class="btn btn-danger" formtarget="_blank"><i class="fa fa-print"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?></button>                    </div>
                 </div>
-                <?php echo Form::close(); ?>
-
             </div>
+            <div class="row">
+                <div class="col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-generate text-white mr-2">
+                        <i class="fa fa-chart-bar mr-1"></i> <?php echo app('translator')->getFromJson('fleet.generate_report'); ?>
+                    </button>
+                    <button type="submit" formaction="<?php echo e(route('reports.cash-book.print')); ?>" class="btn btn-print text-white" formtarget="_blank">
+                        <i class="fa fa-print mr-1"></i> <?php echo app('translator')->getFromJson('fleet.print'); ?>
+                    </button>
+                </div>
+            </div>
+            <?php echo Form::close(); ?>
+
         </div>
     </div>
-</div>
 
-<?php if(isset($bookings)): ?>
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-info">
+    <?php if(isset($bookings)): ?>
+        <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Cash Book Summary for <?php echo e(date($date_format_setting, strtotime($date))); ?></h3>
+                <h3 class="card-title m-0">Cash Book Summary for <?php echo e(date(Hyvikk::get('date_format') ? Hyvikk::get('date_format') : 'd-m-Y', strtotime($date))); ?></h3>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4">
-                        <strong>Total Income:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income, 2)); ?>
-
+                    <div class="col-md-6 summary-section">
+                        <h4 class="summary-title">Income</h4>
+                        <div class="summary-item">
+                            <strong>Booking Income:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income - $tyre_sales, 2)); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Tyre Sales:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($tyre_sales, 2)); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Total Income:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income, 2)); ?></span>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <strong>Total Expenses:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_expenses, 2)); ?>
-
+                    <div class="col-md-6 summary-section">
+                        <h4 class="summary-title">Expenses</h4>
+                        <div class="summary-item">
+                            <strong>Fuel Costs:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fuel_costs, 2)); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Driver Advances:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($other_costs, 2)); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Legal Costs:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($legal_costs, 2)); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Tyre Purchase:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($tyre_purchase, 2)); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Total Expenses:</strong>
+                            <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_expenses, 2)); ?></span>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <strong>Cash Balance:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($cash_balance, 2)); ?>
-
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <h4 class="cash-balance">Cash Balance: <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($cash_balance, 2)); ?></h4>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    <?php endif; ?>
 </div>
-
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-info">
-            <div class="card-header">
-                <h3 class="card-title">Booking Details</h3>
-            </div>
-            <div class="card-body table-responsive">
-                <table class="table table-bordered table-striped table-hover" id="myTable">
-                    <thead>
-                        <tr>
-                            <th>Booking ID</th>
-                            <th>Customer</th>
-                            <th>Vehicle</th>
-                            <th>Pickup Time</th>
-                            <th>Total Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $__currentLoopData = $bookings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $booking): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <tr>
-                            <td><?php echo e($booking->id); ?></td>
-                            <td><?php echo e($booking->customer->name ?? 'N/A'); ?></td>
-                            <td><?php echo e($booking->vehicle->makeModel ?? 'N/A'); ?></td>
-                            <td><?php echo e(date($date_format_setting, strtotime($booking->pickup))); ?></td>
-                            <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($booking->getMeta('total_price'), 2)); ?></td>
-                        </tr>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
 <?php $__env->stopSection(); ?>
 
-<?php $__env->startSection("script"); ?>
+<?php $__env->startSection('script'); ?>
 <script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
 <script type="text/javascript">
 $(document).ready(function() {
     $('#date').datepicker({
         autoclose: true,
         format: 'yyyy-mm-dd'
-    });
-
-    $('#myTable').DataTable({
-        "language": {
-            "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
-        },
-        "ordering": false
     });
 });
 </script>

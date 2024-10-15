@@ -13,11 +13,11 @@
         }
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
-        h1 {
+        h1, h2 {
             text-align: center;
             margin-bottom: 20px;
         }
@@ -41,6 +41,13 @@
         .summary div {
             margin-bottom: 10px;
         }
+        .section {
+            margin-bottom: 30px;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -48,33 +55,63 @@
         <h1>Cash Book Report</h1>
         <div class="summary">
             <div><strong>Date:</strong> <?php echo e(date(Hyvikk::get('date_format'), strtotime($date))); ?></div>
-            <div><strong>Total Income:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income, 2)); ?></div>
-            <div><strong>Total Expenses:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_expenses, 2)); ?></div>
-            <div><strong>Cash Balance:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($cash_balance, 2)); ?></div>
         </div>
 
-        <table>
-            <thead>
+        <div class="section">
+            <h2>Income Summary</h2>
+            <table>
                 <tr>
-                    <th>Booking ID</th>
-                    <th>Customer</th>
-                    <th>Vehicle</th>
-                    <th>Pickup Time</th>
-                    <th>Total Price</th>
+                    <th>Category</th>
+                    <th>Amount</th>
                 </tr>
-            </thead>
-            <tbody>
-                <?php $__currentLoopData = $bookings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $booking): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
-                    <td><?php echo e($booking->id); ?></td>
-                    <td><?php echo e($booking->customer->name ?? 'N/A'); ?></td>
-                    <td><?php echo e($booking->vehicle->makeModel ?? 'N/A'); ?></td>
-                    <td><?php echo e(date(Hyvikk::get('date_format'), strtotime($booking->pickup))); ?></td>
-                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($booking->getMeta('total_price'), 2)); ?></td>
+                    <td>Booking Income</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income - $tyre_sales, 2)); ?></td>
                 </tr>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-            </tbody>
-        </table>
+                <tr>
+                    <td>Tyre Sales</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($tyre_sales, 2)); ?></td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total Income</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income, 2)); ?></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Expense Summary</h2>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Amount</th>
+                </tr>
+                <tr>
+                    <td>Fuel Costs</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fuel_costs, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Driver Advances</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($other_costs, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Legal Costs</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($legal_costs, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Tyre Purchase</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($tyre_purchase, 2)); ?></td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total Expenses</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_expenses, 2)); ?></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="summary">
+            <div><strong>Cash Balance:</strong> <?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($cash_balance, 2)); ?></div>
+        </div>
     </div>
 
     <script type="text/javascript">

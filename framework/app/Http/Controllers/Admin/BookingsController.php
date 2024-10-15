@@ -24,6 +24,7 @@ use App\Model\IncomeExpense;
 use App\Model\BankAccount;
 use App\Model\BankTransaction;
 use App\Model\DailyAdvance;
+use Illuminate\Support\Facades\Schema;
 use Auth;
 use Hash;
 use Carbon\Carbon;
@@ -1257,5 +1258,54 @@ class BookingsController extends Controller
         // For example, if you have a separate table for completed bookings
     
         return redirect()->back()->with('success', 'Booking status has been reverted to Upcoming.');
+    }
+
+    public function bulkAction(Request $request)
+    {
+        $ids = $request->input('ids');
+        $action = $request->input('action');
+        $updatedBookings = [];
+
+        switch ($action) {
+            case 'complete':
+                foreach ($ids as $id) {
+                    $booking = Bookings::findOrFail($id);
+                    $booking->status = 1;
+                    $booking->ride_status = "Completed";
+                    $booking->save();
+                    $updatedBookings[] = [
+                        'id' => $booking->id,
+                        'status' => $booking->status,
+                        'ride_status' => $booking->ride_status
+                    ];
+                }
+                return response()->json([
+                    'message' => 'Selected bookings have been marked as complete',
+                    'updatedBookings' => $updatedBookings
+                ]);
+
+            case 'undo-complete':
+                foreach ($ids as $id) {
+                    $booking = Bookings::findOrFail($id);
+                    $booking->status = 0;
+                    $booking->ride_status = 'Upcoming';
+                    $booking->receipt = 0;
+                    $booking->save();
+                    $updatedBookings[] = [
+                        'id' => $booking->id,
+                        'status' => $booking->status,
+                        'ride_status' => $booking->ride_status
+                    ];
+                }
+                return response()->json([
+                    'message' => 'Selected bookings have been marked as upcoming',
+                    'updatedBookings' => $updatedBookings
+                ]);
+
+            // ... other cases ...
+
+            default:
+                return response()->json(['message' => 'Invalid action'], 400);
+        }
     }
 }

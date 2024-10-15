@@ -3237,14 +3237,57 @@ class ReportsController extends Controller
 			$total_income += $booking->getMeta('total_price');
 		}
 
+		// Get total tyre sales for the day
+		$tyre_sales = DB::table('parts_sell')
+			->whereDate('date_of_sell', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Add tyre sales to total income
+		$total_income += $tyre_sales;
+
+		// Calculate fuel costs for all vehicles on the given date
+		$fuel_costs = FuelModel::whereDate('date', $date)->sum(DB::raw('qty * cost_per_unit'));
+
+		// Calculate other costs (driver advances) for all vehicles on the given date
+		$other_costs = DB::table('bookings')
+			->whereDate('pickup', $date)
+			->whereExists(function ($query) {
+				$query->select(DB::raw(1))
+					->from('bookings_meta')
+					->whereRaw('bookings_meta.booking_id = bookings.id')
+					->where('key', 'advance_pay')
+					->whereRaw('value IS NOT NULL AND value != 0');
+			})
+			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
+
+		// Calculate legal costs for all vehicles
+		$legal_costs = VehicleDocs::whereDate('till', '=', $date)
+			->whereNull('deleted_at')
+			->sum('amount');
+
+		// Calculate tyre purchase costs for the day
+		$tyre_purchase = DB::table('parts_invoice')
+			->whereDate('date_of_purchase', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Calculate total expenses (now including tyre purchases)
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase;
+
 		$cash_balance = $total_income - $total_expenses;
 
 		$data = [
 			'date' => $date,
 			'total_income' => round($total_income, 2),
 			'total_expenses' => round($total_expenses, 2),
+			'fuel_costs' => round($fuel_costs, 2),
+			'other_costs' => round($other_costs, 2),
+			'legal_costs' => round($legal_costs, 2),
+			'tyre_purchase' => round($tyre_purchase, 2),
 			'cash_balance' => round($cash_balance, 2),
 			'bookings' => $bookings,
+			'tyre_sales' => round($tyre_sales, 2),
 			'request' => $request->all(),
 		];
 
@@ -3254,19 +3297,54 @@ class ReportsController extends Controller
 	public function cashBook_print(Request $request)
 	{
 		$date = $request->date;
-		$date = Helper::ymd($date); // Convert to your standard date format
+		$date = Helper::ymd($date);
 
-		// Fetch bookings for the specified date
 		$bookings = Bookings::whereDate('pickup', $date)->get();
 
 		$total_income = 0;
-		$total_expenses = 0; // You might want to add expenses calculation later
+		$total_expenses = 0;
 
 		foreach ($bookings as $booking) {
 			$total_income += $booking->getMeta('total_price');
-			// If you have any expense data related to bookings, you can calculate it here
-			// $total_expenses += $booking->getMeta('some_expense_field');
 		}
+
+		// Get total tyre sales for the day
+		$tyre_sales = DB::table('parts_sell')
+			->whereDate('date_of_sell', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Add tyre sales to total income
+		$total_income += $tyre_sales;
+
+		// Calculate fuel costs for all vehicles on the given date
+		$fuel_costs = FuelModel::whereDate('date', $date)->sum(DB::raw('qty * cost_per_unit'));
+
+		// Calculate other costs (driver advances) for all vehicles on the given date
+		$other_costs = DB::table('bookings')
+			->whereDate('pickup', $date)
+			->whereExists(function ($query) {
+				$query->select(DB::raw(1))
+					->from('bookings_meta')
+					->whereRaw('bookings_meta.booking_id = bookings.id')
+					->where('key', 'advance_pay')
+					->whereRaw('value IS NOT NULL AND value != 0');
+			})
+			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
+
+		// Calculate legal costs for all vehicles
+		$legal_costs = VehicleDocs::whereDate('till', '=', $date)
+			->whereNull('deleted_at')
+			->sum('amount');
+
+		// Calculate tyre purchase costs for the day
+		$tyre_purchase = DB::table('parts_invoice')
+			->whereDate('date_of_purchase', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Calculate total expenses
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase;
 
 		$cash_balance = $total_income - $total_expenses;
 
@@ -3274,8 +3352,13 @@ class ReportsController extends Controller
 			'date' => $date,
 			'total_income' => round($total_income, 2),
 			'total_expenses' => round($total_expenses, 2),
+			'fuel_costs' => round($fuel_costs, 2),
+			'other_costs' => round($other_costs, 2),
+			'legal_costs' => round($legal_costs, 2),
+			'tyre_purchase' => round($tyre_purchase, 2),
 			'cash_balance' => round($cash_balance, 2),
 			'bookings' => $bookings,
+			'tyre_sales' => round($tyre_sales, 2),
 		];
 
 		return view("reports.cash-book-print", $data);

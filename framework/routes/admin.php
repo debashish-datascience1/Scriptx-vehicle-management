@@ -359,7 +359,7 @@ Route::namespace('Admin')->group(function () {
         Route::post("reports/statement", "ReportsController@statement_post")->name("reports.statement")->middleware('userpermission:4');
         Route::post("print-statement", "ReportsController@statement_print")->middleware('userpermission:4');
 
-
+        Route::post('/bookings/bulk-action', 'BookingsController@bulkAction')->name('bookings.bulk_action');
         Route::get("reports/drivers-report", "ReportsController@driverspayroll")->name("reports.drivers-report")->middleware('userpermission:4');
         Route::post("reports/drivers-report", "ReportsController@driverspayroll_post")->name("reports.drivers-report")->middleware('userpermission:4');
         Route::post("print-drivers-report", "ReportsController@driverspayroll_print")->middleware('userpermission:4');
