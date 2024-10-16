@@ -358,7 +358,16 @@ Route::namespace('Admin')->group(function () {
         Route::get("reports/statement", "ReportsController@statement")->name("reports.statement")->middleware('userpermission:4');
         Route::post("reports/statement", "ReportsController@statement_post")->name("reports.statement")->middleware('userpermission:4');
         Route::post("print-statement", "ReportsController@statement_print")->middleware('userpermission:4');
-
+        // Route::get('/take', 'LoanTakeController@index')->name('loans.take');
+        Route::get('/pay', 'LoanPayController@index')->name('loans.pay');
+        Route::get('/give', 'LoanGiveController@index')->name('loans.give');
+        Route::get('/return', 'LoanReturnController@index')->name('loans.return');
+        Route::resource('loan-take', 'LoanTakeController');
+        Route::resource('loan-give', 'LoanGiveController');
+        Route::get('loan-take/{id}/return', 'LoanTakeController@returnLoan')->name('loan-take.return');
+        Route::post('loan-take/{id}/process-return', 'LoanTakeController@processReturn')->name('loan-take.process-return');
+        Route::get('loan-give/{id}/return', 'LoanGiveController@returnLoan')->name('loan-give.return');
+        Route::post('loan-give/{id}/process-return', 'LoanGiveController@processReturn')->name('loan-give.process-return');
         Route::post('/bookings/bulk-action', 'BookingsController@bulkAction')->name('bookings.bulk_action');
         Route::get("reports/drivers-report", "ReportsController@driverspayroll")->name("reports.drivers-report")->middleware('userpermission:4');
         Route::post("reports/drivers-report", "ReportsController@driverspayroll_post")->name("reports.drivers-report")->middleware('userpermission:4');

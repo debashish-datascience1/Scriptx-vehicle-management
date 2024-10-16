@@ -638,6 +638,41 @@
             </ul>
           </li>
           @endif
+
+          @if(Request::is('admin/loan-take*') || Request::is('admin/loan-give*'))
+            @php($loanClass = 'menu-open')
+            @php($loanActive = 'active')
+    
+          @else
+            @php( $loanClass = '')
+            @php($loanActive = '')
+          @endif
+
+          @if(in_array(1, $modules)) 
+              <li class="nav-item has-treeview {{ $loanClass }}">
+                  <a href="#" class="nav-link {{ $loanActive }}">
+                      <i class="nav-icon fa fa-money"></i> 
+                      <p>
+                          @lang('menu.loans')
+                          <i class="right fa fa-angle-left"></i>
+                      </p>
+                  </a>
+                  <ul class="nav nav-treeview">
+                      <li class="nav-item">
+                          <a href="{{ route('loan-take.index') }}" class="nav-link {{ Request::is('admin/loan-take*') ? 'active' : '' }}">
+                          <i class="fa fa-usd nav-icon"></i>
+                              <p>@lang('menu.loan_take')</p>
+                          </a>
+                      </li>
+                      <li class="nav-item">
+                          <a href="{{ route('loan-give.index') }}" class="nav-link {{ Request::is('admin/loan-give*') ? 'active' : '' }}">
+                          <i class="fa fa-handshake-o nav-icon"></i>
+                              <p>@lang('menu.loan_give')</p>
+                          </a>
+                      </li>
+                  </ul>
+              </li>
+          @endif
           @if((Request::is('admin/daily-advance*')) || (Request::is('admin/daily-advance/report*')) || Request::is('admin/other-advance*') || Request::is('admin/other-adjust*'))
             @php($class="menu-open")
             @php($active="active")

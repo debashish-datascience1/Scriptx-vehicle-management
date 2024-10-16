@@ -593,6 +593,41 @@
             </ul>
           </li>
           <?php endif; ?>
+
+          <?php if(Request::is('admin/loan-take*') || Request::is('admin/loan-give*')): ?>
+            <?php ($loanClass = 'menu-open'); ?>
+            <?php ($loanActive = 'active'); ?>
+    
+          <?php else: ?>
+            <?php ( $loanClass = ''); ?>
+            <?php ($loanActive = ''); ?>
+          <?php endif; ?>
+
+          <?php if(in_array(1, $modules)): ?> 
+              <li class="nav-item has-treeview <?php echo e($loanClass); ?>">
+                  <a href="#" class="nav-link <?php echo e($loanActive); ?>">
+                      <i class="nav-icon fa fa-money"></i> 
+                      <p>
+                          <?php echo app('translator')->getFromJson('menu.loans'); ?>
+                          <i class="right fa fa-angle-left"></i>
+                      </p>
+                  </a>
+                  <ul class="nav nav-treeview">
+                      <li class="nav-item">
+                          <a href="<?php echo e(route('loan-take.index')); ?>" class="nav-link <?php echo e(Request::is('admin/loan-take*') ? 'active' : ''); ?>">
+                          <i class="fa fa-usd nav-icon"></i>
+                              <p><?php echo app('translator')->getFromJson('menu.loan_take'); ?></p>
+                          </a>
+                      </li>
+                      <li class="nav-item">
+                          <a href="<?php echo e(route('loan-give.index')); ?>" class="nav-link <?php echo e(Request::is('admin/loan-give*') ? 'active' : ''); ?>">
+                          <i class="fa fa-handshake-o nav-icon"></i>
+                              <p><?php echo app('translator')->getFromJson('menu.loan_give'); ?></p>
+                          </a>
+                      </li>
+                  </ul>
+              </li>
+          <?php endif; ?>
           <?php if((Request::is('admin/daily-advance*')) || (Request::is('admin/daily-advance/report*')) || Request::is('admin/other-advance*') || Request::is('admin/other-adjust*')): ?>
             <?php ($class="menu-open"); ?>
             <?php ($active="active"); ?>
