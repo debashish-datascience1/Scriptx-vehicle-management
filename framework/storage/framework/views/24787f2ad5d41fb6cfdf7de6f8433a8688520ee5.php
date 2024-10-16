@@ -1,4 +1,6 @@
-<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+?>
 <?php $__env->startSection('extra_css'); ?>
 <style type="text/css">
   .mybtn1
@@ -118,6 +120,7 @@ input:checked + .slider:before {
               <th>Driver</th>
               <th>Vehicle</th>
               <th>Salary</th>
+              <th>Last Paid</th>
               
               <th><?php echo app('translator')->getFromJson('fleet.action'); ?></th>
             </tr>
@@ -144,6 +147,18 @@ input:checked + .slider:before {
 
               </td>
               <td><span class="fa fa-inr"> <?php echo e(number_format($row->salary)); ?></span></td>
+              <td>
+                  <?php if(isset($latestPayrolls[$row->id])): ?>
+                      <?php
+                          $lastPayroll = $latestPayrolls[$row->id];
+                          $monthName = date('F', mktime(0, 0, 0, $lastPayroll->for_month, 10));
+                      ?>
+                      <?php echo e($monthName); ?> - <?php echo e($lastPayroll->for_year); ?>
+
+                  <?php else: ?>
+                      Not paid yet
+                  <?php endif; ?>
+              </td>
               <td>
               <div class="btn-group">
                 <a class="vpay btn btn-success" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#viewModal" title="<?php echo app('translator')->getFromJson('fleet.view'); ?>" style="color: #fff">Pay</a>
@@ -173,6 +188,7 @@ input:checked + .slider:before {
               <th><?php echo app('translator')->getFromJson('fleet.name'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.vehicle'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.salary'); ?></th>
+              <th>Last Paid</th>
               
               
               

@@ -145,74 +145,306 @@ class BankAccountController extends Controller
         else
             return view('bank_account.bulk_receive', $index);
     }
+    // public function bulk_paypost(Request $request)
+    // {
+    //     // dd($request->all());
+    //     $customer = $request->customer;
+    //     $vendor = $request->vendor;
+        // $index['transactions'] = Transaction::whereIn('param_id', [18, 20, 26, 28])
+        //     ->where(function ($query) {
+        //         $query->whereNull('is_completed')
+        //             ->orWhere('is_completed', 2);
+        //     })
+        //     ->where(function ($q) {
+        //         $q->where('advance_for', 22)
+        //             ->orwhereNull('advance_for');
+        //     })->get();
+        // // dd($index);
+        // foreach ($index['transactions'] as $k => $t) {
+        //     if ($t->param_id == 18) { //Booking
+        //         $shalom = Bookings::where(['id' => $t->from_id, 'customer_id' => $customer]);
+        //         $t->org_id = $org = $shalom->exists() ? $shalom->first()->customer_id : null;
+        //         $t->date = $shalom->exists() ? $shalom->first()->created_at : null;
+        //         $t->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
+        //         $t->vc = !empty($t->org_id) ? User::find($t->org_id)->name : null;
+        //     } elseif ($t->param_id == 19) { //Payroll
+        //         $t->org_id = null;
+        //     } elseif ($t->param_id == 20) { //Fuel
+        //         $shalom = FuelModel::where(['id' => $t->from_id, 'vendor_name' => $vendor]);
+        //         $t->org_id = $shalom->exists() ? $shalom->first()->vendor_name : null;
+        //         $t->date = $shalom->exists() ? $shalom->first()->created_at : null;
+        //         $t->dateof = $shalom->exists() ? date("Y-m-d H:i:s", strtotime($shalom->first()->date)) : null;
+        //         $t->vc = !empty($t->org_id) ? Vendor::find($t->org_id)->name : null;
+        //     } elseif ($t->param_id == 26) { //Parts
+        //         // dd($t->from_id);
+        //         $shalom = PartsInvoice::where(['id' => $t->from_id, 'vendor_id' => $vendor]);
+        //         // dd(PartsModel::where(['id'=>$t->from_id,'vendor_id'=>$vendor])->get());
+        //         $t->org_id = $shalom->exists() ? $shalom->first()->vendor_id : null;
+        //         $t->date = $t->dateof = $shalom->exists() ? date("Y-m-d H:i:s", strtotime($shalom->first()->created_at)) : null;
+        //         $t->vc = !empty($t->org_id) ? Vendor::find($t->org_id)->name : null;
+        //     } elseif ($t->param_id == 28) { //Work Order
+        //         $shalom = WorkOrders::where(['id' => $t->from_id, 'vendor_id' => $vendor]);
+        //         $t->org_id = $shalom->exists() ? $shalom->first()->vendor_id : null;
+        //         $date_stuff = $shalom->exists() ? $shalom->first()->required_by : ($shalom->exists() ? date("Y-m-d", strtotime($shalom->first()->created_at)) : null);
+        //         $t->date = $t->dateof = !empty($date_stuff) ? $date_stuff . " 00:00:00" : null;
+        //         $t->vc = !empty($t->org_id) ? Vendor::find($t->org_id)->name : null;
+        //     }
+        //     // empty($t->dateof) ? dd($t) : '123';
+        //     $t->rem = $t->incExp->remaining;
+        //     // $t->param_id==19 ?? dd($t);
+        // }
+    //     $filtered = $index['transactions']->where('org_id', '!=', null)->where('rem', '!=', 0)->where('dateof', '!=', null)->flatten();
+    //     // dd($filtered);
+    //     // dd($filtered->take(10));
+    //     if (empty($request->get('from_date')))
+    //         $start = !empty($filtered->first()) ? date("Y-m-d", strtotime($filtered->first()->dateof)) : null;
+    //     else
+    //         $start = date("Y-m-d", strtotime($request->get('from_date')));
+
+    //     if (empty($request->get('to_date')))
+    //         $end = !empty($filtered->reverse()->first()) ? date("Y-m-d", strtotime($filtered->reverse()->first()->dateof)) : null;
+    //     else
+    //         $end = date("Y-m-d", strtotime($request->get('to_date')));
+    //     // dd($start,$end);
+    //     // dd(strtotime($start),strtotime($end));
+    //     // dd($filtered->whereBetween('dateof',["2021-05-04 00:00:00","2021-05-04 23:59:59"]));
+
+    //     // dd($filtered);
+    //     $filtered = strtotime($start) == strtotime($end) ? $filtered->whereBetween('dateof', ["$start 00:00:00", "$end 23:59:59"]) : $filtered->whereBetween('dateof', [$start, $end]);
+    //     // dd($filtered);
+    //     $index['transactions'] = $filtered;
+    //     $index['customers'] = User::where('user_type', 'C')->pluck('name', 'id');
+    //     $index['vend'] = Vendor::get();
+    //     foreach ($index['vend'] as $v) {
+    //         $index['vendors'][$v->id] = $v->name . " ( $v->type )";
+    //     }
+    //     $index['vendor'] = $request->has('vendor') ? $request->vendor : null;
+    //     $index['customer'] = $request->has('customer') ? $request->customer : null;
+    //     if (empty($request->vendor) && empty($request->customer)) {
+    //         $index['vendorSelect'] = $index['customerSelect'] = null;
+    //     } else {
+    //         $index['vendorSelect'] = $request->has('vendor') && !empty($request->vendor) ? null : 'disabled';
+    //         $index['customerSelect'] = $request->has('customer') && !empty($request->customer) ? null : 'disabled';
+    //     }
+    //     $index['result'] = "";
+    //     if (!empty($customer))
+    //         $index['custvend'] = User::find($customer)->name;
+    //     elseif (!empty($vendor))
+    //         $index['custvend'] = Vendor::find($vendor)->name;
+    //     else
+    //         $index['custvend'] = null;
+
+    //     $index['bankAccounts'] = BankAccount::select("id", DB::raw("CONCAT(bank,'(',account_no,')') as bank"))->pluck('bank', 'id');
+    //     $index['totalAmount'] = $index['transactions']->sum('total');
+    //     foreach ($index['transactions'] as $tr) {
+    //         $tr->remainingAmt = $tr->incExp->remaining;
+    //         $vehicleExistParams = [18, 20, 28]; //Booking,Fuel,Work Order
+    //         if (in_array($tr->param_id, $vehicleExistParams)) {
+    //             if ($tr->param_id == 18) { //Bookings
+    //                 $book = $tr->booking;
+    //                 // $dateof = $book->pickup;
+    //                 $vehicle =  $book->vehicle;
+    //                 $plate = $vehicle->license_plate;
+    //             } else if ($tr->param_id == 20) { //Fuel
+    //                 $ffu = $tr->fuel;
+    //                 // $dateof = $ffu->date;
+    //                 $vehicle =  $ffu->vehicle_data;
+    //                 $plate = $vehicle->license_plate;
+    //             } else if ($tr->param_id == 26) { //Parts Invoice
+    //                 $plate = null;
+    //             } else if ($tr->param_id == 28) { //Work Orders
+    //                 $wk = $tr->workorders;
+    //                 // $dateof = $wk->created_at;
+    //                 $vehicle =  $wk->vehicle;
+    //                 $plate = $vehicle->license_plate;
+    //             }
+    //         } else {
+    //             $plate = null;
+    //         }
+    //         $tr->license_plate = $plate;
+    //         // $tr->dateof = $dateof;
+    //         // dd($tr);
+    //     }
+    //     $index['remm'] = $index['transactions']->sum('remainingAmt');
+    //     if ($request->has('customer') && !empty($customer))
+    //         $index['faulty'] = [1 => 'Remaining', 2 => 'Completed', 3 => 'Shortage', 4 => "Driver's Fault"];
+    //     else
+    //         $index['faulty'] = [1 => 'Remaining', 2 => 'Completed'];
+    //     // dd($customer);
+    //     $index['request'] = $request->all();
+    //     $index['method'] = Params::where('code', 'PaymentMethod')->pluck('label', 'id');
+    //     $index['from_date'] = $request->get('from_date');
+    //     $index['to_date'] = $request->get('to_date');
+    //     $index['now'] = date("Y-m-d");
+    //     // dd($index);
+    //     if ($customer != "")
+    //         return view('bank_account.bulk_receive', $index);
+    //     else
+    //         return view('bank_account.bulk_pay', $index);
+    // }
     public function bulk_paypost(Request $request)
     {
-        // dd($request->all());
+        // set_time_limit(1200); // Increases the limit to 300 seconds (5 minutes)
+
+        // $customer = $request->customer;
+        // $vendor = $request->vendor;
+        // $index['transactions'] = Transaction::whereIn('param_id', [18, 20, 26, 28])
+        //     ->where(function ($query) {
+        //         $query->whereNull('is_completed')
+        //             ->orWhere('is_completed', 2);
+        //     })
+        //     ->where(function ($q) {
+        //         $q->where('advance_for', 22)
+        //             ->orwhereNull('advance_for');
+        //     })->get();
+        //     // dd($index);
+
+        // foreach ($index['transactions'] as $k => $t) {
+        //     if ($t->param_id == 18) { //Booking
+        //         $booking = $t->booking;
+        //         if ($booking && (!$customer || $booking->customer_id == $customer)) {
+        //             $t->org_id = $booking->customer_id;
+        //             $t->date = $booking->created_at;
+        //             $t->dateof = $booking->pickup;
+        //             $t->vc = $booking->customer ? $booking->customer->name : null;
+        //         } else {
+        //             continue;
+        //         }
+        //     } elseif ($t->param_id == 20) { //Fuel
+        //         $fuel = $t->fuel;
+        //         if ($fuel && (!$vendor || $fuel->vendor_name == $vendor)) {
+        //             $t->org_id = $fuel->vendor_name;
+        //             $t->date = $fuel->created_at;
+        //             $t->dateof = $fuel->date ? date("Y-m-d H:i:s", strtotime($fuel->date)) : null;
+        //             $t->vc = $fuel->vendor ? $fuel->vendor->name : null;
+        //         } else {
+        //             continue;
+        //         }
+        //     } elseif ($t->param_id == 26) { //Parts
+        //         $partsInvoice = $t->partsInvoice;
+        //         if ($partsInvoice && (!$vendor || $partsInvoice->vendor_id == $vendor)) {
+        //             $t->org_id = $partsInvoice->vendor_id;
+        //             $t->date = $t->dateof = $partsInvoice->created_at;
+        //             $t->vc = $partsInvoice->vendor ? $partsInvoice->vendor->name : null;
+        //         } else {
+        //             continue;
+        //         }
+        //     } elseif ($t->param_id == 28) { //Work Order
+        //         $workOrder = $t->workorders;
+        //         if ($workOrder && (!$vendor || $workOrder->vendor_id == $vendor)) {
+        //             $t->org_id = $workOrder->vendor_id;
+        //             $date_stuff = $workOrder->required_by ?? $workOrder->created_at;
+        //             $t->date = $t->dateof = $date_stuff ? date("Y-m-d H:i:s", strtotime($date_stuff)) : null;
+        //             $t->vc = $workOrder->vendor ? $workOrder->vendor->name : null;
+        //         } else {
+        //             continue;
+        //         }
+        //     }
+
+        //     $t->rem = $t->incExp ? $t->incExp->remaining : null;
+        // }
+        // $filtered = $index['transactions']->filter(function ($t) {
+        //     return $t->org_id !== null && $t->rem != 0 && $t->dateof !== null;
+        // });
+
+        // $start = $request->get('from_date') ? date("Y-m-d", strtotime($request->get('from_date'))) : null;
+        // $end = $request->get('to_date') ? date("Y-m-d", strtotime($request->get('to_date'))) : null;
+
+        // $filtered = $filtered->filter(function ($t) use ($start, $end) {
+        //     $date = date("Y-m-d", strtotime($t->dateof));
+        //     if ($start && $end) {
+        //         return $date >= $start && $date <= $end;
+        //     } elseif ($start) {
+        //         return $date >= $start;
+        //     } elseif ($end) {
+        //         return $date <= $end;
+        //     }
+        //     return true;
+        // });
+
+        // $index['transactions'] = $filtered;
         $customer = $request->customer;
         $vendor = $request->vendor;
-        $index['transactions'] = Transaction::whereIn('param_id', [18, 20, 26, 28])
+        $start = $request->get('from_date') ? date("Y-m-d", strtotime($request->get('from_date'))) : null;
+        $end = $request->get('to_date') ? date("Y-m-d", strtotime($request->get('to_date'))) : null;
+
+        $query = Transaction::whereIn('param_id', [18, 20, 26, 28])
             ->where(function ($query) {
                 $query->whereNull('is_completed')
                     ->orWhere('is_completed', 2);
             })
             ->where(function ($q) {
                 $q->where('advance_for', 22)
-                    ->orwhereNull('advance_for');
-            })->get();
+                    ->orWhereNull('advance_for');
+            })
+            ->whereNull('deleted_at'); // Add this line to exclude soft deleted records
+
+        // Apply date range filter if dates are provided
+        if ($start && $end) {
+            $query->whereBetween('created_at', [$start, $end]);
+        } elseif ($start) {
+            $query->where('created_at', '>=', $start);
+        } elseif ($end) {
+            $query->where('created_at', '<=', $end);
+        }
+    
+        $index['transactions'] = $query->get();
         // dd($index);
+
+        // Rest of your existing code...
         foreach ($index['transactions'] as $k => $t) {
             if ($t->param_id == 18) { //Booking
-                $shalom = Bookings::where(['id' => $t->from_id, 'customer_id' => $customer]);
-                $t->org_id = $org = $shalom->exists() ? $shalom->first()->customer_id : null;
-                $t->date = $shalom->exists() ? $shalom->first()->created_at : null;
-                $t->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-                $t->vc = !empty($t->org_id) ? User::find($t->org_id)->name : null;
-            } elseif ($t->param_id == 19) { //Payroll
-                $t->org_id = null;
+                $booking = $t->booking;
+                if ($booking && (!$customer || $booking->customer_id == $customer)) {
+                    $t->org_id = $booking->customer_id;
+                    $t->date = $booking->created_at;
+                    $t->dateof = $booking->pickup;
+                    $t->vc = $booking->customer ? $booking->customer->name : null;
+                } else {
+                    continue;
+                }
             } elseif ($t->param_id == 20) { //Fuel
-                $shalom = FuelModel::where(['id' => $t->from_id, 'vendor_name' => $vendor]);
-                $t->org_id = $shalom->exists() ? $shalom->first()->vendor_name : null;
-                $t->date = $shalom->exists() ? $shalom->first()->created_at : null;
-                $t->dateof = $shalom->exists() ? date("Y-m-d H:i:s", strtotime($shalom->first()->date)) : null;
-                $t->vc = !empty($t->org_id) ? Vendor::find($t->org_id)->name : null;
+                $fuel = $t->fuel;
+                if ($fuel && (!$vendor || $fuel->vendor_name == $vendor)) {
+                    $t->org_id = $fuel->vendor_name;
+                    $t->date = $fuel->created_at;
+                    $t->dateof = $fuel->date ? date("Y-m-d H:i:s", strtotime($fuel->date)) : null;
+                    $t->vc = $fuel->vendor ? $fuel->vendor->name : null;
+                } else {
+                    continue;
+                }
             } elseif ($t->param_id == 26) { //Parts
-                // dd($t->from_id);
-                $shalom = PartsInvoice::where(['id' => $t->from_id, 'vendor_id' => $vendor]);
-                // dd(PartsModel::where(['id'=>$t->from_id,'vendor_id'=>$vendor])->get());
-                $t->org_id = $shalom->exists() ? $shalom->first()->vendor_id : null;
-                $t->date = $t->dateof = $shalom->exists() ? date("Y-m-d H:i:s", strtotime($shalom->first()->created_at)) : null;
-                $t->vc = !empty($t->org_id) ? Vendor::find($t->org_id)->name : null;
+                $partsInvoice = $t->partsInvoice;
+                if ($partsInvoice && (!$vendor || $partsInvoice->vendor_id == $vendor)) {
+                    $t->org_id = $partsInvoice->vendor_id;
+                    $t->date = $t->dateof = $partsInvoice->created_at;
+                    $t->vc = $partsInvoice->vendor ? $partsInvoice->vendor->name : null;
+                } else {
+                    continue;
+                }
             } elseif ($t->param_id == 28) { //Work Order
-                $shalom = WorkOrders::where(['id' => $t->from_id, 'vendor_id' => $vendor]);
-                $t->org_id = $shalom->exists() ? $shalom->first()->vendor_id : null;
-                $date_stuff = $shalom->exists() ? $shalom->first()->required_by : ($shalom->exists() ? date("Y-m-d", strtotime($shalom->first()->created_at)) : null);
-                $t->date = $t->dateof = !empty($date_stuff) ? $date_stuff . " 00:00:00" : null;
-                $t->vc = !empty($t->org_id) ? Vendor::find($t->org_id)->name : null;
+                $workOrder = $t->workorders;
+                if ($workOrder && (!$vendor || $workOrder->vendor_id == $vendor)) {
+                    $t->org_id = $workOrder->vendor_id;
+                    $date_stuff = $workOrder->required_by ?? $workOrder->created_at;
+                    $t->date = $t->dateof = $date_stuff ? date("Y-m-d H:i:s", strtotime($date_stuff)) : null;
+                    $t->vc = $workOrder->vendor ? $workOrder->vendor->name : null;
+                } else {
+                    continue;
+                }
             }
-            // empty($t->dateof) ? dd($t) : '123';
-            $t->rem = $t->incExp->remaining;
-            // $t->param_id==19 ?? dd($t);
+
+            $t->rem = $t->incExp ? $t->incExp->remaining : null;
         }
-        $filtered = $index['transactions']->where('org_id', '!=', null)->where('rem', '!=', 0)->where('dateof', '!=', null)->flatten();
-        // dd($filtered);
-        // dd($filtered->take(10));
-        if (empty($request->get('from_date')))
-            $start = !empty($filtered->first()) ? date("Y-m-d", strtotime($filtered->first()->dateof)) : null;
-        else
-            $start = date("Y-m-d", strtotime($request->get('from_date')));
 
-        if (empty($request->get('to_date')))
-            $end = !empty($filtered->reverse()->first()) ? date("Y-m-d", strtotime($filtered->reverse()->first()->dateof)) : null;
-        else
-            $end = date("Y-m-d", strtotime($request->get('to_date')));
-        // dd($start,$end);
-        // dd(strtotime($start),strtotime($end));
-        // dd($filtered->whereBetween('dateof',["2021-05-04 00:00:00","2021-05-04 23:59:59"]));
+        $filtered = $index['transactions']->filter(function ($t) {
+            return $t->org_id !== null && $t->rem != 0 && $t->dateof !== null;
+        });
 
-        // dd($filtered);
-        $filtered = strtotime($start) == strtotime($end) ? $filtered->whereBetween('dateof', ["$start 00:00:00", "$end 23:59:59"]) : $filtered->whereBetween('dateof', [$start, $end]);
-        // dd($filtered);
         $index['transactions'] = $filtered;
+
+
+        // Rest of your existing code...
         $index['customers'] = User::where('user_type', 'C')->pluck('name', 'id');
         $index['vend'] = Vendor::get();
         foreach ($index['vend'] as $v) {
@@ -236,51 +468,83 @@ class BankAccountController extends Controller
 
         $index['bankAccounts'] = BankAccount::select("id", DB::raw("CONCAT(bank,'(',account_no,')') as bank"))->pluck('bank', 'id');
         $index['totalAmount'] = $index['transactions']->sum('total');
+        
         foreach ($index['transactions'] as $tr) {
-            $tr->remainingAmt = $tr->incExp->remaining;
+            $tr->remainingAmt = $tr->incExp ? $tr->incExp->remaining : null;
             $vehicleExistParams = [18, 20, 28]; //Booking,Fuel,Work Order
             if (in_array($tr->param_id, $vehicleExistParams)) {
                 if ($tr->param_id == 18) { //Bookings
-                    $book = $tr->booking;
-                    // $dateof = $book->pickup;
-                    $vehicle =  $book->vehicle;
-                    $plate = $vehicle->license_plate;
+                    $vehicle = $tr->booking->vehicle;
                 } else if ($tr->param_id == 20) { //Fuel
-                    $ffu = $tr->fuel;
-                    // $dateof = $ffu->date;
-                    $vehicle =  $ffu->vehicle_data;
-                    $plate = $vehicle->license_plate;
-                } else if ($tr->param_id == 26) { //Parts Invoice
-                    $plate = null;
+                    $vehicle = $tr->fuel->vehicle_data;
                 } else if ($tr->param_id == 28) { //Work Orders
-                    $wk = $tr->workorders;
-                    // $dateof = $wk->created_at;
-                    $vehicle =  $wk->vehicle;
-                    $plate = $vehicle->license_plate;
+                    $vehicle = $tr->workorders->vehicle;
                 }
+                $tr->license_plate = $vehicle ? $vehicle->license_plate : null;
             } else {
-                $plate = null;
+                $tr->license_plate = null;
             }
-            $tr->license_plate = $plate;
-            // $tr->dateof = $dateof;
-            // dd($tr);
         }
+
         $index['remm'] = $index['transactions']->sum('remainingAmt');
         if ($request->has('customer') && !empty($customer))
             $index['faulty'] = [1 => 'Remaining', 2 => 'Completed', 3 => 'Shortage', 4 => "Driver's Fault"];
         else
             $index['faulty'] = [1 => 'Remaining', 2 => 'Completed'];
-        // dd($customer);
+
         $index['request'] = $request->all();
         $index['method'] = Params::where('code', 'PaymentMethod')->pluck('label', 'id');
         $index['from_date'] = $request->get('from_date');
         $index['to_date'] = $request->get('to_date');
         $index['now'] = date("Y-m-d");
-        // dd($index);
+
         if ($customer != "")
             return view('bank_account.bulk_receive', $index);
         else
             return view('bank_account.bulk_pay', $index);
+    }
+
+    private function processBooking($t, $customer)
+    {
+        $booking = $t->booking;
+        if ($booking && (!$customer || $booking->customer_id == $customer)) {
+            $t->org_id = $booking->customer_id;
+            $t->date = $booking->created_at;
+            $t->dateof = $booking->pickup;
+            $t->vc = $booking->customer ? $booking->customer->name : null;
+        }
+    }
+
+    private function processFuel($t, $vendor)
+    {
+        $fuel = $t->fuel;
+        if ($fuel && (!$vendor || $fuel->vendor_name == $vendor)) {
+            $t->org_id = $fuel->vendor_name;
+            $t->date = $fuel->created_at;
+            $t->dateof = $fuel->date ? date("Y-m-d H:i:s", strtotime($fuel->date)) : null;
+            $t->vc = $fuel->vendor ? $fuel->vendor->name : null;
+        }
+    }
+
+    private function processParts($t, $vendor)
+    {
+        $partsInvoice = $t->partsInvoice;
+        if ($partsInvoice && (!$vendor || $partsInvoice->vendor_id == $vendor)) {
+            $t->org_id = $partsInvoice->vendor_id;
+            $t->date = $t->dateof = $partsInvoice->created_at;
+            $t->vc = $partsInvoice->vendor ? $partsInvoice->vendor->name : null;
+        }
+    }
+
+    private function processWorkOrder($t, $vendor)
+    {
+        $workOrder = $t->workorders;
+        if ($workOrder && (!$vendor || $workOrder->vendor_id == $vendor)) {
+            $t->org_id = $workOrder->vendor_id;
+            $date_stuff = $workOrder->required_by ?? $workOrder->created_at;
+            $t->date = $t->dateof = $date_stuff ? date("Y-m-d H:i:s", strtotime($date_stuff)) : null;
+            $t->vc = $workOrder->vendor ? $workOrder->vendor->name : null;
+        }
     }
 
     public function bulk_store(Request $request)

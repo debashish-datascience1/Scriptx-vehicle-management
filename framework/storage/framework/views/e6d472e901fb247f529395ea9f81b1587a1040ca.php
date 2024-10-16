@@ -31,7 +31,15 @@
       <div class="card-header with-border">
         <h3 class="card-title"> <?php echo app('translator')->getFromJson('fleet.manage_bookings'); ?> &nbsp;
           <a href="<?php echo e(route("bookings.create")); ?>" class="btn btn-success"><?php echo app('translator')->getFromJson('fleet.new_booking'); ?></a>
-          <a href="<?php echo e(url("admin/refresh-json/18")); ?>" class="btn btn-primary float-right refresh-table"><span class="fa fa-repeat"></span> &nbsp; <?php echo app('translator')->getFromJson('fleet.refresh'); ?></a>
+          <a href="<?php echo e(url("admin/refresh-json/18")); ?>" class="btn btn-primary refresh-table"><span class="fa fa-repeat"></span> &nbsp; <?php echo app('translator')->getFromJson('fleet.refresh'); ?></a>
+          <div class="dropdown d-inline-block float-right ml-2">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="bulkActionDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Bulk Actions
+            </button>
+            <div class="dropdown-menu" aria-labelledby="bulkActionDropdown">
+              <!-- Options will be dynamically populated here -->
+            </div>
+          </div>
         </h3>
       </div>
 
@@ -44,6 +52,9 @@
                   <?php if($data->count() > 0): ?>
                   
                   <?php endif; ?>
+                </th>
+                <th>
+                  <input type="checkbox" id="select_all">
                 </th>
                 <th style="width: 2% !important">SL#</th>
                 <th style="width: 10% !important"><?php echo app('translator')->getFromJson('fleet.customer'); ?></th>
@@ -65,6 +76,9 @@
                <tr>
                 <td>
                   
+                </td>
+                <td>
+                  <input type="checkbox" class="booking_checkbox" value="<?php echo e($row->id); ?>" data-status="<?php echo e($row->ride_status); ?>" data-advance="<?php echo e($row->advance_pay ? 'yes' : 'no'); ?>">
                 </td>
                 <td><?php echo e($k+$data->firstItem()); ?></td>
                 <td style="width: 10% !important"><?php echo e($row->customer->name); ?></td>
@@ -108,41 +122,36 @@
                 </td>
                 
                 <td style="width: 10% !important">
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-                      <span class="fa fa-gear"></span>
-                      <span class="sr-only">Toggle Dropdown</span>
-                    </button>
-                    <div class="dropdown-menu custom" role="menu">
-                      <a class="dropdown-item vbook" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal2"  style="cursor:pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> <?php echo app('translator')->getFromJson('fleet.viewBookingDetails'); ?></a>
-                      <a href="print_booking_new/<?php echo e($row->id); ?>" class="dropdown-item" data-id="<?php echo e($row->id); ?>" style="cursor:pointer;" target="_blank"> <span aria-hidden="true" class="fa fa-print" style="color: #1114b4;"></span> Print</a>
-                      
-                      <?php if($row->ride_status == 'Completed'): ?>
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+                        <span class="fa fa-gear"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                      </button>
+                      <div class="dropdown-menu custom" role="menu">
+                        <a class="dropdown-item vbook" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal2"  style="cursor:pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> <?php echo app('translator')->getFromJson('fleet.viewBookingDetails'); ?></a>
+                        <a href="print_booking_new/<?php echo e($row->id); ?>" class="dropdown-item" data-id="<?php echo e($row->id); ?>" style="cursor:pointer;" target="_blank"> <span aria-hidden="true" class="fa fa-print" style="color: #1114b4;"></span> Print</a>
+                        
+                        <?php if($row->ride_status == 'Completed'): ?>
+                        <a class="dropdown-item vUndo" data-id="<?php echo e($row->id); ?>" style="cursor: pointer;">
+                          <span class="fa fa-undo" aria-hidden="true" style="color: #0d9c00"></span> Undo Complete
+                          <span class="fa fa-spinner fa-spin" style="display: none;"></span>
+                        </a>     
+                        <?php endif; ?>
                         <a class="dropdown-item" href="<?php echo e(url('admin/bookings/'.$row->id.'/edit')); ?>"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
-                        <a class="dropdown-item vRoute" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
-                      <?php else: ?>
-                        <?php if($row->status==0 && $row->ride_status != "Cancelled" && !empty($row->transid) && $row->inc_rows<2 && Helper::isEligible($row->id,18)): ?>
-                          <a class="dropdown-item" href="<?php echo e(url('admin/bookings/'.$row->id.'/edit')); ?>"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
-                          <a class="dropdown-item vtype" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#myModal" style="cursor:pointer;"> <span class="fa fa-trash" aria-hidden="true" style="color: #dd4b39;"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?></a>
+                        
+                        <?php if($row->ride_status != 'Completed'): ?>
+                          <a class="dropdown-item vtype" data-id="<?php echo e($row->id); ?>" style="cursor:pointer;">
+                            <span class="fa fa-trash" aria-hidden="true" style="color: #dd4b39;"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?>
+                          </a>
                           <a class="dropdown-item vDriverAdvanceLater" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalDriverAdvanceLater" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-inr" aria-hidden="true" style="color: #0d9c00"></span> Late Driver Advance</a>
                           <?php if($row->receipt != 1): ?>
-                            
+                            <a class="dropdown-item vcomplete" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalComplete" data-backdrop='static' data-keyboard='false' style="cursor:pointer;"> <span class="fa fa-check" aria-hidden="true" style="color: #0d9c00;"></span> Mark as Complete</a>
                           <?php endif; ?>
                         <?php endif; ?>
-                        <?php if($row->vehicle_id != null): ?>
-                          <?php if($row->status==0 && $row->receipt != 1): ?>
-                            <?php if(Auth::user()->user_type != "C" && $row->ride_status != "Cancelled"): ?>
-                              <a class="dropdown-item vcomplete" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalComplete" data-backdrop='static' data-keyboard='false' style="cursor:pointer;"> <span class="fa fa-check" aria-hidden="true" style="color: #0d9c00;"></span> Mark as Complete</a>
-                              <a class="dropdown-item vRoute" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
-                            <?php endif; ?>
-                          <?php elseif($row->receipt == 1): ?>
-                            
-                            
-                          <?php endif; ?>
-                        <?php endif; ?>
-                      <?php endif; ?>
+                        
+                        <a class="dropdown-item vRoute" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
+                      </div>
                     </div>
-                  </div>
                 <?php echo Form::open(['url' => 'admin/bookings/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'book_'.$row->id]); ?>
 
                 <?php echo Form::hidden("id",$row->id); ?>
@@ -915,6 +924,184 @@ $(".sum").change(function(){
         return false;
     })
   })
+  $(document).ready(function() {
+    $(".vUndo").click(function(){
+        var id = $(this).data('id');
+        var $button = $(this);
+        var $spinner = $button.find('.fa-spinner');
+        
+        if(confirm("Are you sure you want to undo this completed booking?")) {
+            // Show spinner and disable button immediately
+            $spinner.show();
+            $button.prop('disabled', true);
+            
+            // Start a page reload immediately
+            location.reload();
+            
+            // Perform the AJAX request in the background
+            $.ajax({
+                url: '<?php echo e(url("admin/bookings")); ?>/' + id + '/undo-complete',
+                type: 'POST',
+                data: {
+                    _token: '<?php echo e(csrf_token()); ?>'
+                },
+                success: function(response) {
+                    // The page is already reloading, so we don't need to do anything here
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
+                    // The page is already reloading, so we don't need to do anything here
+                }
+            });
+        }
+    });
+});
+$(document).ready(function() {
+    $("body").on("click", ".vtype", function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        var row = $(this).closest('tr');
+        
+        if (confirm("Are you sure you want to delete this booking?")) {
+            $.ajax({
+                url: '<?php echo e(url("admin/bookings")); ?>/' + id,
+                type: 'DELETE',
+                data: {
+                    _token: '<?php echo e(csrf_token()); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Remove the deleted row from the table
+                        row.remove();
+                        // Show success message
+                        new PNotify({
+                            title: 'Success!',
+                            text: response.message,
+                            type: 'success'
+                        });
+                        
+                        // Update row numbers
+                        updateRowNumbers();
+                    } else {
+                        // Show error message
+                        new PNotify({
+                            title: 'Error!',
+                            text: response.message,
+                            type: 'error'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
+                    new PNotify({
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the booking.',
+                        type: 'error'
+                    });
+                }
+            });
+        }
+    });
+
+    function updateRowNumbers() {
+        $('#data_table12 tbody tr').each(function(index) {
+            $(this).find('td:eq(1)').text(index + 1);
+        });
+    }
+});
+$(document).ready(function() {
+  // Select all checkboxes
+  $('#select_all').on('click', function() {
+    $('.booking_checkbox').prop('checked', this.checked);
+    updateBulkActionDropdown();
+  });
+
+  // Update bulk action dropdown when individual checkboxes are clicked
+  $('.booking_checkbox').on('click', function() {
+    updateBulkActionDropdown();
+  });
+
+  function updateBulkActionDropdown() {
+    var selectedBookings = $('.booking_checkbox:checked');
+    var dropdownMenu = $('#bulkActionDropdown').next('.dropdown-menu');
+    dropdownMenu.empty();
+
+    if (selectedBookings.length === 0) {
+        dropdownMenu.append('<a class="dropdown-item" href="#">No bookings selected</a>');
+        return;
+    }
+
+    var allUpcoming = true;
+    var allCompleted = true;
+    var allNoAdvance = true;
+
+    selectedBookings.each(function() {
+        var status = $(this).data('status');
+        var advance = $(this).data('advance');
+        if (status !== 'Completed') allCompleted = false;
+        if (status === 'Completed') allUpcoming = false;
+        if (advance === 'yes') allNoAdvance = false;
+    });
+
+    if (allUpcoming && allNoAdvance) {
+        dropdownMenu.append('<a class="dropdown-item bulk-action" href="#" data-action="complete">Mark as Complete</a>');
+    } else if (allCompleted) {
+        dropdownMenu.append('<a class="dropdown-item bulk-action" href="#" data-action="undo-complete">Undo Complete</a>');
+    } else {
+        dropdownMenu.append('<a class="dropdown-item" href="#">Mixed statuses or advance payments - no actions available</a>');
+    }
+  }
+
+  // Handle bulk actions
+  $(document).on('click', '.bulk-action', function(e) {
+    e.preventDefault();
+    var action = $(this).data('action');
+    var selectedIds = $('.booking_checkbox:checked').map(function() {
+      return this.value;
+    }).get();
+
+    if (confirm('Are you sure you want to ' + action + ' the selected bookings?')) {
+      $.ajax({
+        url: '<?php echo e(route("bookings.bulk_action")); ?>',
+        method: 'POST',
+        data: {
+          _token: '<?php echo e(csrf_token()); ?>',
+          ids: selectedIds,
+          action: action
+        },
+        success: function(response) {
+          alert(response.message);
+          
+          // Update the UI for each affected booking
+          response.updatedBookings.forEach(function(booking) {
+            var row = $('tr').find('input[value="' + booking.id + '"]').closest('tr');
+            var statusCell = row.find('td:nth-child(11)'); // Adjust this index if needed
+            
+            // Update the status cell content
+            statusCell.html('<strong>' + booking.id + '</strong><br>' +
+              (booking.ride_status !== 'Completed' ?
+                '<span class="text-warning">' + booking.ride_status + '</span>' :
+                '<span class="text-success">' + booking.ride_status + '</span>'
+              )
+            );
+            
+            // Update the checkbox data attributes
+            row.find('.booking_checkbox')
+               .data('status', booking.ride_status)
+               .data('advance', booking.advance_pay ? 'yes' : 'no');
+          });
+          
+          // Refresh the bulk action dropdown
+          updateBulkActionDropdown();
+          location.reload();
+        },
+        error: function() {
+          alert('An error occurred. Please try again.');
+        }
+      });
+    }
+  });
+});
 </script>
 <?php $__env->stopSection(); ?>
 

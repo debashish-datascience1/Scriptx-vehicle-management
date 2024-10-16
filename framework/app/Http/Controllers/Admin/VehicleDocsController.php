@@ -191,12 +191,13 @@ class VehicleDocsController extends Controller
         $durationUnit = $vdata->getMeta($durationUnitArray[$doc_id]);
         $date = new Carbon($date);
 
-        if ($durationUnit == 'years')
-            $date->addYears($durationTime);
-        elseif ($durationUnit == 'months')
-            $date->addMonths($durationTime);
-        else
-            $date->addDays($durationTime);
+        if ($durationUnit == 'years') {
+            $date->addYears($durationTime)->subDay();
+        } elseif ($durationUnit == 'months') {
+            $date->addMonths($durationTime)->subDay();
+        } else { // days
+            $date->addDays($durationTime - 1);
+        }
 
         // $newDate = $date->addDays($durationDays);
         $label = "<label> Valid Till : ";

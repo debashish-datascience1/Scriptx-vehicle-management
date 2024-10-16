@@ -16,6 +16,7 @@ use App\Model\IncomeModel;
 use App\Model\ServiceItemsModel;
 use App\Model\User;
 use App\Model\Params;
+use App\Model\Wheel;
 use App\Model\VehicleModel;
 use App\Model\WorkOrders;
 use App\Model\Vendor;
@@ -2894,15 +2895,10 @@ class ReportsController extends Controller
 
 	public function statement_post(Request $request)
 	{
-		// dd($request->all());
 		$incomeExpense = IncomeExpense::orderBy("id", "ASC")->get();
-		// $transaction = Transaction::get();
 
 		foreach ($incomeExpense as $key => $tr) {
-			// dd($tr,$tr->transaction_id,$tr->transaction);
-
 			$trash = $tr->transaction;
-			// dd($trash);
 			if (!$trash == null) {
 				//Booking,PartsInvoice,Fuel (Break and Continue)
 				if (($trash->param_id == 18 || $trash->param_id == 20 || $trash->param_id == 26 || $trash->param_id == 28) && $tr->amount == 0) { //check for advance_for=21
@@ -2910,82 +2906,14 @@ class ReportsController extends Controller
 					continue;
 				}
 				$transaction_data = Helper::getActualTransactionDate($trash->from_id, $trash->param_id);
-				// if ($trash->id == 6575) dd($transaction_data);
-				// if ($transaction_data->date == "0000-00-00") dd($trash->from_id, $trash->param_id);
 				$tr->dateof = $transaction_data->date;
 
-				// if ($trash->param_id == 18) { //bookings
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = Bookings::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	} else { //for driver advance
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date . " 00:00:00" : null;
-				// 	}
-				// } else if ($trash->param_id == 19) { //payroll
-				// 	$shalom = Payroll::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 20) { //fuel
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = FuelModel::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 25) { //salary advance
-				// 	$shalom = DailyAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 26) { //parts invoice
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = PartsInvoice::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 27) { //advance driver refund
-				// 	// $shalom = AdvanceDriver::where('id',$trash->from_id);
-				// 	// $tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	$tr->dateof = $trash->created_at;
-				// } else if ($trash->param_id == 28) { //work order
-				// 	$shalom = WorkOrders::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 29) { //starting amount
-				// 	$shalom = BankAccount::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->updated_at : null;
-				// } else if ($trash->param_id == 30) { //deposit
-				// 	$shalom = BankTransaction::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 31) { //revised
-				// 	$shalom = BankTransaction::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 32) { //driver liability
-				// 	$shalom = DailyAdvance::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 35) { //document renew
-				// 	$shalom = VehicleDocs::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 43) { //other advance
-				// 	$shalom = OtherAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 44) { //advance refund
-				// 	$shalom = OtherAdjust::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 49) { //down payment
-				// 	$shalom = PurchaseInfo::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->purchase_date : null;
-				// } else if ($trash->param_id == 50) { //emi date
-				// 	$shalom = EmiModel::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// }
 				$tr->type = $trash->type;
-				// if ($trash->id == 6575) dd($tr);
 			}
 		}
-		// dd($transaction->reverse()->toArray());
-		// $filtered = $transaction;
+		
 		$filtered = $incomeExpense->where('dateof', '!=', null)->sortBy('dateof')->flatten();
-		// $filtered1 = $incomeExpense->where('dateof','=',null)->flatten();
-		// dd($incomeExpense, $filtered);
-		// dd($filtered->first());
+		
 		if ($request->get('date1') == null)
 			$start = !empty($filtered) ? $filtered->first()->dateof : null;
 		else
@@ -2998,16 +2926,10 @@ class ReportsController extends Controller
 
 		$start = date('Y-m-d', strtotime($start));
 		$end = date('Y-m-d', strtotime($end));
-		// dd($filtered);
-		// dd($filtered->get(count($filtered)-2));
-		// dd($filtered->first(),$filtered->reverse()->first());
-		// dd($start,$end);
-		//Opening Balance and closing balance
+		
 		$openingCredit = $filtered->where('dateof', '<', $start)->where('type', 23)->sum('amount'); //DOUBT X
 		$openingDebit = $filtered->where('dateof', '<', $start)->where('type', 24)->sum('amount');
 		$openingBalance = $openingCredit - $openingDebit;
-		// dd($openingCredit,$openingDebit,$openingBalance);
-
 		$closingCredit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 23)->sum('amount');
 		$closingDebit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 24)->sum('amount');
 		$closingAmount = $closingCredit - $closingDebit;
@@ -3018,9 +2940,6 @@ class ReportsController extends Controller
 			$closingBalance = $openingBalance + $closingAmount;
 		}
 
-		// dd($openingBalance,$closingCredit,$closingDebit,$closingAmount,$closingBalance); //DOUBT X
-
-		// $filtered = strtotime($start)==strtotime($end) ? $filtered->whereBetween('dateof',["$start 00:00:00","$end 23:59:59"]) : $filtered->whereBetween('dateof',[$start,$end]);
 		$filtered = $filtered->whereBetween('dateof', [$start, $end]);
 
 		// dd($filtered);
@@ -3032,8 +2951,7 @@ class ReportsController extends Controller
 		$data['openingBalance'] = $openingBalance;
 		$data['closingBalance'] = $closingBalance;
 		$data['request'] = $request->all();
-		// dd($data);
-		// dd($data['transactions']->first());
+		
 		return view('reports.statement', $data);
 	}
 
@@ -3041,13 +2959,8 @@ class ReportsController extends Controller
 	{
 		// dd($request->all());
 		$incomeExpense = IncomeExpense::orderBy("id", "ASC")->get();
-		// $transaction = Transaction::get();
-
 		foreach ($incomeExpense as $key => $tr) {
-			// dd($tr,$tr->transaction_id,$tr->transaction);
-
 			$trash = $tr->transaction;
-			// dd($trash);
 			if (!$trash == null) {
 				//Booking,PartsInvoice,Fuel (Break and Continue)
 				if (($trash->param_id == 18 || $trash->param_id == 20 || $trash->param_id == 26 || $trash->param_id == 28) && $tr->amount == 0) { //check for advance_for=21
@@ -3055,80 +2968,11 @@ class ReportsController extends Controller
 					continue;
 				}
 				$transaction_data = Helper::getActualTransactionDate($trash->from_id, $trash->param_id);
-				// if ($trash->id == 6575) dd($transaction_data);
 				$tr->dateof = $transaction_data->date;
-
-				// if ($trash->param_id == 18) { //bookings
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = Bookings::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	} else { //for driver advance
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date . " 00:00:00" : null;
-				// 	}
-				// } else if ($trash->param_id == 19) { //payroll
-				// 	$shalom = Payroll::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 20) { //fuel
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = FuelModel::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 25) { //salary advance
-				// 	$shalom = DailyAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 26) { //parts invoice
-				// 	if ($tr->amount == 0 || $tr->amount == null) {
-				// 		$shalom = PartsInvoice::where('id', $trash->from_id);
-				// 		$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// 	} else {
-				// 		$tr->dateof = !empty($tr->date) ? $tr->date : null;
-				// 	}
-				// } else if ($trash->param_id == 27) { //advance driver refund
-				// 	// $shalom = AdvanceDriver::where('id',$trash->from_id);
-				// 	// $tr->dateof = $shalom->exists() ? $shalom->first()->pickup : null;
-				// 	$tr->dateof = $trash->created_at;
-				// } else if ($trash->param_id == 28) { //work order
-				// 	$shalom = WorkOrders::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 29) { //starting amount
-				// 	$shalom = BankAccount::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->updated_at : null;
-				// } else if ($trash->param_id == 30) { //deposit
-				// 	$shalom = BankTransaction::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 31) { //revised
-				// 	$shalom = BankTransaction::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 32) { //driver liability
-				// 	$shalom = DailyAdvance::where(['id' => $trash->from_id, 'from_id' => !null]);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 35) { //document renew
-				// 	$shalom = VehicleDocs::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->created_at : null;
-				// } else if ($trash->param_id == 43) { //other advance
-				// 	$shalom = OtherAdvance::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 44) { //advance refund
-				// 	$shalom = OtherAdjust::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// } else if ($trash->param_id == 49) { //down payment
-				// 	$shalom = PurchaseInfo::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->purchase_date : null;
-				// } else if ($trash->param_id == 50) { //emi date
-				// 	$shalom = EmiModel::where('id', $trash->from_id);
-				// 	$tr->dateof = $shalom->exists() ? $shalom->first()->date : null;
-				// }
 				$tr->type = $trash->type;
-				// if ($trash->id == 6575) dd($tr);
 			}
 		}
-		// dd($transaction->reverse()->toArray());
-		// $filtered = $transaction;
 		$filtered = $incomeExpense->where('dateof', '!=', null)->sortBy('dateof')->flatten();
-		// $filtered1 = $incomeExpense->where('dateof','=',null)->flatten();
-		// dd($incomeExpense,$filtered,$filtered1);
 		if ($request->get('date1') == null)
 			$start = !empty($filtered) ? $filtered->first()->dateof : null;
 		else
@@ -3141,16 +2985,9 @@ class ReportsController extends Controller
 
 		$start = date('Y-m-d', strtotime($start));
 		$end = date('Y-m-d', strtotime($end));
-		// dd($filtered);
-		// dd($filtered->get(count($filtered)-2));
-		// dd($filtered->first(),$filtered->reverse()->first());
-		// dd($start,$end);
-		//Opening Balance and closing balance
 		$openingCredit = $filtered->where('dateof', '<', $start)->where('type', 23)->sum('amount'); //DOUBT X
 		$openingDebit = $filtered->where('dateof', '<', $start)->where('type', 24)->sum('amount');
 		$openingBalance = $openingCredit - $openingDebit;
-		// dd($openingCredit,$openingDebit,$openingBalance);
-
 		$closingCredit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 23)->sum('amount');
 		$closingDebit = $filtered->whereBetween('dateof', [$start, $end])->where('type', 24)->sum('amount');
 		$closingAmount = $closingCredit - $closingDebit;
@@ -3160,13 +2997,12 @@ class ReportsController extends Controller
 		} else {
 			$closingBalance = $openingBalance + $closingAmount;
 		}
-
-		// dd($openingBalance,$closingCredit,$closingDebit,$closingAmount,$closingBalance); //DOUBT X
-
-		// $filtered = strtotime($start)==strtotime($end) ? $filtered->whereBetween('dateof',["$start 00:00:00","$end 23:59:59"]) : $filtered->whereBetween('dateof',[$start,$end]);
 		$filtered = $filtered->whereBetween('dateof', [$start, $end]);
 
-		// dd($filtered);
+		$filtered = $filtered->filter(function($item) {
+			return $item->transaction !== null;
+		});
+	
 		$data['transactions'] = $filtered->flatten();
 		$data['result'] = "";
 		$data['dates'] = [$start, $end];
@@ -3176,7 +3012,6 @@ class ReportsController extends Controller
 		$data['closingBalance'] = $closingBalance;
 		$data['request'] = $request->all();
 		$data['closingAmount'] = $closingAmount;
-		// dd($data);
 		return view('reports.statement-report', $data);
 	}
 
@@ -3376,6 +3211,158 @@ class ReportsController extends Controller
 		return view('reports.vehicleheadadvance_print', $index);
 	}
 
+	public function cashBook(Request $request)
+	{
+		$data['date'] = $request->get('date', date('Y-m-d'));
+		$data['request'] = $request;
+
+		if ($request->isMethod('post')) {
+			$data['cashBookEntries'] = []; 
+		}
+
+		return view('reports.cash-book', $data);
+	}
+
+	public function cashBook_post(Request $request)
+	{
+		$date = $request->date;
+		$date = Helper::ymd($date); 
+
+		$bookings = Bookings::whereDate('pickup', $date)->get();
+
+		$total_income = 0;
+		$total_expenses = 0; 
+
+		foreach ($bookings as $booking) {
+			$total_income += $booking->getMeta('total_price');
+		}
+
+		// Get total tyre sales for the day
+		$tyre_sales = DB::table('parts_sell')
+			->whereDate('date_of_sell', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Add tyre sales to total income
+		$total_income += $tyre_sales;
+
+		// Calculate fuel costs for all vehicles on the given date
+		$fuel_costs = FuelModel::whereDate('date', $date)->sum(DB::raw('qty * cost_per_unit'));
+
+		// Calculate other costs (driver advances) for all vehicles on the given date
+		$other_costs = DB::table('bookings')
+			->whereDate('pickup', $date)
+			->whereExists(function ($query) {
+				$query->select(DB::raw(1))
+					->from('bookings_meta')
+					->whereRaw('bookings_meta.booking_id = bookings.id')
+					->where('key', 'advance_pay')
+					->whereRaw('value IS NOT NULL AND value != 0');
+			})
+			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
+
+		// Calculate legal costs for all vehicles
+		$legal_costs = VehicleDocs::whereDate('till', '=', $date)
+			->whereNull('deleted_at')
+			->sum('amount');
+
+		// Calculate tyre purchase costs for the day
+		$tyre_purchase = DB::table('parts_invoice')
+			->whereDate('date_of_purchase', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Calculate total expenses (now including tyre purchases)
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase;
+
+		$cash_balance = $total_income - $total_expenses;
+
+		$data = [
+			'date' => $date,
+			'total_income' => round($total_income, 2),
+			'total_expenses' => round($total_expenses, 2),
+			'fuel_costs' => round($fuel_costs, 2),
+			'other_costs' => round($other_costs, 2),
+			'legal_costs' => round($legal_costs, 2),
+			'tyre_purchase' => round($tyre_purchase, 2),
+			'cash_balance' => round($cash_balance, 2),
+			'bookings' => $bookings,
+			'tyre_sales' => round($tyre_sales, 2),
+			'request' => $request->all(),
+		];
+
+		return view("reports.cash-book", $data);
+	}
+
+	public function cashBook_print(Request $request)
+	{
+		$date = $request->date;
+		$date = Helper::ymd($date);
+
+		$bookings = Bookings::whereDate('pickup', $date)->get();
+
+		$total_income = 0;
+		$total_expenses = 0;
+
+		foreach ($bookings as $booking) {
+			$total_income += $booking->getMeta('total_price');
+		}
+
+		// Get total tyre sales for the day
+		$tyre_sales = DB::table('parts_sell')
+			->whereDate('date_of_sell', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Add tyre sales to total income
+		$total_income += $tyre_sales;
+
+		// Calculate fuel costs for all vehicles on the given date
+		$fuel_costs = FuelModel::whereDate('date', $date)->sum(DB::raw('qty * cost_per_unit'));
+
+		// Calculate other costs (driver advances) for all vehicles on the given date
+		$other_costs = DB::table('bookings')
+			->whereDate('pickup', $date)
+			->whereExists(function ($query) {
+				$query->select(DB::raw(1))
+					->from('bookings_meta')
+					->whereRaw('bookings_meta.booking_id = bookings.id')
+					->where('key', 'advance_pay')
+					->whereRaw('value IS NOT NULL AND value != 0');
+			})
+			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
+
+		// Calculate legal costs for all vehicles
+		$legal_costs = VehicleDocs::whereDate('till', '=', $date)
+			->whereNull('deleted_at')
+			->sum('amount');
+
+		// Calculate tyre purchase costs for the day
+		$tyre_purchase = DB::table('parts_invoice')
+			->whereDate('date_of_purchase', $date)
+			->whereNull('deleted_at')
+			->sum('grand_total');
+
+		// Calculate total expenses
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase;
+
+		$cash_balance = $total_income - $total_expenses;
+
+		$data = [
+			'date' => $date,
+			'total_income' => round($total_income, 2),
+			'total_expenses' => round($total_expenses, 2),
+			'fuel_costs' => round($fuel_costs, 2),
+			'other_costs' => round($other_costs, 2),
+			'legal_costs' => round($legal_costs, 2),
+			'tyre_purchase' => round($tyre_purchase, 2),
+			'cash_balance' => round($cash_balance, 2),
+			'bookings' => $bookings,
+			'tyre_sales' => round($tyre_sales, 2),
+		];
+
+		return view("reports.cash-book-print", $data);
+	}
 
 	public function salaryReport()
 	{
@@ -3469,6 +3456,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3587,6 +3575,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3627,6 +3616,7 @@ class ReportsController extends Controller
 
 		return view('reports.print_salary-report', $data);
 	}
+
 	public function exportReport_print(Request $request)
 	{
 		$driver_ids = $request->driver_id;
@@ -3642,6 +3632,13 @@ class ReportsController extends Controller
 		
 		$arrayList = [];
 		foreach ($driver_ids as $did) {
+			$userData =  User::where('id', $did)->first();
+			
+			// Skip inactive drivers
+			if (!$userData->is_active) {
+				continue;
+			}
+
 			$payroll = Payroll::where('for_date', $search_date)->where('user_id', $did);
 
 			//Working Days
@@ -3666,7 +3663,6 @@ class ReportsController extends Controller
 			
 			$bookingAdvance = !empty($booking_ids) ? AdvanceDriver::whereIn('booking_id', $booking_ids)->where('param_id', 7)->sum('value') : 0;
 
-			$userData =  User::where('id', $did)->first();
 			$gross_salary = $userData->salary;
 			$user_vehicle =  !empty($userData->driver_vehicle->vehicle) ? $userData->driver_vehicle->vehicle->license_plate : "-";
 			$payable_salary = $gross_salary - ($salary_advance + $bookingAdvance);
@@ -3695,7 +3691,8 @@ class ReportsController extends Controller
 				$newArray = [
 					"id" => $primaryID,
 					"user_id" => $did,
-					"driver" =>  User::find($did)->name,
+					"driver" =>  $userData->name,
+					"active_status" =>  $userData->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -3740,10 +3737,11 @@ class ReportsController extends Controller
 			$file = fopen('php://output', 'w');
 			fputcsv($file, $columns);
 
-			foreach ($finalList as $index => $row) {
+			$slNo = 1;
+			foreach ($finalList as $row) {
 				$totalAdvance = bcdiv($row->bookingAdvance, 1, 2) + bcdiv($row->salary_advance, 1, 2);
 				fputcsv($file, [
-					$index + 1,
+					$slNo++,
 					$row->is_payroll ? $row->driver->name : $row->driver,
 					$row->is_payroll ? $row->driver->driver_vehicle->vehicle->license_plate : $row->vehicle,
 					$row->days_present . '/' . $row->days_absent,
@@ -3987,6 +3985,7 @@ class ReportsController extends Controller
 					"id" => $primaryID,
 					"user_id" => $did,
 					"driver" =>  User::find($did)->name,
+					"active_status" =>  User::find($did)->is_active,
 					"vehicle" =>  $user_vehicle,
 					"salary" => $gross_salary,
 					"date" => $search_date,
@@ -4085,9 +4084,11 @@ class ReportsController extends Controller
 			}
 
 			$bankInfo = $userData->bank;
-			$showRow = !$request->payment_type || 
+			$active_status = $userData->is_active;
+			$showRow = ($active_status == 1) && 
+					(!$request->payment_type || 
 					($request->payment_type == 'bank' && !empty($bankInfo)) || 
-					($request->payment_type == 'cash' && empty($bankInfo));
+					($request->payment_type == 'cash' && empty($bankInfo)));
 
 			if ($showRow) {
 				if ($payroll->exists()) {
@@ -4101,6 +4102,7 @@ class ReportsController extends Controller
 						"id" => $primaryID,
 						"user_id" => $did,
 						"driver" =>  User::find($did)->name,
+						"active_status" =>  $active_status,
 						"vehicle" =>  $user_vehicle,
 						"salary" => $gross_salary,
 						"date" => $search_date,
@@ -4137,9 +4139,11 @@ class ReportsController extends Controller
 			$index = 1;
 			foreach ($finalList as $row) {
 				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-				$showRow = !$request->payment_type || 
+				$active_status = $row->is_payroll ? $row->driver->is_active : $row->active_status;
+				$showRow = ($active_status == 1) && 
+						(!$request->payment_type || 
 						($request->payment_type == 'bank' && !empty($bankInfo)) || 
-						($request->payment_type == 'cash' && empty($bankInfo));
+						($request->payment_type == 'cash' && empty($bankInfo)));
 
 				if ($showRow) {
 					fputcsv($file, [
@@ -4156,9 +4160,11 @@ class ReportsController extends Controller
 			// Add total row
 			$totalPayableSalary = $finalList->sum(function ($row) use ($request) {
 				$bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-				$showRow = !$request->payment_type || 
+				$active_status = $row->is_payroll ? $row->driver->is_active : $row->active_status;
+				$showRow = ($active_status == 1) && 
+						(!$request->payment_type || 
 						($request->payment_type == 'bank' && !empty($bankInfo)) || 
-						($request->payment_type == 'cash' && empty($bankInfo));
+						($request->payment_type == 'cash' && empty($bankInfo)));
 				return $showRow ? $row->payable_salary : 0;
 			});
 
@@ -4974,20 +4980,23 @@ class ReportsController extends Controller
 
 	// other adjust report ends
 
-	// vehicle overview stats
+
 	public function vehicleOverview()
 	{
-		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))->pluck('name', 'id');
+		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+			->pluck('name', 'id')
+			->prepend('All Vehicles', 'all');  // Add "All" option
 		$data['request'] = null;
-		// dd($data);
 		return view('vehicles.report', $data);
 	}
 
 	public function vehicleOverview_post(Request $request)
 	{
-		// dd($request->all());
-		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))->pluck('name', 'id');
-		// $data['bookings'] = Bookings::select(DB::raw("count(id) a  totalbooking,sum()"));
+		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+			->pluck('name', 'id')
+			->prepend('All Vehicles', 'all');
+
+		// Set date range
 		if ($request->get('date1') == null)
 			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'ASC')->take(1)->first('pickup')->pickup;
 		else
@@ -4997,104 +5006,261 @@ class ReportsController extends Controller
 			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'DESC')->take(1)->first('pickup')->pickup;
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
-		// dd($start,$end);
 
-		// Bookings
-		$vehicle_id = $request->get('vehicle_id');
-		$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
+		if ($request->get('vehicle_id') === 'all') {
+			// Handle "All Vehicles" report
+			$data['all_vehicles'] = true;
+			$data['vehicle'] = null; // Add this line to explicitly set vehicle to null
+			// $vehicles = VehicleModel::all();
+			session(['report_start_date' => $start]);
+			session(['report_end_date' => $end]);
+			session(['wheel_prices' => $request->get('wheel_prices')]);
+			
+			// Get all vehicles for processing
+			$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
+			->select('vehicles.*', 'wheels.name as wheel_name')
+			->orderBy('vehicles.id');			
+			// If it's an export request, get all records
+			if($request->has('export')) {
+				$vehicles = $vehicles->get();
+			} else {
+				// For normal view, use pagination
+				$vehicles = $vehicles->paginate(50)->withPath(route('reports.vehicles-overview'));
+			}
+			$summary = [];
+			$updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
+			
+			foreach ($vehicles as $vehicle) {
+				// Get bookings data
+				$bookings = Bookings::where('vehicle_id', $vehicle->id)
+					->whereBetween('pickup', [$start, $end])
+					->get();
+				
+				$totalKms = 0;
+				$totalFuel = 0;
+				$totalPrice = 0;
+				
+				foreach ($bookings as $booking) {
+					$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
+					$totalFuel += (float)$booking->getMeta('pet_required');
+					$totalPrice += (float)$booking->getMeta('total_price');
+				}
+				$wheelName = $vehicle->wheel_name ?? 'N/A';
+				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
+                ->where('till', '>', $end)
+                ->whereNull('deleted_at')
+                ->select('param_id', DB::raw('MAX(till) as max_till'))
+                ->groupBy('param_id')
+                ->get()
+                ->map(function ($doc) use ($vehicle, $end) {
+                    return VehicleDocs::where('vehicle_id', $vehicle->id)
+                        ->where('param_id', $doc->param_id)
+                        ->where('till', $doc->max_till)
+                        ->where('till', '>', $end)
+                        ->whereNull('deleted_at')
+                        ->value('amount') ?? 0;
+                })
+                ->sum();
 
-		// dd($bookings);
-		foreach ($bookings as $b) {
-			$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
-			$book['fuel'][] = $b->getMeta('pet_required');
-			$book['price'][] = $b->getMeta('total_price');
-		}
-		$book['totalbooking'] = $bookings->count();
-		$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
-		$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
-		$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
+				$tyreCost = 0;
+				if ($vehicle->wheel) {
+					$wheelPrice = $updatedWheelPrices[$vehicle->wheel] ?? Wheel::find($vehicle->wheel)->price;
+					$tyreCost = $totalKms * $wheelPrice;
+				}
+				// dd($updatedWheelPrices);
 
-		//Fuel
-		$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->get();
-		$fuelArray = array();
-		foreach ($fuelModel as $f) {
-			// if(in_array($f->fuel_type,$fuelArray)){
-			$fuelName = FuelType::find($f->fuel_type)->fuel_name;
-			$fuelArray[$fuelName]['id'][] = $f->id;
-			$fuelArray[$fuelName]['ltr'][] = $f->qty;
-			// $fuelArray[$fuelName]['cost'][] = $f->cost_per_unit;
-			$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+				$driver_salary = 0;
+				if ($driver) {
+					$userData = User::where('id', $driver->driver_id)->first();
+					$driver_salary = $userData ? $userData->salary : 0;
+				}
+				// Get fuel data
+				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
+					->whereBetween('date', [$start, $end])
+					->get();
+				
+				$fuelArray = [];
+				$totalFuelCost = 0;
+				$totalFuelQty = 0;
+				
+				foreach ($fuelModel as $f) {
+					$fuelName = FuelType::find($f->fuel_type)->fuel_name;
+					$fuelArray[$fuelName]['id'][] = $f->id;
+					$fuelArray[$fuelName]['ltr'][] = $f->qty;
+					$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+					$totalFuelCost += $f->qty * $f->cost_per_unit;
+					$totalFuelQty += $f->qty;
+				}
+				
+				// Get work orders
+				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
+					->whereBetween('required_by', [$start, $end])
+					->get();
+				
+				$maintenanceCost = 0;
+				foreach ($workorders as $wo) {
+					$maintenanceCost += empty($wo->grand_total) ? $wo->price : $wo->grand_total;
+				}
+				
+				// Calculate driver advances
+				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
+					->whereBetween('pickup', [$start, $end])
+					->meta()
+					->where(function ($query) {
+						$query->where('bookings_meta.key', '=', 'advance_pay')
+							->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+					})->get();
+				
+				$totalAdvance = 0;
+				foreach ($advanceBookings as $ad) {
+					$totalAdvance += !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				}
+				
+				$summary[] = [
+					'vehicle' => $vehicle,
+					// 'bookings_count' => $bookings->count(),
+					'wheel_name' => $wheelName,
+					'total_kms' => $totalKms,
+					'total_fuel_used' => $totalFuel,
+					'total_revenue' => $totalPrice,
+					'fuel_cost' => $totalFuelCost,
+					'fuel_qty' => $totalFuelQty,
+					'fuel_details' => $fuelArray,
+					'tyre_cost' => $tyreCost,
+					'work_orders' => $workorders->count(),
+					'maintenance_cost' => $maintenanceCost,
+					'driver_advance' => $totalAdvance,
+					'legal_cost' => $legalCost,
+					'driver_salary' => $driver_salary,
+					'other' => $totalAdvance,
+                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+                	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
+					'avg_revenue_per_km' => $totalKms > 0 ? $totalPrice / $totalKms : 0,
+					'avg_fuel_cost_per_km' => $totalKms > 0 ? $totalFuelCost / $totalKms : 0
+				];
+			}
+			
+			$data['summary'] = $summary;
+			$data['from_date'] = $start;
+			$data['to_date'] = $end;
+			if(!$request->has('export')) {
+				$data['pagination'] = $vehicles;
+			}
+			
+		} else {
+			// Single vehicle report
+			$vehicle_id = $request->get('vehicle_id');
+			
+			// Get bookings data
+			$bookings = Bookings::where('vehicle_id', $vehicle_id)
+				->whereBetween('pickup', [$start, $end])
+				->get();
+
+			foreach ($bookings as $b) {
+				$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
+				$book['fuel'][] = $b->getMeta('pet_required');
+				$book['price'][] = $b->getMeta('total_price');
+			}
+			
+			$book['totalbooking'] = $bookings->count();
+			$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
+			$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
+			$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
+
+			// Get fuel data
+			$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
+				->whereBetween('date', [$start, $end])
+				->get();
+			
+			$fuelArray = [];
+			foreach ($fuelModel as $f) {
+				$fuelName = FuelType::find($f->fuel_type)->fuel_name;
+				$fuelArray[$fuelName]['id'][] = $f->id;
+				$fuelArray[$fuelName]['ltr'][] = $f->qty;
+				$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+			}
+
+			// Get driver advances
+			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
+				->whereBetween('pickup', [$start, $end])
+				->meta()
+				->where(function ($query) {
+					$query->where('bookings_meta.key', '=', 'advance_pay')
+						->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+				})->get();
+			
+			$advance = [];
+			foreach ($advanceBookings as $ad) {
+				$advance['amount'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				$advance['times'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				$advance['id'][] = $ad->id;
+			}
+			
+			$advance['times'] = isset($advance['times']) ? $advance['times'] : 0;
+			$advance['id'] = isset($advance['id']) ? $advance['id'] : [];
+			$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))
+				->whereIn('booking_id', $advance['id'])
+				->orderBy('param_id')
+				->groupBy('param_id')
+				->get();
+				
+			foreach ($advance['details'] as $det) {
+				$det->label = $det->param_name->label;
+			}
+
+			// Get work orders
+			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
+				->whereBetween('required_by', [$start, $end])
+				->get();
+			
+			$prepArray = [];
+			foreach ($workorders as $wo) {
+				$prepArray['gtotal'][] = empty($wo->grand_total) ? $wo->price : $wo->grand_total;
+				$prepArray['cgst'][] = empty($wo->cgst) ? $wo->cgst : $wo->cgst;
+				$prepArray['sgst'][] = empty($wo->sgst) ? $wo->sgst : $wo->sgst;
+				$prepArray['vendors'][] = $wo->vendor_id;
+				$prepArray['status'][$wo->status][] = $wo->status;
+				$prepArray['id'][] = $wo->id;
+			}
+			
+			$data['wo'] = Helper::toCollection([
+				'count' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? count($prepArray['gtotal']) : 0,
+				'grand_total' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? array_sum($prepArray['gtotal']) : 0,
+				'cgst' => isset($prepArray['cgst']) && !empty($prepArray['cgst']) ? array_sum($prepArray['cgst']) : 0,
+				'sgst' => isset($prepArray['sgst']) && !empty($prepArray['sgst']) ? array_sum($prepArray['sgst']) : 0,
+				'vendors' => isset($prepArray['vendors']) && !empty($prepArray['vendors']) ? count(array_unique($prepArray['vendors'])) : 0,
+				'status' => isset($prepArray['status']) && count($prepArray['status']) > 0 ? $prepArray['status'] : []
+			]);
+
+			// Get parts used
+			$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
+			$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))
+				->whereIn('work_id', $workOrderIds)
+				->groupBy('part_id')
+				->get();
+
+			$data['vehicle'] = VehicleModel::where('id', $vehicle_id)->first();
+			$data['from_date'] = $start;
+			$data['to_date'] = $end;
+			$data['book'] = Helper::toCollection($book);
+			$data['fuels'] = Helper::toCollection($fuelArray);
+			$data['advances'] = Helper::toCollection($advance);
 		}
 
-		// Advance
-		$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->meta()->where(function ($query) {
-			$query->where('bookings_meta.key', '=', 'advance_pay')
-				->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
-		})->get();
-		$advance = array();
-		foreach ($advanceBookings as $ad) {
-			$advance['amount'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
-			$advance['times'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
-			$advance['id'][] = $ad->id;
-			//   $advance[] = 
-		}
-		// dd($advance["id"]);
-		$advance['times'] = isset($advance['times']) ? $advance['times'] : 0;
-		$advance['id'] = isset($advance['id']) ? $advance['id'] : [];
-		$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))->whereIn('booking_id', $advance['id'])->orderBy('param_id')->groupBy('param_id')->get();
-		foreach ($advance['details'] as $det) {
-			$det->label = $det->param_name->label;
-		}
-		$workorders = WorkOrders::where('vehicle_id', $vehicle_id)->whereBetween('required_by', [$start, $end])->get();
-		// dd($start,$end,$workorders);
-		$prepArray = array();
-		foreach ($workorders as $wo) {
-			$prepArray['gtotal'][] = empty($wo->grand_total) ? $wo->price : $wo->grand_total;
-			$prepArray['cgst'][] = empty($wo->cgst) ? $wo->cgst : $wo->cgst;
-			$prepArray['sgst'][] = empty($wo->sgst) ? $wo->sgst : $wo->sgst;
-			$prepArray['vendors'][] = $wo->vendor_id;
-			$prepArray['status'][$wo->status][] = $wo->status;
-			$prepArray['id'][] = $wo->id;
-		}
-		$data['wo'] = Helper::toCollection([
-			'count' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? count($prepArray['gtotal']) : 0,
-			'grand_total' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? array_sum($prepArray['gtotal']) : 0,
-			'cgst' => isset($prepArray['cgst']) && !empty($prepArray['cgst']) ? array_sum($prepArray['cgst']) : 0,
-			'sgst' => isset($prepArray['sgst']) && !empty($prepArray['sgst']) ? array_sum($prepArray['sgst']) : 0,
-			'vendors' => isset($prepArray['vendors']) && !empty($prepArray['vendors']) ? count(array_unique($prepArray['sgst'])) : 0,
-			'status' => isset($prepArray['status']) && count($prepArray['status']) > 0 ? $prepArray['status'] : []
-		]);
-		// Work order/Part
-		// dd($data['workorders']);
-		// dd($prepArray);
-		$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
-		$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))->whereIn('work_id', $workOrderIds)->groupBy('part_id')->get();
-		//Work order/Part Ends
-		// dd($data);
-		// foreach($data['partsUsed'] as $pd){
-		//     dd($pd->part_id);
-		//     empty($pd->part_id) ?? dd(123);
-		//     // dd(PartsModel::find($pd->part_id)->title);
-		//     $pd->parts_name = PartsModel::find($pd->part_id)->title;
-		// }
-		// Tranactions
-		// $data['fuel'] = $fuelFinal;
 		$data['request'] = $request->all();
-		$data['vehicle'] = VehicleModel::where('id', $request->vehicle_id)->first();
-		$data['from_date'] = $start;
-		$data['to_date'] = $end;
-		$data['book'] = Helper::toCollection($book);
-		$data['fuels'] = Helper::toCollection($fuelArray);
-		$data['advances'] = Helper::toCollection($advance);
 		$data['result'] = "";
-		// dd($data);
+
+		
 		return view('vehicles.report', $data);
 	}
 
 	public function vehicleOverview_print(Request $request)
 	{
-		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))->pluck('name', 'id');
-		// $data['bookings'] = Bookings::select(DB::raw("count(id) a  totalbooking,sum()"));
+		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+        ->pluck('name', 'id')
+        ->prepend('All Vehicles', 'all');
+
 		if ($request->get('date1') == null)
 			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'ASC')->take(1)->first('pickup')->pickup;
 		else
@@ -5104,102 +5270,224 @@ class ReportsController extends Controller
 			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'DESC')->take(1)->first('pickup')->pickup;
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
-		// dd($start,$end);
 
-		// Bookings
-		$vehicle_id = $request->get('vehicle_id');
-		$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
+		if ($request->get('vehicle_id') === 'all') {
+			// Handle "All Vehicles" report
+			$data['all_vehicles'] = true;
+			$data['vehicle'] = null;
+			
+			// Get all vehicles
+			// $vehicles = VehicleModel::orderBy('id')->get();
+			$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
+			->select('vehicles.*', 'wheels.name as wheel_name')
+			->orderBy('vehicles.id')
+			->get();		
+			
+			$summary = [];
+			// $updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
+			$updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
+			
+			foreach ($vehicles as $vehicle) {
+				// Get bookings data
+				$bookings = Bookings::where('vehicle_id', $vehicle->id)
+					->whereBetween('pickup', [$start, $end])
+					->get();
+				
+				$totalKms = 0;
+				$totalFuel = 0;
+				$totalPrice = 0;
+				
+				foreach ($bookings as $booking) {
+					$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
+					$totalFuel += (float)$booking->getMeta('pet_required');
+					$totalPrice += (float)$booking->getMeta('total_price');
+				}
 
-		// dd($bookings);
-		foreach ($bookings as $b) {
-			$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
-			$book['fuel'][] = $b->getMeta('pet_required');
-			$book['price'][] = $b->getMeta('total_price');
-		}
-		$book['totalbooking'] = $bookings->count();
-		$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
-		$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
-		$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
+				$tyreCost = 0;
+				if ($vehicle->wheel) {
+					$wheelPrice = $updatedWheelPrices[$vehicle->wheel] ?? Wheel::find($vehicle->wheel)->price;
+					$tyreCost = $totalKms * $wheelPrice;
+				}
+				$wheelName = $vehicle->wheel_name ?? 'N/A';
+				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
+                ->where('till', '>', $end)
+                ->whereNull('deleted_at')
+                ->select('param_id', DB::raw('MAX(till) as max_till'))
+                ->groupBy('param_id')
+                ->get()
+                ->map(function ($doc) use ($vehicle, $end) {
+                    return VehicleDocs::where('vehicle_id', $vehicle->id)
+                        ->where('param_id', $doc->param_id)
+                        ->where('till', $doc->max_till)
+                        ->where('till', '>', $end)
+                        ->whereNull('deleted_at')
+                        ->value('amount') ?? 0;
+                })
+                ->sum();
+				// dd($updatedWheelPrices);
+				
+				// Get fuel data
+				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
+					->whereBetween('date', [$start, $end])
+					->get();
+				
+				$totalFuelCost = 0;
+				$totalFuelQty = 0;
+				
+				foreach ($fuelModel as $f) {
+					$totalFuelCost += $f->qty * $f->cost_per_unit;
+					$totalFuelQty += $f->qty;
+				}
+				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+				$driver_salary = 0;
+				if ($driver) {
+					$userData = User::where('id', $driver->driver_id)->first();
+					$driver_salary = $userData ? $userData->salary : 0;
+				}
+				// Get work orders
+				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
+					->whereBetween('required_by', [$start, $end])
+					->get();
+				
+				$maintenanceCost = 0;
+				foreach ($workorders as $wo) {
+					$maintenanceCost += empty($wo->grand_total) ? $wo->price : $wo->grand_total;
+				}
 
-		//Fuel
-		$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->get();
-		$fuelArray = array();
-		foreach ($fuelModel as $f) {
-			// if(in_array($f->fuel_type,$fuelArray)){
-			$fuelName = FuelType::find($f->fuel_type)->fuel_name;
-			$fuelArray[$fuelName]['id'][] = $f->id;
-			$fuelArray[$fuelName]['ltr'][] = $f->qty;
-			// $fuelArray[$fuelName]['cost'][] = $f->cost_per_unit;
-			$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
-		}
+				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
+                ->whereBetween('pickup', [$start, $end])
+                ->meta()
+                ->where(function ($query) {
+                    $query->where('bookings_meta.key', '=', 'advance_pay')
+                        ->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+                })->get();
+            
+				$totalAdvance = 0;
+				foreach ($advanceBookings as $ad) {
+					$totalAdvance += !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				}
+				
+				$summary[] = [
+					'vehicle' => $vehicle,
+					'wheel_name' => $wheelName,
+					// 'bookings_count' => $bookings->count(),
+					'total_kms' => $totalKms,
+					'total_fuel_used' => $totalFuel,
+					'total_revenue' => $totalPrice,
+					'fuel_cost' => $totalFuelCost,
+					'fuel_qty' => $totalFuelQty,
+					'tyre_cost' => $tyreCost,
+					'work_orders' => $workorders->count(),
+					'maintenance_cost' => $maintenanceCost,
+					'legal_cost' => $legalCost,
+					'driver_salary' => $driver_salary,
+					'other' => $totalAdvance,
+                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+                	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
+					// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost,	
+				];
+			}
+			
+			$data['summary'] = $summary;
+			$data['from_date'] = $start;
+			$data['to_date'] = $end;
+			
+		} else {
+			// Bookings
+			$vehicle_id = $request->get('vehicle_id');
+			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
 
-		// Advance
-		$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->meta()->where(function ($query) {
-			$query->where('bookings_meta.key', '=', 'advance_pay')
-				->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
-		})->get();
-		$advance = array();
-		foreach ($advanceBookings as $ad) {
-			$advance['amount'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
-			$advance['times'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
-			$advance['id'][] = $ad->id;
-			//   $advance[] = 
+			// dd($bookings);
+			foreach ($bookings as $b) {
+				$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
+				$book['fuel'][] = $b->getMeta('pet_required');
+				$book['price'][] = $b->getMeta('total_price');
+			}
+			$book['totalbooking'] = $bookings->count();
+			$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
+			$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
+			$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
+
+			//Fuel
+			$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->get();
+			$fuelArray = array();
+			foreach ($fuelModel as $f) {
+				// if(in_array($f->fuel_type,$fuelArray)){
+				$fuelName = FuelType::find($f->fuel_type)->fuel_name;
+				$fuelArray[$fuelName]['id'][] = $f->id;
+				$fuelArray[$fuelName]['ltr'][] = $f->qty;
+				// $fuelArray[$fuelName]['cost'][] = $f->cost_per_unit;
+				$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+			}
+
+			// Advance
+			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->meta()->where(function ($query) {
+				$query->where('bookings_meta.key', '=', 'advance_pay')
+					->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+			})->get();
+			$advance = array();
+			foreach ($advanceBookings as $ad) {
+				$advance['amount'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				$advance['times'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+				$advance['id'][] = $ad->id;
+				//   $advance[] = 
+			}
+			// dd($advance["id"]);
+			$advance['times'] = isset($advance['times']) ? $advance['times'] : 0;
+			$advance['id'] = isset($advance['id']) ? $advance['id'] : [];
+			$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))->whereIn('booking_id', $advance['id'])->orderBy('param_id')->groupBy('param_id')->get();
+			foreach ($advance['details'] as $det) {
+				$det->label = $det->param_name->label;
+			}
+			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)->whereBetween('required_by', [$start, $end])->get();
+			// dd($start,$end,$workorders);
+			$prepArray = array();
+			foreach ($workorders as $wo) {
+				$prepArray['gtotal'][] = empty($wo->grand_total) ? $wo->price : $wo->grand_total;
+				$prepArray['cgst'][] = empty($wo->cgst) ? $wo->cgst : $wo->cgst;
+				$prepArray['sgst'][] = empty($wo->sgst) ? $wo->sgst : $wo->sgst;
+				$prepArray['vendors'][] = $wo->vendor_id;
+				$prepArray['status'][$wo->status][] = $wo->status;
+				$prepArray['id'][] = $wo->id;
+			}
+			$data['wo'] = Helper::toCollection([
+				'count' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? count($prepArray['gtotal']) : 0,
+				'grand_total' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? array_sum($prepArray['gtotal']) : 0,
+				'cgst' => isset($prepArray['cgst']) && !empty($prepArray['cgst']) ? array_sum($prepArray['cgst']) : 0,
+				'sgst' => isset($prepArray['sgst']) && !empty($prepArray['sgst']) ? array_sum($prepArray['sgst']) : 0,
+				'vendors' => isset($prepArray['vendors']) && !empty($prepArray['vendors']) ? count(array_unique($prepArray['sgst'])) : 0,
+				'status' => isset($prepArray['status']) && count($prepArray['status']) > 0 ? $prepArray['status'] : []
+			]);
+			// Work order/Part
+			// dd($data['workorders']);
+			// dd($prepArray);
+			$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
+			$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))->whereIn('work_id', $workOrderIds)->groupBy('part_id')->get();
+			//Work order/Part Ends
+			// dd($data);
+			// foreach($data['partsUsed'] as $pd){
+			//     dd($pd->part_id);
+			//     empty($pd->part_id) ?? dd(123);
+			//     // dd(PartsModel::find($pd->part_id)->title);
+			//     $pd->parts_name = PartsModel::find($pd->part_id)->title;
+			// }
+			// Tranactions
+			// $data['fuel'] = $fuelFinal;
+			$data['request'] = $request->all();
+			$data['vehicle'] = VehicleModel::where('id', $request->vehicle_id)->first();
+			$data['from_date'] = $start;
+			$data['to_date'] = $end;
+			$data['book'] = Helper::toCollection($book);
+			$data['fuels'] = Helper::toCollection($fuelArray);
+			$data['advances'] = Helper::toCollection($advance);
+
 		}
-		// dd($advance["id"]);
-		$advance['times'] = isset($advance['times']) ? $advance['times'] : 0;
-		$advance['id'] = isset($advance['id']) ? $advance['id'] : [];
-		$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))->whereIn('booking_id', $advance['id'])->orderBy('param_id')->groupBy('param_id')->get();
-		foreach ($advance['details'] as $det) {
-			$det->label = $det->param_name->label;
-		}
-		$workorders = WorkOrders::where('vehicle_id', $vehicle_id)->whereBetween('required_by', [$start, $end])->get();
-		// dd($start,$end,$workorders);
-		$prepArray = array();
-		foreach ($workorders as $wo) {
-			$prepArray['gtotal'][] = empty($wo->grand_total) ? $wo->price : $wo->grand_total;
-			$prepArray['cgst'][] = empty($wo->cgst) ? $wo->cgst : $wo->cgst;
-			$prepArray['sgst'][] = empty($wo->sgst) ? $wo->sgst : $wo->sgst;
-			$prepArray['vendors'][] = $wo->vendor_id;
-			$prepArray['status'][$wo->status][] = $wo->status;
-			$prepArray['id'][] = $wo->id;
-		}
-		$data['wo'] = Helper::toCollection([
-			'count' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? count($prepArray['gtotal']) : 0,
-			'grand_total' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? array_sum($prepArray['gtotal']) : 0,
-			'cgst' => isset($prepArray['cgst']) && !empty($prepArray['cgst']) ? array_sum($prepArray['cgst']) : 0,
-			'sgst' => isset($prepArray['sgst']) && !empty($prepArray['sgst']) ? array_sum($prepArray['sgst']) : 0,
-			'vendors' => isset($prepArray['vendors']) && !empty($prepArray['vendors']) ? count(array_unique($prepArray['sgst'])) : 0,
-			'status' => isset($prepArray['status']) && count($prepArray['status']) > 0 ? $prepArray['status'] : []
-		]);
-		// Work order/Part
-		// dd($data['workorders']);
-		// dd($prepArray);
-		$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
-		$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))->whereIn('work_id', $workOrderIds)->groupBy('part_id')->get();
-		//Work order/Part Ends
-		// dd($data);
-		// foreach($data['partsUsed'] as $pd){
-		//     dd($pd->part_id);
-		//     empty($pd->part_id) ?? dd(123);
-		//     // dd(PartsModel::find($pd->part_id)->title);
-		//     $pd->parts_name = PartsModel::find($pd->part_id)->title;
-		// }
-		// Tranactions
-		// $data['fuel'] = $fuelFinal;
 		$data['request'] = $request->all();
-		$data['vehicle'] = VehicleModel::where('id', $request->vehicle_id)->first();
-		$data['from_date'] = $start;
-		$data['to_date'] = $end;
-		$data['book'] = Helper::toCollection($book);
-		$data['fuels'] = Helper::toCollection($fuelArray);
-		$data['advances'] = Helper::toCollection($advance);
 		$data['result'] = "";
-		// dd($data);
+		$data['wheels'] = Wheel::all(['id', 'name', 'price']);
+
 		return view('vehicles.print_report', $data);
 	}
-	// vehicle overview ends
-
-	// document renew starts
 
 	public function documentRenewReport()
 	{

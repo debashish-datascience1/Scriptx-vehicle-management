@@ -24,6 +24,7 @@ use App\Model\PurchaseInfo;
 use App\Model\ServiceReminderModel;
 use App\Model\Transaction;
 use App\Model\User;
+use App\Model\Wheel;
 use App\Model\VehicleGroupModel;
 use App\Model\VehicleModel;
 use App\Model\VehicleReviewModel;
@@ -121,6 +122,7 @@ class VehiclesController extends Controller
             $index['groups'] = VehicleGroupModel::where('id', Auth::user()->group_id)->get();
         }
         $index['types'] = VehicleTypeModel::all();
+        $index['wheels'] = Wheel::all(); // Add this line
         return view("vehicles.create", $index);
     }
     public function destroy(Request $request)
@@ -183,7 +185,8 @@ class VehiclesController extends Controller
         // }
         // dd($purchase_info);
         $types = VehicleTypeModel::all();
-        return view("vehicles.edit", compact('vehicle', 'groups', 'drivers', 'udfs', 'types', 'purchase_info', 'methods', 'banks'));
+        $wheels = Wheel::all(); // Add this line to get all wheels
+        return view("vehicles.edit", compact('vehicle', 'groups', 'drivers', 'udfs', 'types', 'purchase_info', 'methods', 'banks', 'wheels'));
     }
     private function upload_file($file, $field, $id)
     {
@@ -194,6 +197,12 @@ class VehiclesController extends Controller
         $file->move($destinationPath, $fileName1);
 
         $x = VehicleModel::find($id)->update([$field => $fileName1]);
+    }
+
+    public function getWheels()
+    {
+        $wheels = Wheel::select('id', 'name', 'price')->get();
+        return response()->json(['wheels' => $wheels]);
     }
 
     private function upload_doc($file, $field, $id)
@@ -228,6 +237,7 @@ class VehiclesController extends Controller
         unset($form_data['documents']);
         unset($form_data['udf']);
         $form_data['year'] = !empty($request->get("year")) ? Helper::ymd($request->get("year")) : null;
+        $form_data['wheel'] = $request->get("wheel_id"); 
         $user->update($form_data);
 
         if ($request->get("in_service")) {
@@ -262,6 +272,7 @@ class VehiclesController extends Controller
         $vehicle = VehicleModel::create([
             'make' => $request->get("make"),
             'model' => $request->get("model"),
+            'wheel' => $request->get("wheel_id"), // Add this line
             // 'type' => $request->get("type"),
             'year' => !empty($request->get("year")) ? Helper::ymd($request->get("year")) : null,
             'engine_type' => $request->get("engine_type"),

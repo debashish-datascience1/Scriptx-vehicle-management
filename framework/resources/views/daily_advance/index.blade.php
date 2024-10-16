@@ -102,6 +102,7 @@
             </tr>
           </tfoot>
         </table>
+        {{ $dailys->links() }}
       </div>
     </div>
   </div>

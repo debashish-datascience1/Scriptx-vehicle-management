@@ -1,8 +1,10 @@
-<?php ($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'); ?>
+<?php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+?>
 
 <?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
-<li class="breadcrumb-item active">Salary Report</li>
+<li class="breadcrumb-item active">Salary Advance Report</li>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('extra_css'); ?>
 <link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
@@ -19,7 +21,7 @@
   <div class="col-md-12">
     <div class="card card-info">
       <div class="card-header">
-        <h3 class="card-title">Salary Report
+        <h3 class="card-title">Salary Advance Report
         </h3>
       </div>
 

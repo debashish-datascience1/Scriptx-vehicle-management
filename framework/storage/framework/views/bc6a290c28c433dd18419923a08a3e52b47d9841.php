@@ -1,4 +1,6 @@
-<?php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')?>
+<?php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+?>
 
 <?php $__env->startSection("breadcrumb"); ?>
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
@@ -114,16 +116,18 @@
             </tr>
           </thead>
           <tbody>
+            <?php $counter = 1; ?>
             <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
             <?php
               $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-              $showRow = !$request['payment_type'] || 
-                        ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
-                        ($request['payment_type'] == 'cash' && empty($bankInfo));
+              $showRow = ($row->active_status == 1) && 
+                         (!$request['payment_type'] || 
+                         ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                         ($request['payment_type'] == 'cash' && empty($bankInfo)));
             ?>
             <?php if($showRow): ?>
             <tr>
-              <td><?php echo e($k+1); ?></td>
+              <td><?php echo e($counter++); ?></td>
               <td>
                 <?php if($row->is_payroll): ?>
                   <?php echo e($row->driver->name); ?>
@@ -163,11 +167,11 @@
           </tbody>
            <tfoot>
             <tr>
-				<th>SL#</th>
-				<th>Name</th>
-				<th>Bank</th>
-				<th>A/C No.</th>
-				<th>Payable Amount</th>
+              <th>SL#</th>
+              <th>Name</th>
+              <th>Bank</th>
+              <th>A/C No.</th>
+              <th>Payable Amount</th>
             </tr>
           </tfoot> 
         </table>
@@ -175,9 +179,10 @@
           <?php
           $totalPayableSalary = $salaries->filter(function($row) use ($request) {
             $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-            return !$request['payment_type'] || 
-                  ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
-                  ($request['payment_type'] == 'cash' && empty($bankInfo));
+            return ($row->active_status == 1) &&
+                   (!$request['payment_type'] || 
+                   ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
+                   ($request['payment_type'] == 'cash' && empty($bankInfo)));
           })->sum('payable_salary');
         ?>
 
@@ -190,9 +195,7 @@
     </div>
   </div>
 </div>
-
 <?php endif; ?>
-
 
 <!-- Modal -->
 <div id="whereModal" class="modal fade" role="dialog">

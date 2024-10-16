@@ -1,21 +1,15 @@
 <div role="tabpanel" style="margin-bottom: 10px;">
     <ul class="nav nav-pills">
-        <li class="nav-item"><a href="#info-tab" data-toggle="tab" class="nav-link custom_padding active" style="margin-bottom: 10px;"> General Information <i class="fa"></i></a>
-        </li>
-
-        <li class="nav-item"><a href="#load-tab" data-toggle="tab" class="nav-link custom_padding"> Load Details <i class="fa"></i></a>
-        </li>
-
-        <li class="nav-item"><a href="#journey-tab" data-toggle="tab" class="nav-link custom_padding"> Journey Details <i class="fa"></i></a>
-        </li>
+        <li class="nav-item"><a href="#info-tab" data-toggle="tab" class="nav-link custom_padding active" style="margin-bottom: 10px;"> General Information <i class="fa"></i></a></li>
+        <li class="nav-item"><a href="#load-tab" data-toggle="tab" class="nav-link custom_padding"> Load Details <i class="fa"></i></a></li>
+        <li class="nav-item"><a href="#journey-tab" data-toggle="tab" class="nav-link custom_padding"> Journey Details <i class="fa"></i></a></li>
         @if($booking->status==1)
-        <li class="nav-item adexist"><a href="#advance-tab" data-toggle="tab" class="nav-link custom_padding"> Advance <i class="fa"></i></a>
-        </li>
+        <li class="nav-item adexist"><a href="#advance-tab" data-toggle="tab" class="nav-link custom_padding"> Advance <i class="fa"></i></a></li>
         @endif
     </ul>
 
     <div class="tab-content">
-    <!-- General Information Tab-->
+        <!-- General Information, Load, and Journey tabs remain unchanged -->
         <div class="tab-pane active" id="info-tab">
             <table class="table table-striped">
                 <tr>
@@ -157,35 +151,44 @@
         @if($booking->status==1)
         <div class="tab-pane" id="advance-tab">
             <table class="table table-striped">
-            @if($advances->count()>0)
-                @foreach($advances as $advance)
+            @if($advances->count() > 0)
+                @php
+                    $groupedAdvances = $advances->groupBy('param_id');
+                    $totalAdvance = 0;
+                @endphp
+                @foreach($groupedAdvances as $paramId => $advanceGroup)
+                    @php
+                        // Get the advance with the highest id (assuming it's the most recent)
+                        $latestAdvance = $advanceGroup->sortByDesc('id')->first();
+                        $totalAdvance += $latestAdvance->value;
+                    @endphp
                     <tr>
-                        <th>{{$advance->param_name->label}}</th>
+                        <th>{{$latestAdvance->param_name->label}}</th>
                         <td>
-                            @if($advance->value!='')
-                                <i class="fa fa-inr"></i> {{$advance->value}}
+                            @if($latestAdvance->value != '')
+                                <i class="fa fa-inr"></i> {{$latestAdvance->value}}
                             @else
                                 <span class="badge badge-warning">N/A</span>
                             @endif
                         </td>
-                        <td>{{$advance->remarks}}</td>
+                        <td>{{$latestAdvance->remarks}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top:2px solid #4fb765;">
                     <th>Grand Total Advance</th>
                     <th>
-                        {{Hyvikk::get('currency')}}{{$advTotal}}
+                        {{Hyvikk::get('currency')}}{{$totalAdvance}}
                     </th>
                     <th></th>
                 </tr>
             @else
                 <tr>
-                    <td colspan="2" align="center" style="color: red"><i>No Advances were given in this booking...</i></td>
+                    <td colspan="3" align="center" style="color: red"><i>No Advances were given in this booking...</i></td>
                 </tr>
             @endif
             </table>
         </div>
-        @endif    
+        @endif
     </div>
 </div>
 

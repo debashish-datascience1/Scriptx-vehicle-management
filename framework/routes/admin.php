@@ -245,7 +245,7 @@ Route::namespace('Admin')->group(function () {
         Route::get('/daily-advance/view_event/{id}', 'DailyAdvanceController@view_event')->middleware('userpermission:1');
         Route::get('/daily-advance/get_remarks/{id}', 'DailyAdvanceController@get_remarks');
 
-
+        Route::get('reports/get-wheels', 'VehiclesController@getWheels')->name('admin.get-wheels');
         Route::get('/reports/other-adjust', 'ReportsController@otherAdjust')->name('reports.other-adjust')->middleware('userpermission:4');
         Route::post('/reports/other-adjust', 'ReportsController@otherAdjust_post')->name('reports.other-adjust')->middleware('userpermission:4');
         Route::post('print-other-adjust-report', 'ReportsController@otherAdjust_print');
@@ -333,6 +333,8 @@ Route::namespace('Admin')->group(function () {
 
         Route::get("/bank-account/view_event/{id}", "BankAccountController@view_event")->middleware('userpermission:4');
         Route::resource('/bank-account', 'BankAccountController')->middleware('userpermission:S');
+        Route::resource('/fastag', 'FastagController')->middleware('userpermission:14');
+
         Route::get("/ob-balance/view_event/{id}", "OBBalanceController@view_event")->middleware('userpermission:4');
         Route::resource('/ob-balance', 'OBBalanceController')->middleware('userpermission:S');
         Route::get('/leave/get_remarks/{id}', 'LeaveController@get_remarks');
@@ -356,12 +358,25 @@ Route::namespace('Admin')->group(function () {
         Route::get("reports/statement", "ReportsController@statement")->name("reports.statement")->middleware('userpermission:4');
         Route::post("reports/statement", "ReportsController@statement_post")->name("reports.statement")->middleware('userpermission:4');
         Route::post("print-statement", "ReportsController@statement_print")->middleware('userpermission:4');
-
-
+        // Route::get('/take', 'LoanTakeController@index')->name('loans.take');
+        Route::get('/pay', 'LoanPayController@index')->name('loans.pay');
+        Route::get('/give', 'LoanGiveController@index')->name('loans.give');
+        Route::get('/return', 'LoanReturnController@index')->name('loans.return');
+        Route::resource('loan-take', 'LoanTakeController');
+        Route::resource('loan-give', 'LoanGiveController');
+        Route::get('loan-take/{id}/return', 'LoanTakeController@returnLoan')->name('loan-take.return');
+        Route::post('loan-take/{id}/process-return', 'LoanTakeController@processReturn')->name('loan-take.process-return');
+        Route::get('loan-give/{id}/return', 'LoanGiveController@returnLoan')->name('loan-give.return');
+        Route::post('loan-give/{id}/process-return', 'LoanGiveController@processReturn')->name('loan-give.process-return');
+        Route::post('/bookings/bulk-action', 'BookingsController@bulkAction')->name('bookings.bulk_action');
         Route::get("reports/drivers-report", "ReportsController@driverspayroll")->name("reports.drivers-report")->middleware('userpermission:4');
         Route::post("reports/drivers-report", "ReportsController@driverspayroll_post")->name("reports.drivers-report")->middleware('userpermission:4');
         Route::post("print-drivers-report", "ReportsController@driverspayroll_print")->middleware('userpermission:4');
 
+        Route::get("reports/cash-book", "ReportsController@cashBook")->name("reports.cash-book")->middleware('userpermission:4');
+        Route::post("reports/cash-book", "ReportsController@cashBook_post")->name("reports.cash-book")->middleware('userpermission:4');
+        Route::post("print-cash-book", "ReportsController@cashBook_print")->name("reports.cash-book.print")->middleware('userpermission:4');
+        
         Route::get("reports/drivers-advance-report", "ReportsController@driversAdvance")->name("reports.drivers-advance-report")->middleware('userpermission:4');
         Route::post("reports/drivers-advance-report", "ReportsController@driversAdvance_post")->name("reports.drivers-advance-report")->middleware('userpermission:4');
         Route::post("print-drivers-advance-report", "ReportsController@driversAdvance_print")->middleware('userpermission:4');
@@ -443,6 +458,7 @@ Route::namespace('Admin')->group(function () {
         Route::post('/bookings/dropofftime', 'BookingsController@dropofftime')->name("bookings.dropofftime")->middleware('userpermission:4');
         Route::post('/bookings/timeperltr', 'BookingsController@timeperltr')->name("bookings.timeperltr")->middleware('userpermission:4');
         Route::post('/greater', 'BookingsController@greater')->name("bookings.greater")->middleware('userpermission:4');
+        Route::post('/bookings/{id}/undo-complete', 'BookingsController@undoComplete')->name('bookings.undoComplete')->middleware('userpermission:4');
 
         Route::post("/reports/monthly", "ReportsController@monthly_post")->name("reports.monthly")->middleware('userpermission:4');
         Route::post("/reports/booking", "ReportsController@booking_post")->name("reports.booking")->middleware('userpermission:4');

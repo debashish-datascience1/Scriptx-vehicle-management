@@ -31,7 +31,9 @@
   </style>
 </head>
 <body onload="window.print();">
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')@endphp
+@php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+@endphp
 
   <div class="wrapper">
   <!-- Main content -->
@@ -67,16 +69,18 @@
               <th>Payable Amount</th>
             </thead>
             <tbody>
-            @foreach($salaries as $k=>$row) 
+            @php $counter = 1; @endphp
+            @foreach($salaries as $row) 
                 @php
                   $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-                  $showRow = !$request['payment_type'] || 
+                  $showRow = ($row->active_status == 1) && 
+                             (!$request['payment_type'] || 
                              ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
-                             ($request['payment_type'] == 'cash' && empty($bankInfo));
+                             ($request['payment_type'] == 'cash' && empty($bankInfo)));
                 @endphp
                 @if($showRow)
                 <tr>
-                  <td>{{$k+1}}</td>
+                  <td>{{$counter++}}</td>
                   <td>
                     @if($row->is_payroll)
                       {{$row->driver->name}}
@@ -113,9 +117,10 @@
           @php
             $totalPayableSalary = $salaries->filter(function($row) use ($request) {
               $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-              return !$request['payment_type'] || 
+              return ($row->active_status == 1) &&
+                     (!$request['payment_type'] || 
                      ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
-                     ($request['payment_type'] == 'cash' && empty($bankInfo));
+                     ($request['payment_type'] == 'cash' && empty($bankInfo)));
             })->sum('payable_salary');
           @endphp
           

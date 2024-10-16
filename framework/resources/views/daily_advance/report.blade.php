@@ -1,9 +1,11 @@
 @extends('layouts.app')
-@php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y')
+@php
+$date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y'
+@endphp
 
 @section("breadcrumb")
 <li class="breadcrumb-item"><a href="#">Reports</a></li>
-<li class="breadcrumb-item active">Salary Report</li>
+<li class="breadcrumb-item active">Salary Advance Report</li>
 @endsection
 @section('extra_css')
 <link rel="stylesheet" href="{{asset('assets/css/bootstrap-datepicker.min.css')}}">
@@ -20,7 +22,7 @@
   <div class="col-md-12">
     <div class="card card-info">
       <div class="card-header">
-        <h3 class="card-title">Salary Report
+        <h3 class="card-title">Salary Advance Report
         </h3>
       </div>
 

@@ -106,6 +106,8 @@
             </tr>
           </tfoot>
         </table>
+        <?php echo e($dailys->links()); ?>
+
       </div>
     </div>
   </div>

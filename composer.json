@@ -1,0 +1,11 @@
+{
+    "require": {
+        "maatwebsite/excel": "^2.1",
+        "barryvdh/laravel-dompdf": "^0.9.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true
+        }
+    }
+}

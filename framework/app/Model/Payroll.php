@@ -44,4 +44,10 @@ class Payroll extends Model
     {
         $query->orderBy('for_date', 'DESC');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+    
 }

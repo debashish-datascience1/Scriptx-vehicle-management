@@ -46,7 +46,7 @@
 
           </span>
 
-          <strong><small class="pull-right"> <b><?php echo app('translator')->getFromJson('fleet.date'); ?> : </b> <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'),'default')); ?> / <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'))); ?></small></strong>
+          <small class="pull-right"> <b><?php echo app('translator')->getFromJson('fleet.date'); ?> : </b> <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'),'default')); ?> / <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'))); ?></small>
           </h2>
         </div>
         <!-- /.col -->
@@ -68,16 +68,18 @@
               <th>Payable Amount</th>
             </thead>
             <tbody>
-            <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
+            <?php $counter = 1; ?>
+            <?php $__currentLoopData = $salaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?> 
                 <?php
                   $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-                  $showRow = !$request['payment_type'] || 
+                  $showRow = ($row->active_status == 1) && 
+                             (!$request['payment_type'] || 
                              ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
-                             ($request['payment_type'] == 'cash' && empty($bankInfo));
+                             ($request['payment_type'] == 'cash' && empty($bankInfo)));
                 ?>
                 <?php if($showRow): ?>
                 <tr>
-                  <td><?php echo e($k+1); ?></td>
+                  <td><?php echo e($counter++); ?></td>
                   <td>
                     <?php if($row->is_payroll): ?>
                       <?php echo e($row->driver->name); ?>
@@ -120,9 +122,10 @@
           <?php
             $totalPayableSalary = $salaries->filter(function($row) use ($request) {
               $bankInfo = $row->is_payroll ? $row->driver->bank : $row->bank;
-              return !$request['payment_type'] || 
+              return ($row->active_status == 1) &&
+                     (!$request['payment_type'] || 
                      ($request['payment_type'] == 'bank' && !empty($bankInfo)) || 
-                     ($request['payment_type'] == 'cash' && empty($bankInfo));
+                     ($request['payment_type'] == 'cash' && empty($bankInfo)));
             })->sum('payable_salary');
           ?>
           

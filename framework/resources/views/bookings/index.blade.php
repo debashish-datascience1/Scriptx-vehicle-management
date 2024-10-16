@@ -32,7 +32,15 @@
       <div class="card-header with-border">
         <h3 class="card-title"> @lang('fleet.manage_bookings') &nbsp;
           <a href="{{route("bookings.create")}}" class="btn btn-success">@lang('fleet.new_booking')</a>
-          <a href="{{url("admin/refresh-json/18")}}" class="btn btn-primary float-right refresh-table"><span class="fa fa-repeat"></span> &nbsp; @lang('fleet.refresh')</a>
+          <a href="{{url("admin/refresh-json/18")}}" class="btn btn-primary refresh-table"><span class="fa fa-repeat"></span> &nbsp; @lang('fleet.refresh')</a>
+          <div class="dropdown d-inline-block float-right ml-2">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="bulkActionDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Bulk Actions
+            </button>
+            <div class="dropdown-menu" aria-labelledby="bulkActionDropdown">
+              <!-- Options will be dynamically populated here -->
+            </div>
+          </div>
         </h3>
       </div>
 
@@ -45,6 +53,9 @@
                   @if($data->count() > 0)
                   {{-- <input type="checkbox" id="chk_all"> --}}
                   @endif
+                </th>
+                <th>
+                  <input type="checkbox" id="select_all">
                 </th>
                 <th style="width: 2% !important">SL#</th>
                 <th style="width: 10% !important">@lang('fleet.customer')</th>
@@ -66,6 +77,9 @@
                <tr>
                 <td>
                   {{-- <input type="checkbox" name="ids[]" value="{{ $row->id }}" class="checkbox" id="chk{{ $row->id }}" onclick='checkcheckbox();'> --}}
+                </td>
+                <td>
+                  <input type="checkbox" class="booking_checkbox" value="{{ $row->id }}" data-status="{{ $row->ride_status }}" data-advance="{{ $row->advance_pay ? 'yes' : 'no' }}">
                 </td>
                 <td>{{$k+$data->firstItem()}}</td>
                 <td style="width: 10% !important">{{$row->customer->name}}</td>
@@ -119,43 +133,36 @@
                 @endif
                 </td> --}}
                 <td style="width: 10% !important">
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-                      <span class="fa fa-gear"></span>
-                      <span class="sr-only">Toggle Dropdown</span>
-                    </button>
-                    <div class="dropdown-menu custom" role="menu">
-                      <a class="dropdown-item vbook" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal2"  style="cursor:pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> @lang('fleet.viewBookingDetails')</a>
-                      <a href="print_booking_new/{{$row->id}}" class="dropdown-item" data-id="{{$row->id}}" style="cursor:pointer;" target="_blank"> <span aria-hidden="true" class="fa fa-print" style="color: #1114b4;"></span> Print</a>
-                      
-                      @if($row->ride_status == 'Completed')
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+                        <span class="fa fa-gear"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                      </button>
+                      <div class="dropdown-menu custom" role="menu">
+                        <a class="dropdown-item vbook" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal2"  style="cursor:pointer;"> <span aria-hidden="true" class="fa fa-eye" style="color: #398439;"></span> @lang('fleet.viewBookingDetails')</a>
+                        <a href="print_booking_new/{{$row->id}}" class="dropdown-item" data-id="{{$row->id}}" style="cursor:pointer;" target="_blank"> <span aria-hidden="true" class="fa fa-print" style="color: #1114b4;"></span> Print</a>
+                        
+                        @if($row->ride_status == 'Completed')
+                        <a class="dropdown-item vUndo" data-id="{{$row->id}}" style="cursor: pointer;">
+                          <span class="fa fa-undo" aria-hidden="true" style="color: #0d9c00"></span> Undo Complete
+                          <span class="fa fa-spinner fa-spin" style="display: none;"></span>
+                        </a>     
+                        @endif
                         <a class="dropdown-item" href="{{ url('admin/bookings/'.$row->id.'/edit')}}"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')</a>
-                        <a class="dropdown-item vRoute" data-id="{{$row->id}}" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
-                      @else
-                        @if($row->status==0 && $row->ride_status != "Cancelled" && !empty($row->transid) && $row->inc_rows<2 && Helper::isEligible($row->id,18))
-                          <a class="dropdown-item" href="{{ url('admin/bookings/'.$row->id.'/edit')}}"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')</a>
-                          <a class="dropdown-item vtype" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal" style="cursor:pointer;"> <span class="fa fa-trash" aria-hidden="true" style="color: #dd4b39;"></span> @lang('fleet.delete')</a>
+                        
+                        @if($row->ride_status != 'Completed')
+                          <a class="dropdown-item vtype" data-id="{{$row->id}}" style="cursor:pointer;">
+                            <span class="fa fa-trash" aria-hidden="true" style="color: #dd4b39;"></span> @lang('fleet.delete')
+                          </a>
                           <a class="dropdown-item vDriverAdvanceLater" data-id="{{$row->id}}" data-toggle="modal" data-target="#modalDriverAdvanceLater" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-inr" aria-hidden="true" style="color: #0d9c00"></span> Late Driver Advance</a>
                           @if($row->receipt != 1)
-                            {{-- <a class="dropdown-item vtype" data-id="{{$row->id}}" data-toggle="modal" data-target="#cancelBooking" > <span class="fa fa-times" aria-hidden="true" style="color: #dd4b39"></span> @lang('fleet.cancel_booking')</a> --}}
+                            <a class="dropdown-item vcomplete" data-id="{{$row->id}}" data-toggle="modal" data-target="#modalComplete" data-backdrop='static' data-keyboard='false' style="cursor:pointer;"> <span class="fa fa-check" aria-hidden="true" style="color: #0d9c00;"></span> Mark as Complete</a>
                           @endif
                         @endif
-                        @if($row->vehicle_id != null)
-                          @if($row->status==0 && $row->receipt != 1)
-                            @if(Auth::user()->user_type != "C" && $row->ride_status != "Cancelled")
-                              <a class="dropdown-item vcomplete" data-id="{{$row->id}}" data-toggle="modal" data-target="#modalComplete" data-backdrop='static' data-keyboard='false' style="cursor:pointer;"> <span class="fa fa-check" aria-hidden="true" style="color: #0d9c00;"></span> Mark as Complete</a>
-                              <a class="dropdown-item vRoute" data-id="{{$row->id}}" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
-                            @endif
-                          @elseif($row->receipt == 1)
-                            {{-- <a class="dropdown-item" href="{{ url('admin/bookings/receipt/'.$row->id)}}"><span aria-hidden="true" class="fa fa-list" style="color: #31b0d5;"></span> @lang('fleet.receipt')</a> --}}
-                            {{-- @if($row->receipt == 1 && $row->status == 0 && Auth::user()->user_type != "C")
-                              <a class="dropdown-item" href="{{ url('admin/bookings/complete/'.$row->id)}}" data-id="{{ $row->id }}" data-toggle="modal" data-target="#journeyModal"><span aria-hidden="true" class="fa fa-check" style="color: #5cb85c;"></span> @lang('fleet.complete')</a>
-                            @endif --}}
-                          @endif
-                        @endif
-                      @endif
+                        
+                        <a class="dropdown-item vRoute" data-id="{{$row->id}}" data-toggle="modal" data-target="#modalRoute" data-backdrop='static' data-keyboard='false' style="cursor: pointer;"> <span class="fa fa-plus" aria-hidden="true" style="color: #0d9c00"></span> Add Route</a>
+                      </div>
                     </div>
-                  </div>
                 {!! Form::open(['url' => 'admin/bookings/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'book_'.$row->id]) !!}
                 {!! Form::hidden("id",$row->id) !!}
                 {!! Form::close() !!}
@@ -930,5 +937,183 @@ $(".sum").change(function(){
         return false;
     })
   })
+  $(document).ready(function() {
+    $(".vUndo").click(function(){
+        var id = $(this).data('id');
+        var $button = $(this);
+        var $spinner = $button.find('.fa-spinner');
+        
+        if(confirm("Are you sure you want to undo this completed booking?")) {
+            // Show spinner and disable button immediately
+            $spinner.show();
+            $button.prop('disabled', true);
+            
+            // Start a page reload immediately
+            location.reload();
+            
+            // Perform the AJAX request in the background
+            $.ajax({
+                url: '{{ url("admin/bookings") }}/' + id + '/undo-complete',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    // The page is already reloading, so we don't need to do anything here
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
+                    // The page is already reloading, so we don't need to do anything here
+                }
+            });
+        }
+    });
+});
+$(document).ready(function() {
+    $("body").on("click", ".vtype", function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        var row = $(this).closest('tr');
+        
+        if (confirm("Are you sure you want to delete this booking?")) {
+            $.ajax({
+                url: '{{ url("admin/bookings") }}/' + id,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Remove the deleted row from the table
+                        row.remove();
+                        // Show success message
+                        new PNotify({
+                            title: 'Success!',
+                            text: response.message,
+                            type: 'success'
+                        });
+                        
+                        // Update row numbers
+                        updateRowNumbers();
+                    } else {
+                        // Show error message
+                        new PNotify({
+                            title: 'Error!',
+                            text: response.message,
+                            type: 'error'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
+                    new PNotify({
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the booking.',
+                        type: 'error'
+                    });
+                }
+            });
+        }
+    });
+
+    function updateRowNumbers() {
+        $('#data_table12 tbody tr').each(function(index) {
+            $(this).find('td:eq(1)').text(index + 1);
+        });
+    }
+});
+$(document).ready(function() {
+  // Select all checkboxes
+  $('#select_all').on('click', function() {
+    $('.booking_checkbox').prop('checked', this.checked);
+    updateBulkActionDropdown();
+  });
+
+  // Update bulk action dropdown when individual checkboxes are clicked
+  $('.booking_checkbox').on('click', function() {
+    updateBulkActionDropdown();
+  });
+
+  function updateBulkActionDropdown() {
+    var selectedBookings = $('.booking_checkbox:checked');
+    var dropdownMenu = $('#bulkActionDropdown').next('.dropdown-menu');
+    dropdownMenu.empty();
+
+    if (selectedBookings.length === 0) {
+        dropdownMenu.append('<a class="dropdown-item" href="#">No bookings selected</a>');
+        return;
+    }
+
+    var allUpcoming = true;
+    var allCompleted = true;
+    var allNoAdvance = true;
+
+    selectedBookings.each(function() {
+        var status = $(this).data('status');
+        var advance = $(this).data('advance');
+        if (status !== 'Completed') allCompleted = false;
+        if (status === 'Completed') allUpcoming = false;
+        if (advance === 'yes') allNoAdvance = false;
+    });
+
+    if (allUpcoming && allNoAdvance) {
+        dropdownMenu.append('<a class="dropdown-item bulk-action" href="#" data-action="complete">Mark as Complete</a>');
+    } else if (allCompleted) {
+        dropdownMenu.append('<a class="dropdown-item bulk-action" href="#" data-action="undo-complete">Undo Complete</a>');
+    } else {
+        dropdownMenu.append('<a class="dropdown-item" href="#">Mixed statuses or advance payments - no actions available</a>');
+    }
+  }
+
+  // Handle bulk actions
+  $(document).on('click', '.bulk-action', function(e) {
+    e.preventDefault();
+    var action = $(this).data('action');
+    var selectedIds = $('.booking_checkbox:checked').map(function() {
+      return this.value;
+    }).get();
+
+    if (confirm('Are you sure you want to ' + action + ' the selected bookings?')) {
+      $.ajax({
+        url: '{{ route("bookings.bulk_action") }}',
+        method: 'POST',
+        data: {
+          _token: '{{ csrf_token() }}',
+          ids: selectedIds,
+          action: action
+        },
+        success: function(response) {
+          alert(response.message);
+          
+          // Update the UI for each affected booking
+          response.updatedBookings.forEach(function(booking) {
+            var row = $('tr').find('input[value="' + booking.id + '"]').closest('tr');
+            var statusCell = row.find('td:nth-child(11)'); // Adjust this index if needed
+            
+            // Update the status cell content
+            statusCell.html('<strong>' + booking.id + '</strong><br>' +
+              (booking.ride_status !== 'Completed' ?
+                '<span class="text-warning">' + booking.ride_status + '</span>' :
+                '<span class="text-success">' + booking.ride_status + '</span>'
+              )
+            );
+            
+            // Update the checkbox data attributes
+            row.find('.booking_checkbox')
+               .data('status', booking.ride_status)
+               .data('advance', booking.advance_pay ? 'yes' : 'no');
+          });
+          
+          // Refresh the bulk action dropdown
+          updateBulkActionDropdown();
+          location.reload();
+        },
+        error: function() {
+          alert('An error occurred. Please try again.');
+        }
+      });
+    }
+  });
+});
 </script>
 @endsection

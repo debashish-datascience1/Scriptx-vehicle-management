@@ -4,6 +4,7 @@ namespace App\Model;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Model\Wheel;
 use Kodeine\Metable\Metable;
 
 class VehicleModel extends Model
@@ -13,7 +14,7 @@ class VehicleModel extends Model
     protected $dates = ['deleted_at'];
     protected $table = "vehicles";
     protected $metaTable = 'vehicles_meta'; //optional.
-    protected $fillable = ['make', 'model', 'type', 'year', 'engine_type', 'horse_power', 'color', 'license_plate', 'mileage', 'int_mileage', 'in_service', 'user_id', 'insurance_number', 'documents', 'vehicle_image', 'exp_date', 'reg_exp_date', 'lic_exp_date', 'group_id', 'type_id', 'engine_no', 'chassis_no', 'rc_image'];
+    protected $fillable = ['make', 'wheel', 'model', 'type', 'year', 'engine_type', 'horse_power', 'color', 'license_plate', 'mileage', 'int_mileage', 'in_service', 'user_id', 'insurance_number', 'documents', 'vehicle_image', 'exp_date', 'reg_exp_date', 'lic_exp_date', 'group_id', 'type_id', 'engine_no', 'chassis_no', 'rc_image'];
 
     protected function getMetaKeyName()
     {
@@ -80,5 +81,10 @@ class VehicleModel extends Model
     public function bookings()
     {
         return $this->belongsTo(Bookings::class, 'id', 'vehicle_id');
+    }
+
+    public function wheel()
+    {
+        return $this->belongsTo(Wheel::class, 'wheel_id');
     }
 }

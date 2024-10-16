@@ -558,14 +558,14 @@
               </li>
             </ul>
           </li> @endif
-          @if(Request::is('admin/accounting*') || Request::is('admin/bank-account*') || Request::is('admin/ob-balance*'))
+          @if(Request::is('admin/accounting*') || Request::is('admin/bank-account*') || Request::is('admin/ob-balance*') ||  Request::is('admin/fastag*'))
             @php($class="menu-open")
             @php($active="active")
 
             @else
             @php($class="")
             @php($active="")
-            @endif
+          @endif
           @if(in_array(1,$modules)) <li class="nav-item has-treeview {{$class}}">
             <a href="#" class="nav-link {{$active}}">
               <i class="nav-icon fa fa-money"></i>
@@ -605,6 +605,12 @@
                   <p>@lang('menu.manageBulkPay')</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{{ route('fastag.index')}}" class="nav-link @if(Request::is('admin/fastag*')) active @endif">
+                  <i class="fa fa-newspaper-o nav-icon"></i>
+                  <p>@lang('menu.fastag')</p>
+                </a>
+              </li>
               {{-- <li class="nav-item">
                 <a href="{{ route('ob-balance.index')}}" class="nav-link @if(Request::is('admin/ob-balance/*')) active @endif">
                   <i class="fa fa-balance-scale nav-icon"></i>
@@ -631,6 +637,41 @@
               </li>
             </ul>
           </li>
+          @endif
+
+          @if(Request::is('admin/loan-take*') || Request::is('admin/loan-give*'))
+            @php($loanClass = 'menu-open')
+            @php($loanActive = 'active')
+    
+          @else
+            @php( $loanClass = '')
+            @php($loanActive = '')
+          @endif
+
+          @if(in_array(1, $modules)) 
+              <li class="nav-item has-treeview {{ $loanClass }}">
+                  <a href="#" class="nav-link {{ $loanActive }}">
+                      <i class="nav-icon fa fa-money"></i> 
+                      <p>
+                          @lang('menu.loans')
+                          <i class="right fa fa-angle-left"></i>
+                      </p>
+                  </a>
+                  <ul class="nav nav-treeview">
+                      <li class="nav-item">
+                          <a href="{{ route('loan-take.index') }}" class="nav-link {{ Request::is('admin/loan-take*') ? 'active' : '' }}">
+                          <i class="fa fa-usd nav-icon"></i>
+                              <p>@lang('menu.loan_take')</p>
+                          </a>
+                      </li>
+                      <li class="nav-item">
+                          <a href="{{ route('loan-give.index') }}" class="nav-link {{ Request::is('admin/loan-give*') ? 'active' : '' }}">
+                          <i class="fa fa-handshake-o nav-icon"></i>
+                              <p>@lang('menu.loan_give')</p>
+                          </a>
+                      </li>
+                  </ul>
+              </li>
           @endif
           @if((Request::is('admin/daily-advance*')) || (Request::is('admin/daily-advance/report*')) || Request::is('admin/other-advance*') || Request::is('admin/other-adjust*'))
             @php($class="menu-open")
@@ -835,6 +876,12 @@
                   <i class="fa fa-book nav-icon"></i>
                   <p>@lang('menu.bookingReport')</p>
                 </a>
+              </li>
+              <li class="nav-item">
+                  <a href="{{ route('reports.cash-book') }}" class="nav-link @if(Request::is('admin/reports/cash-book')) active @endif">
+                      <i class="fa fa-money nav-icon"></i>
+                      <p>Cash Book</p>
+                  </a>
               </li>
               <li class="nav-item">
                 <a href="{{ route('reports.customerPayment') }}" class="nav-link @if(Request::is('admin/reports/customer-payment')) active @endif">
