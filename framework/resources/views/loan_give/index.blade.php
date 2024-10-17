@@ -19,7 +19,7 @@
           <thead class="thead-inverse">
             <tr>
               <th>@lang('fleet.date')</th>
-              <th>@lang('fleet.from')</th>
+              <th>@lang('fleet.to')</th>
               <th>@lang('fleet.amount')</th>
               <th>@lang('fleet.remaining_amount')</th>
               <th>@lang('fleet.action')</th>

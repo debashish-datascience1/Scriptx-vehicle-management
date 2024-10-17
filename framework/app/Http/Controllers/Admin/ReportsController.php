@@ -5007,6 +5007,9 @@ class ReportsController extends Controller
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
 
+		$fuelBalanceAdjustments = json_decode($request->get('fuel_balance_adjustments'), true) ?? [];
+		// dd($fuelBalanceAdjustments);
+
 		if ($request->get('vehicle_id') === 'all') {
 			// Handle "All Vehicles" report
 			$data['all_vehicles'] = true;
@@ -5015,7 +5018,8 @@ class ReportsController extends Controller
 			session(['report_start_date' => $start]);
 			session(['report_end_date' => $end]);
 			session(['wheel_prices' => $request->get('wheel_prices')]);
-			
+			session(['fuel_balance_adjustments' => $request->get('fuel_balance_adjustments')]);
+
 			// Get all vehicles for processing
 			$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
 			->select('vehicles.*', 'wheels.name as wheel_name')
@@ -5092,6 +5096,23 @@ class ReportsController extends Controller
 					$totalFuelCost += $f->qty * $f->cost_per_unit;
 					$totalFuelQty += $f->qty;
 				}
+
+				$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+				if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+					$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+					if (isset($fuelArray['Diesel'])) {
+						$fuelArray['Diesel']['ltr'][] = $adjustment;
+						$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
+						$totalFuelQty += $adjustment;
+						$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
+					} elseif (isset($fuelArray['Petrol'])) {
+						$fuelArray['Petrol']['ltr'][] = $adjustment;
+						$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
+						$totalFuelQty += $adjustment;
+						$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
+					}
+				}
+
 				
 				// Get work orders
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
@@ -5169,16 +5190,38 @@ class ReportsController extends Controller
 			$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
 
 			// Get fuel data
-			$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
-				->whereBetween('date', [$start, $end])
-				->get();
-			
+			 $fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
+            ->whereBetween('date', [$start, $end])
+            ->get();
+        
 			$fuelArray = [];
+			$totalFuelCost = 0;
+			$totalFuelQty = 0;
 			foreach ($fuelModel as $f) {
 				$fuelName = FuelType::find($f->fuel_type)->fuel_name;
 				$fuelArray[$fuelName]['id'][] = $f->id;
 				$fuelArray[$fuelName]['ltr'][] = $f->qty;
 				$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+				$totalFuelCost += $f->qty * $f->cost_per_unit;
+				$totalFuelQty += $f->qty;
+			}
+
+			// Apply fuel balance adjustment for single vehicle
+			$vehicle = VehicleModel::find($vehicle_id);
+			$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+			if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+				$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+				if (isset($fuelArray['Diesel'])) {
+					$fuelArray['Diesel']['ltr'][] = $adjustment;
+					$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
+					$totalFuelQty += $adjustment;
+					$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
+				} elseif (isset($fuelArray['Petrol'])) {
+					$fuelArray['Petrol']['ltr'][] = $adjustment;
+					$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
+					$totalFuelQty += $adjustment;
+					$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
+				}
 			}
 
 			// Get driver advances
@@ -5255,11 +5298,244 @@ class ReportsController extends Controller
 		return view('vehicles.report', $data);
 	}
 
+	// public function vehicleOverview_print(Request $request)
+	// {
+	// 	$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+    //     ->pluck('name', 'id')
+    //     ->prepend('All Vehicles', 'all');
+
+	// 	if ($request->get('date1') == null)
+	// 		$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'ASC')->take(1)->first('pickup')->pickup;
+	// 	else
+	// 		$start = date('Y-m-d', strtotime($request->get('date1')));
+
+	// 	if ($request->get('date2') == null)
+	// 		$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'DESC')->take(1)->first('pickup')->pickup;
+	// 	else
+	// 		$end = date('Y-m-d', strtotime($request->get('date2')));
+
+	// 	if ($request->get('vehicle_id') === 'all') {
+	// 		// Handle "All Vehicles" report
+	// 		$data['all_vehicles'] = true;
+	// 		$data['vehicle'] = null;
+			
+	// 		// Get all vehicles
+	// 		// $vehicles = VehicleModel::orderBy('id')->get();
+	// 		$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
+	// 		->select('vehicles.*', 'wheels.name as wheel_name')
+	// 		->orderBy('vehicles.id')
+	// 		->get();		
+			
+	// 		$summary = [];
+	// 		// $updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
+	// 		$updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
+			
+	// 		foreach ($vehicles as $vehicle) {
+	// 			// Get bookings data
+	// 			$bookings = Bookings::where('vehicle_id', $vehicle->id)
+	// 				->whereBetween('pickup', [$start, $end])
+	// 				->get();
+				
+	// 			$totalKms = 0;
+	// 			$totalFuel = 0;
+	// 			$totalPrice = 0;
+				
+	// 			foreach ($bookings as $booking) {
+	// 				$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
+	// 				$totalFuel += (float)$booking->getMeta('pet_required');
+	// 				$totalPrice += (float)$booking->getMeta('total_price');
+	// 			}
+
+	// 			$tyreCost = 0;
+	// 			if ($vehicle->wheel) {
+	// 				$wheelPrice = $updatedWheelPrices[$vehicle->wheel] ?? Wheel::find($vehicle->wheel)->price;
+	// 				$tyreCost = $totalKms * $wheelPrice;
+	// 			}
+	// 			$wheelName = $vehicle->wheel_name ?? 'N/A';
+	// 			$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
+    //             ->where('till', '>', $end)
+    //             ->whereNull('deleted_at')
+    //             ->select('param_id', DB::raw('MAX(till) as max_till'))
+    //             ->groupBy('param_id')
+    //             ->get()
+    //             ->map(function ($doc) use ($vehicle, $end) {
+    //                 return VehicleDocs::where('vehicle_id', $vehicle->id)
+    //                     ->where('param_id', $doc->param_id)
+    //                     ->where('till', $doc->max_till)
+    //                     ->where('till', '>', $end)
+    //                     ->whereNull('deleted_at')
+    //                     ->value('amount') ?? 0;
+    //             })
+    //             ->sum();
+	// 			// dd($updatedWheelPrices);
+				
+	// 			// Get fuel data
+	// 			$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
+	// 				->whereBetween('date', [$start, $end])
+	// 				->get();
+				
+	// 			$totalFuelCost = 0;
+	// 			$totalFuelQty = 0;
+				
+	// 			foreach ($fuelModel as $f) {
+	// 				$totalFuelCost += $f->qty * $f->cost_per_unit;
+	// 				$totalFuelQty += $f->qty;
+	// 			}
+	// 			$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+	// 			$driver_salary = 0;
+	// 			if ($driver) {
+	// 				$userData = User::where('id', $driver->driver_id)->first();
+	// 				$driver_salary = $userData ? $userData->salary : 0;
+	// 			}
+	// 			// Get work orders
+	// 			$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
+	// 				->whereBetween('required_by', [$start, $end])
+	// 				->get();
+				
+	// 			$maintenanceCost = 0;
+	// 			foreach ($workorders as $wo) {
+	// 				$maintenanceCost += empty($wo->grand_total) ? $wo->price : $wo->grand_total;
+	// 			}
+
+	// 			$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
+    //             ->whereBetween('pickup', [$start, $end])
+    //             ->meta()
+    //             ->where(function ($query) {
+    //                 $query->where('bookings_meta.key', '=', 'advance_pay')
+    //                     ->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+    //             })->get();
+            
+	// 			$totalAdvance = 0;
+	// 			foreach ($advanceBookings as $ad) {
+	// 				$totalAdvance += !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+	// 			}
+				
+	// 			$summary[] = [
+	// 				'vehicle' => $vehicle,
+	// 				'wheel_name' => $wheelName,
+	// 				// 'bookings_count' => $bookings->count(),
+	// 				'total_kms' => $totalKms,
+	// 				'total_fuel_used' => $totalFuel,
+	// 				'total_revenue' => $totalPrice,
+	// 				'fuel_cost' => $totalFuelCost,
+	// 				'fuel_qty' => $totalFuelQty,
+	// 				'tyre_cost' => $tyreCost,
+	// 				'work_orders' => $workorders->count(),
+	// 				'maintenance_cost' => $maintenanceCost,
+	// 				'legal_cost' => $legalCost,
+	// 				'driver_salary' => $driver_salary,
+	// 				'other' => $totalAdvance,
+    //             	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+    //             	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
+	// 				// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost,	
+	// 			];
+	// 		}
+			
+	// 		$data['summary'] = $summary;
+	// 		$data['from_date'] = $start;
+	// 		$data['to_date'] = $end;
+			
+	// 	} else {
+	// 		// Bookings
+	// 		$vehicle_id = $request->get('vehicle_id');
+	// 		$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
+
+	// 		// dd($bookings);
+	// 		foreach ($bookings as $b) {
+	// 			$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
+	// 			$book['fuel'][] = $b->getMeta('pet_required');
+	// 			$book['price'][] = $b->getMeta('total_price');
+	// 		}
+	// 		$book['totalbooking'] = $bookings->count();
+	// 		$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
+	// 		$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
+	// 		$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
+
+	// 		//Fuel
+	// 		$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->get();
+	// 		$fuelArray = array();
+	// 		foreach ($fuelModel as $f) {
+	// 			// if(in_array($f->fuel_type,$fuelArray)){
+	// 			$fuelName = FuelType::find($f->fuel_type)->fuel_name;
+	// 			$fuelArray[$fuelName]['id'][] = $f->id;
+	// 			$fuelArray[$fuelName]['ltr'][] = $f->qty;
+	// 			// $fuelArray[$fuelName]['cost'][] = $f->cost_per_unit;
+	// 			$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+	// 		}
+
+	// 		// Advance
+	// 		$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->meta()->where(function ($query) {
+	// 			$query->where('bookings_meta.key', '=', 'advance_pay')
+	// 				->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+	// 		})->get();
+	// 		$advance = array();
+	// 		foreach ($advanceBookings as $ad) {
+	// 			$advance['amount'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+	// 			$advance['times'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+	// 			$advance['id'][] = $ad->id;
+	// 			//   $advance[] = 
+	// 		}
+	// 		// dd($advance["id"]);
+	// 		$advance['times'] = isset($advance['times']) ? $advance['times'] : 0;
+	// 		$advance['id'] = isset($advance['id']) ? $advance['id'] : [];
+	// 		$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))->whereIn('booking_id', $advance['id'])->orderBy('param_id')->groupBy('param_id')->get();
+	// 		foreach ($advance['details'] as $det) {
+	// 			$det->label = $det->param_name->label;
+	// 		}
+	// 		$workorders = WorkOrders::where('vehicle_id', $vehicle_id)->whereBetween('required_by', [$start, $end])->get();
+	// 		// dd($start,$end,$workorders);
+	// 		$prepArray = array();
+	// 		foreach ($workorders as $wo) {
+	// 			$prepArray['gtotal'][] = empty($wo->grand_total) ? $wo->price : $wo->grand_total;
+	// 			$prepArray['cgst'][] = empty($wo->cgst) ? $wo->cgst : $wo->cgst;
+	// 			$prepArray['sgst'][] = empty($wo->sgst) ? $wo->sgst : $wo->sgst;
+	// 			$prepArray['vendors'][] = $wo->vendor_id;
+	// 			$prepArray['status'][$wo->status][] = $wo->status;
+	// 			$prepArray['id'][] = $wo->id;
+	// 		}
+	// 		$data['wo'] = Helper::toCollection([
+	// 			'count' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? count($prepArray['gtotal']) : 0,
+	// 			'grand_total' => isset($prepArray['gtotal']) && !empty($prepArray['gtotal']) ? array_sum($prepArray['gtotal']) : 0,
+	// 			'cgst' => isset($prepArray['cgst']) && !empty($prepArray['cgst']) ? array_sum($prepArray['cgst']) : 0,
+	// 			'sgst' => isset($prepArray['sgst']) && !empty($prepArray['sgst']) ? array_sum($prepArray['sgst']) : 0,
+	// 			'vendors' => isset($prepArray['vendors']) && !empty($prepArray['vendors']) ? count(array_unique($prepArray['sgst'])) : 0,
+	// 			'status' => isset($prepArray['status']) && count($prepArray['status']) > 0 ? $prepArray['status'] : []
+	// 		]);
+	// 		// Work order/Part
+	// 		// dd($data['workorders']);
+	// 		// dd($prepArray);
+	// 		$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
+	// 		$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))->whereIn('work_id', $workOrderIds)->groupBy('part_id')->get();
+	// 		//Work order/Part Ends
+	// 		// dd($data);
+	// 		// foreach($data['partsUsed'] as $pd){
+	// 		//     dd($pd->part_id);
+	// 		//     empty($pd->part_id) ?? dd(123);
+	// 		//     // dd(PartsModel::find($pd->part_id)->title);
+	// 		//     $pd->parts_name = PartsModel::find($pd->part_id)->title;
+	// 		// }
+	// 		// Tranactions
+	// 		// $data['fuel'] = $fuelFinal;
+	// 		$data['request'] = $request->all();
+	// 		$data['vehicle'] = VehicleModel::where('id', $request->vehicle_id)->first();
+	// 		$data['from_date'] = $start;
+	// 		$data['to_date'] = $end;
+	// 		$data['book'] = Helper::toCollection($book);
+	// 		$data['fuels'] = Helper::toCollection($fuelArray);
+	// 		$data['advances'] = Helper::toCollection($advance);
+
+	// 	}
+	// 	$data['request'] = $request->all();
+	// 	$data['result'] = "";
+	// 	$data['wheels'] = Wheel::all(['id', 'name', 'price']);
+
+	// 	return view('vehicles.print_report', $data);
+	// }
 	public function vehicleOverview_print(Request $request)
 	{
 		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
-        ->pluck('name', 'id')
-        ->prepend('All Vehicles', 'all');
+			->pluck('name', 'id')
+			->prepend('All Vehicles', 'all');
 
 		if ($request->get('date1') == null)
 			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'ASC')->take(1)->first('pickup')->pickup;
@@ -5271,24 +5547,22 @@ class ReportsController extends Controller
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
 
+		$fuelBalanceAdjustments = json_decode($request->get('fuel_balance_adjustments'), true) ?? [];
+		// dd($fuelBalanceAdjustments);
 		if ($request->get('vehicle_id') === 'all') {
 			// Handle "All Vehicles" report
 			$data['all_vehicles'] = true;
 			$data['vehicle'] = null;
 			
-			// Get all vehicles
-			// $vehicles = VehicleModel::orderBy('id')->get();
 			$vehicles = VehicleModel::leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
-			->select('vehicles.*', 'wheels.name as wheel_name')
-			->orderBy('vehicles.id')
-			->get();		
+				->select('vehicles.*', 'wheels.name as wheel_name')
+				->orderBy('vehicles.id')
+				->get();        
 			
 			$summary = [];
-			// $updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
 			$updatedWheelPrices = json_decode($request->get('wheel_prices'), true) ?? [];
 			
 			foreach ($vehicles as $vehicle) {
-				// Get bookings data
 				$bookings = Bookings::where('vehicle_id', $vehicle->id)
 					->whereBetween('pickup', [$start, $end])
 					->get();
@@ -5309,24 +5583,23 @@ class ReportsController extends Controller
 					$tyreCost = $totalKms * $wheelPrice;
 				}
 				$wheelName = $vehicle->wheel_name ?? 'N/A';
-				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
-                ->where('till', '>', $end)
-                ->whereNull('deleted_at')
-                ->select('param_id', DB::raw('MAX(till) as max_till'))
-                ->groupBy('param_id')
-                ->get()
-                ->map(function ($doc) use ($vehicle, $end) {
-                    return VehicleDocs::where('vehicle_id', $vehicle->id)
-                        ->where('param_id', $doc->param_id)
-                        ->where('till', $doc->max_till)
-                        ->where('till', '>', $end)
-                        ->whereNull('deleted_at')
-                        ->value('amount') ?? 0;
-                })
-                ->sum();
-				// dd($updatedWheelPrices);
 				
-				// Get fuel data
+				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
+					->where('till', '>', $end)
+					->whereNull('deleted_at')
+					->select('param_id', DB::raw('MAX(till) as max_till'))
+					->groupBy('param_id')
+					->get()
+					->map(function ($doc) use ($vehicle, $end) {
+						return VehicleDocs::where('vehicle_id', $vehicle->id)
+							->where('param_id', $doc->param_id)
+							->where('till', $doc->max_till)
+							->where('till', '>', $end)
+							->whereNull('deleted_at')
+							->value('amount') ?? 0;
+					})
+					->sum();
+				
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
 					->whereBetween('date', [$start, $end])
 					->get();
@@ -5338,13 +5611,24 @@ class ReportsController extends Controller
 					$totalFuelCost += $f->qty * $f->cost_per_unit;
 					$totalFuelQty += $f->qty;
 				}
+
+				$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+				$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+            if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+                $adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+                $totalFuelQty += $adjustment;
+                // Assuming the cost per unit is the same as the last fuel entry
+                $lastFuelCostPerUnit = $fuelModel->last()->cost_per_unit ?? 0;
+                $totalFuelCost += $adjustment * $lastFuelCostPerUnit;
+            }
+
 				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
 				$driver_salary = 0;
 				if ($driver) {
 					$userData = User::where('id', $driver->driver_id)->first();
 					$driver_salary = $userData ? $userData->salary : 0;
 				}
-				// Get work orders
+
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
 					->whereBetween('required_by', [$start, $end])
 					->get();
@@ -5355,13 +5639,13 @@ class ReportsController extends Controller
 				}
 
 				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
-                ->whereBetween('pickup', [$start, $end])
-                ->meta()
-                ->where(function ($query) {
-                    $query->where('bookings_meta.key', '=', 'advance_pay')
-                        ->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
-                })->get();
-            
+					->whereBetween('pickup', [$start, $end])
+					->meta()
+					->where(function ($query) {
+						$query->where('bookings_meta.key', '=', 'advance_pay')
+							->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+					})->get();
+				
 				$totalAdvance = 0;
 				foreach ($advanceBookings as $ad) {
 					$totalAdvance += !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
@@ -5370,7 +5654,6 @@ class ReportsController extends Controller
 				$summary[] = [
 					'vehicle' => $vehicle,
 					'wheel_name' => $wheelName,
-					// 'bookings_count' => $bookings->count(),
 					'total_kms' => $totalKms,
 					'total_fuel_used' => $totalFuel,
 					'total_revenue' => $totalPrice,
@@ -5382,9 +5665,7 @@ class ReportsController extends Controller
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
 					'other' => $totalAdvance,
-                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
-                	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
-					// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost,	
+					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
 				];
 			}
 			
@@ -5393,11 +5674,11 @@ class ReportsController extends Controller
 			$data['to_date'] = $end;
 			
 		} else {
-			// Bookings
+			// Individual vehicle report
 			$vehicle_id = $request->get('vehicle_id');
 			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
 
-			// dd($bookings);
+			$book = ['kms' => [], 'fuel' => [], 'price' => []];
 			foreach ($bookings as $b) {
 				$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
 				$book['fuel'][] = $b->getMeta('pet_required');
@@ -5408,40 +5689,68 @@ class ReportsController extends Controller
 			$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
 			$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
 
-			//Fuel
-			$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->get();
-			$fuelArray = array();
+			$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
+				->whereBetween('date', [$start, $end])
+				->get();
+			
+			$fuelArray = [];
+			$totalFuelCost = 0;
+			$totalFuelQty = 0;
+			
 			foreach ($fuelModel as $f) {
-				// if(in_array($f->fuel_type,$fuelArray)){
 				$fuelName = FuelType::find($f->fuel_type)->fuel_name;
 				$fuelArray[$fuelName]['id'][] = $f->id;
 				$fuelArray[$fuelName]['ltr'][] = $f->qty;
-				// $fuelArray[$fuelName]['cost'][] = $f->cost_per_unit;
 				$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+				$totalFuelCost += $f->qty * $f->cost_per_unit;
+				$totalFuelQty += $f->qty;
 			}
 
-			// Advance
-			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->meta()->where(function ($query) {
-				$query->where('bookings_meta.key', '=', 'advance_pay')
-					->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
-			})->get();
-			$advance = array();
+			$vehicle = VehicleModel::find($vehicle_id);
+			$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+			if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+				$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+				if (isset($fuelArray['Diesel'])) {
+					$fuelArray['Diesel']['ltr'][] = $adjustment;
+					$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
+					$totalFuelQty += $adjustment;
+					$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
+				} elseif (isset($fuelArray['Petrol'])) {
+					$fuelArray['Petrol']['ltr'][] = $adjustment;
+					$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
+					$totalFuelQty += $adjustment;
+					$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
+				}
+			}
+
+			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
+				->whereBetween('pickup', [$start, $end])
+				->meta()
+				->where(function ($query) {
+					$query->where('bookings_meta.key', '=', 'advance_pay')
+						->whereRaw('bookings_meta.value IS NOT NULL AND bookings_meta.value!=0');
+				})->get();
+			$advance = ['amount' => [], 'times' => [], 'id' => []];
 			foreach ($advanceBookings as $ad) {
 				$advance['amount'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
 				$advance['times'][] = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
 				$advance['id'][] = $ad->id;
-				//   $advance[] = 
 			}
-			// dd($advance["id"]);
 			$advance['times'] = isset($advance['times']) ? $advance['times'] : 0;
 			$advance['id'] = isset($advance['id']) ? $advance['id'] : [];
-			$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))->whereIn('booking_id', $advance['id'])->orderBy('param_id')->groupBy('param_id')->get();
+			$advance['details'] = AdvanceDriver::select('id', 'param_id', DB::raw('count(value) as times'), DB::raw('SUM(value) as amount'))
+				->whereIn('booking_id', $advance['id'])
+				->orderBy('param_id')
+				->groupBy('param_id')
+				->get();
 			foreach ($advance['details'] as $det) {
 				$det->label = $det->param_name->label;
 			}
-			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)->whereBetween('required_by', [$start, $end])->get();
-			// dd($start,$end,$workorders);
-			$prepArray = array();
+
+			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
+				->whereBetween('required_by', [$start, $end])
+				->get();
+			$prepArray = ['gtotal' => [], 'cgst' => [], 'sgst' => [], 'vendors' => [], 'status' => [], 'id' => []];
 			foreach ($workorders as $wo) {
 				$prepArray['gtotal'][] = empty($wo->grand_total) ? $wo->price : $wo->grand_total;
 				$prepArray['cgst'][] = empty($wo->cgst) ? $wo->cgst : $wo->cgst;
@@ -5458,30 +5767,22 @@ class ReportsController extends Controller
 				'vendors' => isset($prepArray['vendors']) && !empty($prepArray['vendors']) ? count(array_unique($prepArray['sgst'])) : 0,
 				'status' => isset($prepArray['status']) && count($prepArray['status']) > 0 ? $prepArray['status'] : []
 			]);
-			// Work order/Part
-			// dd($data['workorders']);
-			// dd($prepArray);
+
 			$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
-			$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))->whereIn('work_id', $workOrderIds)->groupBy('part_id')->get();
-			//Work order/Part Ends
-			// dd($data);
-			// foreach($data['partsUsed'] as $pd){
-			//     dd($pd->part_id);
-			//     empty($pd->part_id) ?? dd(123);
-			//     // dd(PartsModel::find($pd->part_id)->title);
-			//     $pd->parts_name = PartsModel::find($pd->part_id)->title;
-			// }
-			// Tranactions
-			// $data['fuel'] = $fuelFinal;
+			$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))
+				->whereIn('work_id', $workOrderIds)
+				->groupBy('part_id')
+				->get();
+
 			$data['request'] = $request->all();
-			$data['vehicle'] = VehicleModel::where('id', $request->vehicle_id)->first();
+			$data['vehicle'] = $vehicle;
 			$data['from_date'] = $start;
 			$data['to_date'] = $end;
 			$data['book'] = Helper::toCollection($book);
 			$data['fuels'] = Helper::toCollection($fuelArray);
 			$data['advances'] = Helper::toCollection($advance);
-
 		}
+
 		$data['request'] = $request->all();
 		$data['result'] = "";
 		$data['wheels'] = Wheel::all(['id', 'name', 'price']);

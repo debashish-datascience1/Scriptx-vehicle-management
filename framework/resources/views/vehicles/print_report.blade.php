@@ -403,7 +403,90 @@
     </div>
   </div>
 </div>
+<div class="modal fade no-print" id="fuelBalanceModal" tabindex="-1" role="dialog" aria-labelledby="fuelBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="fuelBalanceModalLabel">Fuel Balance Adjustments</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="fuel-balance-scroll-area">
+                    <form id="fuelBalanceForm">
+                        <!-- Dynamic content will be inserted here -->
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" id="saveFuelBalance">Save and Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Required Scripts -->
+<script src="{{ asset('assets/js/jquery.min.js') }}"></script>
+<script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
+<script>
+    function showWheelPriceModal() {
+        $('#wheelPriceModal').modal('show');
+    }
+
+    $('#continueReport').on('click', function() {
+        $('#wheelPriceModal').modal('hide');
+        populateFuelBalanceModal();
+        $('#fuelBalanceModal').modal('show');
+    });
+
+    function populateFuelBalanceModal() {
+        var formContent = '';
+        @if(isset($all_vehicles))
+            @foreach($summary as $vehicle_data)
+                @if(isset($vehicle_data['vehicle']) && $vehicle_data['vehicle'])
+                    formContent += `
+                        <div class="form-group">
+                            <label>{{$vehicle_data['vehicle']->make}}-{{$vehicle_data['vehicle']->model}}-{{$vehicle_data['vehicle']->license_plate}}</label>
+                            <input type="number" class="form-control fuel-input" name="fuel_balance[{{$vehicle_data['vehicle']->id}}]" min="0" step="0.01">
+                        </div>
+                    `;
+                @endif
+            @endforeach
+        @elseif(isset($vehicle) && $vehicle)
+            formContent += `
+                <div class="form-group">
+                    <label>{{$vehicle->make}}-{{$vehicle->model}}-{{$vehicle->license_plate}}</label>
+                    <input type="number" class="form-control fuel-input" name="fuel_balance[{{$vehicle->id}}]" min="0" step="0.01">
+                </div>
+            `;
+        @endif
+        $('#fuelBalanceForm').html(formContent);
+    }
+
+    $('#saveFuelBalance').on('click', function() {
+        var fuelBalanceAdjustments = {};
+        $('.fuel-input').each(function() {
+            var value = $(this).val();
+            if (value && value != '0') {
+                var vehicleId = $(this).attr('name').match(/\[(.*?)\]/)[1];
+                fuelBalanceAdjustments[vehicleId] = parseFloat(value);
+            }
+        });
+
+        // Add fuel balance adjustments to a hidden input in the main form
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'fuel_balance_adjustments',
+            value: JSON.stringify(fuelBalanceAdjustments)
+        }).appendTo('form');
+
+        // Close modal and submit the form for printing
+        $('#fuelBalanceModal').modal('hide');
+        $('form').submit();
+    });
+</script>
 <!-- Required Scripts -->
 
 </body>

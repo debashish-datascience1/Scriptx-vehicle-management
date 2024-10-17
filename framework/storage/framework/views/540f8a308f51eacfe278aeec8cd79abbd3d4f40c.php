@@ -94,12 +94,9 @@
                                 <tr>
                                     <th>Vehicle</th>
 									<th>Model (Wheel)</th>
-                                    <!-- <th>Total KM</th> -->
                                     <th>Total Income</th>
-                                    <!-- <th>Fuel Usage</th> -->
                                     <th>Fuel Cost</th>
 									<th>Driver Salary</th>
-                                    <!-- <th>Maintenance</th> -->
 									<th>Other</th>
                                     <th>Tyre Cost</th>
                                     <th>Legal</th>
@@ -119,16 +116,9 @@
 									<?php echo e($vehicle_data['wheel_name']); ?>
 
 									</td> 
-						           <!-- <td><?php echo e(number_format($vehicle_data['total_kms'], 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></td> -->
                                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['total_revenue'], 2)); ?></td>
-                                    <!-- <td><?php echo e(number_format($vehicle_data['fuel_qty'], 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></td> -->
                                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['fuel_cost'], 2)); ?></td>
 									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['driver_salary'], 2)); ?></td>
-                                    <!-- <td>
-                                        <?php echo e($vehicle_data['work_orders']); ?> orders
-                                        <br>
-                                        <small class="text-muted"><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['maintenance_cost'], 2)); ?></small>
-                                    </td> -->
 									<td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['other'], 2)); ?></td>
                                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['tyre_cost'], 2)); ?></td>
                                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['legal_cost'], 2)); ?></td>
@@ -140,12 +130,9 @@
                                 <tr class="table-info">
                                     <th>Total</th>
 									<th></th>
-                                    <!-- <th><?php echo e(number_format(collect($summary)->sum('total_kms'), 2)); ?> <?php echo e(Hyvikk::get('dis_format')); ?></th> -->
                                     <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('total_revenue'), 2)); ?></th>
-                                    <!-- <th><?php echo e(number_format(collect($summary)->sum('fuel_qty'), 2)); ?> <?php echo e(Hyvikk::get('fuel_unit')); ?></th> -->
                                     <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('fuel_cost'), 2)); ?></th>
 									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('driver_salary'), 2)); ?></th>
-                                    <!-- <th><?php echo e(collect($summary)->sum('work_orders')); ?> orders</th> -->
 									<th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('other'), 2)); ?></th>
                                     <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('tyre_cost'), 2)); ?></th>
                                     <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('legal_cost'), 2)); ?></th>
@@ -395,7 +382,6 @@
               </tr>
             </thead>
             <tbody id="wheelPriceTableBody">
-              <!-- Wheel data will be inserted here -->
             </tbody>
           </table>
         </div>
@@ -408,287 +394,368 @@
   </div>
 </div>
 
+<div class="modal fade" id="fuelBalanceModal" tabindex="-1" role="dialog" aria-labelledby="fuelBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="fuelBalanceModalLabel">Fuel Balance Adjustments</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="fuel-balance-scroll-area">
+                    <form id="fuelBalanceForm">
+                        <!-- Dynamic content will be inserted here -->
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" id="saveFuelBalance">Save and Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS changes -->
+<style>
+    .fuel-balance-scroll-area {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .fuel-balance-scroll-area::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .fuel-balance-scroll-area::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .fuel-balance-scroll-area::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    .fuel-balance-scroll-area::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection("script"); ?>
-<script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
-<!-- bootstrap datepicker -->
-<script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
-<script type="text/javascript">
-  $(document).ready(function() {
-    $('#date1').datepicker({
-        autoclose: true,
-        format: 'dd-mm-yyyy'
-    });
-    $('#date2').datepicker({
-        autoclose: true,
-        format: 'dd-mm-yyyy'
-    });
-  });
-</script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/jszip.min.js')); ?>"></script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/pdfmake.min.js')); ?>"></script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/vfs_fonts.js')); ?>"></script>
-<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/buttons.html5.min.js')); ?>"></script>
-<script type="text/javascript">
+	<script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
+	<!-- bootstrap datepicker -->
+	<script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
+	<script type="text/javascript">
 	$(document).ready(function() {
+		$('#date1').datepicker({
+			autoclose: true,
+			format: 'dd-mm-yyyy'
+		});
+		$('#date2').datepicker({
+			autoclose: true,
+			format: 'dd-mm-yyyy'
+		});
+	});
+	</script>
+	<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/jszip.min.js')); ?>"></script>
+	<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/pdfmake.min.js')); ?>"></script>
+	<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/vfs_fonts.js')); ?>"></script>
+	<script type="text/javascript" src="<?php echo e(asset('assets/js/cdn/buttons.html5.min.js')); ?>"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$("#vehicle_id").select2();
+			$('#myTable tfoot th').each( function () {
+			var title = $(this).text();
+			$(this).html( '<input type="text" placeholder="'+title+'" />' );
+			});
+			var myTable = $('#myTable').DataTable( {
+				buttons: [{
+					extend: 'collection',
+						text: 'Export',
+						buttons: [
+							'copy',
+							'excel',
+							'csv',
+							'pdf',
+						]}
+				],
+
+				"language": {
+						"url": '<?php echo e(__("fleet.datatable_lang")); ?>',
+					},
+				"initComplete": function() {
+						myTable.columns().every(function () {
+						var that = this;
+						$('input', this.footer()).on('keyup change', function () {
+							that.search(this.value).draw();
+						});
+						});
+					}
+			});
+		});
+
+
+		$(document).ready(function() {
+		$('#date1').datepicker({
+			autoclose: true,
+			format: 'dd-mm-yyyy'
+		});
+		$('#date2').datepicker({
+			autoclose: true,
+			format: 'dd-mm-yyyy'
+		});
+
 		$("#vehicle_id").select2();
-		$('#myTable tfoot th').each( function () {
-	      var title = $(this).text();
-	      $(this).html( '<input type="text" placeholder="'+title+'" />' );
-	    });
-	    var myTable = $('#myTable').DataTable( {
-	        // dom: 'Bfrtip',
-	        buttons: [{
-	             extend: 'collection',
-	                text: 'Export',
-	                buttons: [
-	                    'copy',
-	                    'excel',
-	                    'csv',
-	                    'pdf',
-	                ]}
-	        ],
 
-	        "language": {
-	                 "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
-	              },
-	        "initComplete": function() {
-	                myTable.columns().every(function () {
-	                  var that = this;
-	                  $('input', this.footer()).on('keyup change', function () {
-	                      that.search(this.value).draw();
-	                  });
-	                });
-	              }
-	    });
+		if ($('#fleetOverviewTable').length) {
+			var table = $('#fleetOverviewTable').DataTable({
+				dom: 'Bfrtip',
+				paging: false, 
+				buttons: [
+					{
+						extend: 'copy',
+						action: function(e, dt, button, config) {
+							exportFullData('copy');
+						}
+					},
+					{
+						extend: 'csv',
+						action: function(e, dt, button, config) {
+							exportFullData('csv');
+						}
+					},
+					{
+						extend: 'excel',
+						action: function(e, dt, button, config) {
+							exportFullData('excel');
+						}
+					},
+					{
+						extend: 'pdf',
+						action: function(e, dt, button, config) {
+							exportFullData('pdf');
+						}
+					}
+				],
+				"language": {
+					"url": '<?php echo e(__("fleet.datatable_lang")); ?>',
+				}
+			});
+		}
+
+		$(document).on('click', '.pagination a', function(e) {
+			e.preventDefault();
+			var url = $(this).attr('href');
+			
+			var formData = new FormData($('form.form-block')[0]);
+			
+			$.ajax({
+				url: url,
+				method: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function(response) {
+					// Update only the table content
+					$('#reportContent').html($(response).find('#reportContent').html());
+					
+					// Update the URL without page refresh
+					window.history.pushState({}, '', url);
+				},
+				error: function(xhr) {
+					console.error('Error loading page:', xhr);
+				}
+			});
+		});
 	});
 
-
-	$(document).ready(function() {
-    // Initialize datepickers
-    $('#date1').datepicker({
-        autoclose: true,
-        format: 'dd-mm-yyyy'
-    });
-    $('#date2').datepicker({
-        autoclose: true,
-        format: 'dd-mm-yyyy'
-    });
-
-    // Initialize select2
-    $("#vehicle_id").select2();
-
-    // Initialize DataTables with server-side pagination configuration
-    if ($('#fleetOverviewTable').length) {
-        var table = $('#fleetOverviewTable').DataTable({
-            dom: 'Bfrtip',
-            paging: false, // Disable DataTables pagination
-            buttons: [
-                {
-                    extend: 'copy',
-                    action: function(e, dt, button, config) {
-                        exportFullData('copy');
-                    }
-                },
-                {
-                    extend: 'csv',
-                    action: function(e, dt, button, config) {
-                        exportFullData('csv');
-                    }
-                },
-                {
-                    extend: 'excel',
-                    action: function(e, dt, button, config) {
-                        exportFullData('excel');
-                    }
-                },
-                {
-                    extend: 'pdf',
-                    action: function(e, dt, button, config) {
-                        exportFullData('pdf');
-                    }
-                }
-            ],
-            "language": {
-                "url": '<?php echo e(__("fleet.datatable_lang")); ?>',
-            }
-        });
-    }
-
-    // Handle server-side pagination clicks
-    $(document).on('click', '.pagination a', function(e) {
-        e.preventDefault();
-        var url = $(this).attr('href');
-        
-        // Get current form data
-        var formData = new FormData($('form.form-block')[0]);
-        
-        // Make AJAX request instead of form submission
-        $.ajax({
-            url: url,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                // Update only the table content
-                $('#reportContent').html($(response).find('#reportContent').html());
-                
-                // Update the URL without page refresh
-                window.history.pushState({}, '', url);
-            },
-            error: function(xhr) {
-                console.error('Error loading page:', xhr);
-            }
-        });
-    });
-});
-
-function exportFullData(type) {
-    var formData = $('form.form-block').serialize();
-    formData += '&export=' + type;
-
-    var form = $('<form>', {
-        'method': 'POST',
-        'action': $('form.form-block').attr('action')
-    });
-
-    $.each($('form.form-block').serializeArray(), function(i, field) {
-        form.append($('<input>', {
-            'type': 'hidden',
-            'name': field.name,
-            'value': field.value
-        }));
-    });
-
-    form.append($('<input>', {
-        'type': 'hidden',
-        'name': 'export',
-        'value': type
-    }));
-
-    form.append($('<input>', {
-        'type': 'hidden',
-        'name': '_token',
-        'value': $('meta[name="csrf-token"]').attr('content')
-    }));
-
-    $('body').append(form);
-    form.submit();
-    form.remove();
-}
-
-	// Preserve form data in pagination links
-	$(document).on('click', '.pagination a', function(e) {
-		e.preventDefault();
-		var url = $(this).attr('href');
-		
-		// Get current form data
+	function exportFullData(type) {
 		var formData = $('form.form-block').serialize();
-		
-		// Append form data to pagination URL
-		url += (url.indexOf('?') === -1 ? '?' : '&') + formData;
-		
-		// Submit form to new URL
-		$('form.form-block').attr('action', url).submit();
+		formData += '&export=' + type;
+
+		var form = $('<form>', {
+			'method': 'POST',
+			'action': $('form.form-block').attr('action')
+		});
+
+		$.each($('form.form-block').serializeArray(), function(i, field) {
+			form.append($('<input>', {
+				'type': 'hidden',
+				'name': field.name,
+				'value': field.value
+			}));
+		});
+
+		form.append($('<input>', {
+			'type': 'hidden',
+			'name': 'export',
+			'value': type
+		}));
+		form.append($('<input>', {
+			'type': 'hidden',
+			'name': '_token',
+			'value': $('meta[name="csrf-token"]').attr('content')
+		}));
+		$('body').append(form);
+		form.submit();
+		form.remove();
+	}
+		$(document).on('click', '.pagination a', function(e) {
+			e.preventDefault();
+			var url = $(this).attr('href');
+			var formData = $('form.form-block').serialize();
+			url += (url.indexOf('?') === -1 ? '?' : '&') + formData;
+			$('form.form-block').attr('action', url).submit();
+		});
+		$(document).ready(function() {
+		var originalFormAction = $('form.form-block').attr('action');
+		var printFormAction = $('button[formaction][formtarget="_blank"]').attr('formaction');
+
+		$('#continueReport').on('click', function(e) {
+			e.preventDefault(); // Prevent form submission
+			var updatedWheels = {};
+			$('.wheel-price').each(function() {
+				updatedWheels[$(this).data('wheel-id')] = parseFloat($(this).val());
+			});
+
+			$('input[name="wheel_prices"]').remove(); // Remove existing input if any
+			$('<input>').attr({
+				type: 'hidden',
+				name: 'wheel_prices',
+				value: JSON.stringify(updatedWheels)
+			}).appendTo('form.form-block');
+
+			$('#wheelPriceModal').modal('hide');
+			showFuelBalanceModal();
+		});
+
+		function showFuelBalanceModal() {
+			$('#fuelBalanceForm').empty();
+
+			if ($('#vehicle_id').val() === 'all') {
+				$('#vehicle_id option').each(function() {
+					var vehicleId = $(this).val();
+					var vehicleName = $(this).text();
+					if (vehicleId !== 'all' && vehicleId !== '') {
+						appendFuelBalanceInput(vehicleId, vehicleName);
+					}
+				});
+			} else {
+				var vehicleId = $('#vehicle_id').val();
+				var vehicleName = $('#vehicle_id option:selected').text();
+				if (vehicleId !== '' && vehicleName !== 'Select Vehicle') {
+					appendFuelBalanceInput(vehicleId, vehicleName);
+				}
+			}
+
+			$('#fuelBalanceModal').modal('show');
+		}
+
+		function appendFuelBalanceInput(vehicleId, vehicleName) {
+			var input = `
+				<div class="form-group row">
+					<label for="fuel_balance_${vehicleId}" class="col-sm-8 col-form-label">${vehicleName}</label>
+					<div class="col-sm-4">
+						<input type="number" class="form-control" id="fuel_balance_${vehicleId}" 
+							name="fuel_balance[${vehicleName}]" value="0">
+					</div>
+				</div>
+			`;
+			$('#fuelBalanceForm').append(input);
+		}
+
+
+		$('#saveFuelBalance').on('click', function() {
+			var fuelBalanceData = {};
+			$('#fuelBalanceForm input').each(function() {
+				var key = $(this).attr('name').match(/\[(.*?)\]/)[1];
+				fuelBalanceData[key] = $(this).val();
+			});
+			
+			$('input[name="fuel_balance_adjustments"]').remove(); // Remove existing input if any
+			$('<input>').attr({
+				type: 'hidden',
+				name: 'fuel_balance_adjustments',
+				value: JSON.stringify(fuelBalanceData)
+			}).appendTo('form.form-block');
+
+			$('#fuelBalanceModal').modal('hide');
+			submitReport();
+		});
+
+		function submitReport() {
+			var isPrint = $('#wheelPriceModal').data('isPrint');
+			var $form = $('form.form-block');
+
+			if (isPrint) {
+				$form.attr('action', printFormAction);
+				$form.attr('target', '_blank');
+			} else {
+				$form.attr('action', originalFormAction);
+				$form.removeAttr('target');
+			}
+
+			$form.off('submit').submit();
+			setTimeout(function() {
+				$form.attr('action', originalFormAction);
+				$form.removeAttr('target');
+			}, 100);
+		}
+
+		// Remove the direct form submission on 'Generate Report' button click
+		$('#generateReport').off('click').on('click', function(e) {
+			e.preventDefault();
+			loadWheelPrices(false);
+		});
+
+		// Remove the direct form submission on 'Print' button click
+		$('button[formaction][formtarget="_blank"]').off('click').on('click', function(e) {
+			e.preventDefault();
+			loadWheelPrices(true);
+		});
+
+		function loadWheelPrices(isPrint) {
+			$.ajax({
+				url: '/VehicleMgmt/admin/reports/get-wheels',
+				method: 'GET',
+				success: function(response) {
+					populateWheelModal(response.wheels);
+					$('#wheelPriceModal').modal('show');
+					$('#wheelPriceModal').data('isPrint', isPrint);
+				},
+				error: function(xhr) {
+					console.error('Error loading wheel data:', xhr);
+					alert('Error loading wheel data. Please try again.');
+				}
+			});
+		}
+
+		function populateWheelModal(wheels) {
+			var tbody = $('#wheelPriceTableBody');
+			tbody.empty();
+			
+			wheels.forEach(function(wheel) {
+				var row = `
+					<tr>
+						<td>${wheel.name}</td>
+						<td>
+							<input type="number" class="form-control wheel-price" 
+								data-wheel-id="${wheel.id}" 
+								value="${wheel.price}" 
+								step="0.01" min="0">
+						</td>
+					</tr>
+				`;
+				tbody.append(row);
+			});
+		}
 	});
-	$(document).ready(function() {
-    // Store the original form action
-    var originalFormAction = $('form.form-block').attr('action');
-    var printFormAction = $('button[formaction][formtarget="_blank"]').attr('formaction');
-
-    // Function to handle report generation and print
-    function handleReportAction(e, isPrint) {
-        e.preventDefault();
-        loadWheelPrices(isPrint);
-        return false;
-    }
-
-    // Attach event handlers to both buttons
-    $('#generateReport').on('click', function(e) {
-        handleReportAction(e, false);
-    });
-
-    $('button[formaction][formtarget="_blank"]').on('click', function(e) {
-        handleReportAction(e, true);
-    });
-
-    function loadWheelPrices(isPrint) {
-        $.ajax({
-            url: '/VehicleMgmt/admin/reports/get-wheels',
-            method: 'GET',
-            success: function(response) {
-                populateWheelModal(response.wheels);
-                $('#wheelPriceModal').modal('show');
-                // Store whether it's a print action
-                $('#wheelPriceModal').data('isPrint', isPrint);
-            },
-            error: function(xhr) {
-                console.error('Error loading wheel data:', xhr);
-                alert('Error loading wheel data. Please try again.');
-            }
-        });
-    }
-
-    function populateWheelModal(wheels) {
-        var tbody = $('#wheelPriceTableBody');
-        tbody.empty();
-        
-        wheels.forEach(function(wheel) {
-            var row = `
-                <tr>
-                    <td>${wheel.name}</td>
-                    <td>
-                        <input type="number" class="form-control wheel-price" 
-                               data-wheel-id="${wheel.id}" 
-                               value="${wheel.price}" 
-                               step="0.01" min="0">
-                    </td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
-    }
-
-    $('#continueReport').on('click', function() {
-        var updatedWheels = {};
-        $('.wheel-price').each(function() {
-            updatedWheels[$(this).data('wheel-id')] = parseFloat($(this).val());
-        });
-
-        // Add the updated wheel prices to the form
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'wheel_prices',
-            value: JSON.stringify(updatedWheels)
-        }).appendTo('form.form-block');
-
-        $('#wheelPriceModal').modal('hide');
-
-        var isPrint = $('#wheelPriceModal').data('isPrint');
-        var $form = $('form.form-block');
-
-        if (isPrint) {
-            // For print, submit the form to the print URL
-            $form.attr('action', printFormAction);
-            $form.attr('target', '_blank');
-        } else {
-            // For generate report, use the default form action
-            $form.attr('action', originalFormAction);
-            $form.removeAttr('target');
-        }
-
-        $form.off('submit').submit();
-
-        // Reset form action and target after submission
-        setTimeout(function() {
-            $form.attr('action', originalFormAction);
-            $form.removeAttr('target');
-        }, 100);
-    });
-});
-</script>
+	</script>
 <?php $__env->stopSection(); ?>
 
 

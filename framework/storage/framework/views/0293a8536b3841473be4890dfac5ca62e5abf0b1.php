@@ -18,7 +18,7 @@
           <thead class="thead-inverse">
             <tr>
               <th><?php echo app('translator')->getFromJson('fleet.date'); ?></th>
-              <th><?php echo app('translator')->getFromJson('fleet.from'); ?></th>
+              <th><?php echo app('translator')->getFromJson('fleet.to'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.amount'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.remaining_amount'); ?></th>
               <th><?php echo app('translator')->getFromJson('fleet.action'); ?></th>
