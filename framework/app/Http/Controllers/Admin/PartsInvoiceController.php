@@ -33,14 +33,28 @@ class PartsInvoiceController extends Controller
 
     public function create()
     {
-        $data['items'] = Helper::getAllParts();
+        // Get all parts, then filter out deleted ones from the results
+        $allParts = Helper::getAllParts();
+        
+        if ($allParts) {
+            // Get IDs of deleted parts
+            $deletedPartIds = DB::table('parts')
+                ->whereNotNull('deleted_at')
+                ->pluck('id')
+                ->toArray();
+                
+            // Remove deleted parts from the options array
+            $allParts = array_diff_key($allParts, array_flip($deletedPartIds));
+        }
+
+        $data['items'] = $allParts;
         $data['vendors'] = Vendor::pluck('name', 'id');
         $data['categories'] = PartsCategoryModel::pluck('name', 'id');
         $data['is_gst'] = [1 => 'Yes', 2 => 'No'];
-        // dd($data);
+        
         return view("parts_invoice.create", $data);
     }
-
+    
     public function getCategoryInfo(Request $request)
     {
         $itemId = $request->input('item_id');

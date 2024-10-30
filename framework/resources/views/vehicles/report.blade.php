@@ -552,10 +552,8 @@
 				processData: false,
 				contentType: false,
 				success: function(response) {
-					// Update only the table content
 					$('#reportContent').html($(response).find('#reportContent').html());
 					
-					// Update the URL without page refresh
 					window.history.pushState({}, '', url);
 				},
 				error: function(xhr) {
@@ -608,13 +606,13 @@
 		var printFormAction = $('button[formaction][formtarget="_blank"]').attr('formaction');
 
 		$('#continueReport').on('click', function(e) {
-			e.preventDefault(); // Prevent form submission
+			e.preventDefault(); 
 			var updatedWheels = {};
 			$('.wheel-price').each(function() {
 				updatedWheels[$(this).data('wheel-id')] = parseFloat($(this).val());
 			});
 
-			$('input[name="wheel_prices"]').remove(); // Remove existing input if any
+			$('input[name="wheel_prices"]').remove(); 
 			$('<input>').attr({
 				type: 'hidden',
 				name: 'wheel_prices',
@@ -668,7 +666,7 @@
 				fuelBalanceData[key] = $(this).val();
 			});
 			
-			$('input[name="fuel_balance_adjustments"]').remove(); // Remove existing input if any
+			$('input[name="fuel_balance_adjustments"]').remove(); 
 			$('<input>').attr({
 				type: 'hidden',
 				name: 'fuel_balance_adjustments',
@@ -698,13 +696,11 @@
 			}, 100);
 		}
 
-		// Remove the direct form submission on 'Generate Report' button click
 		$('#generateReport').off('click').on('click', function(e) {
 			e.preventDefault();
 			loadWheelPrices(false);
 		});
 
-		// Remove the direct form submission on 'Print' button click
 		$('button[formaction][formtarget="_blank"]').off('click').on('click', function(e) {
 			e.preventDefault();
 			loadWheelPrices(true);

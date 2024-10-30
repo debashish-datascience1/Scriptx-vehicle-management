@@ -103,13 +103,10 @@
                 <tr>
                   <th>Vehicle</th>
 									<th>Model (Wheel)</th>
-                  <!-- <th>Total KM</th> -->
                   <th>Total Income</th>
-                  <!-- <th>Fuel Usage</th> -->
                   <th>Fuel Cost</th>
                   <th>Driver Salary</th>
                   <th>Other</th>
-                  <!-- <th>Maintenance</th> -->
                   <th>Tyre Cost</th>
                   <th>Legal</th>
                   <th>Net Profit/loss</th>
@@ -126,16 +123,9 @@
                   <td>
 									{{$vehicle_data['wheel_name']}}
 									</td> 
-                  <!-- <td>{{number_format($vehicle_data['total_kms'], 2)}} {{Hyvikk::get('dis_format')}}</td> -->
                   <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['total_revenue'], 2)}}</td>
-                  <!-- <td>{{number_format($vehicle_data['fuel_qty'], 2)}} {{Hyvikk::get('fuel_unit')}}</td> -->
                   <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['fuel_cost'], 2)}}</td>
                   <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['driver_salary'], 2)}}</td>
-                  <!-- <td>
-                    {{$vehicle_data['work_orders']}} orders
-                    <br>
-                    <small class="text-muted">{{Hyvikk::get('currency')}} {{number_format($vehicle_data['maintenance_cost'], 2)}}</small>
-                  </td> -->
                   <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['other'], 2)}}</td>
                   <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['tyre_cost'], 2)}}</td>
                   <td>{{Hyvikk::get('currency')}} {{number_format($vehicle_data['legal_cost'], 2)}}</td>
@@ -147,12 +137,9 @@
                 <tr class="total-row">
                   <th>Total</th>
 									<th></th>
-                  <!-- <th>{{number_format(collect($summary)->sum('total_kms'), 2)}} {{Hyvikk::get('dis_format')}}</th> -->
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('total_revenue'), 2)}}</th>
-                  <!-- <th>{{number_format(collect($summary)->sum('fuel_qty'), 2)}} {{Hyvikk::get('fuel_unit')}}</th> -->
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('fuel_cost'), 2)}}</th>
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('driver_salary'), 2)}}</th>
-                  <!-- <th>{{collect($summary)->sum('work_orders')}} orders</th> -->
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('other'), 2)}}</th>
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('tyre_cost'), 2)}}</th>
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('legal_cost'), 2)}}</th>
