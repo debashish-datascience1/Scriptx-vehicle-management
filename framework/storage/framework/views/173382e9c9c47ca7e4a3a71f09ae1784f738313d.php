@@ -102,6 +102,7 @@
             <table class="table table-bordered table-striped table-hover fleet-table" id="fleetOverviewTable">
               <thead>
                 <tr>
+                	<th>SL No</th>
                   <th>Vehicle</th>
 									<th>Model (Wheel)</th>
                   <th>Total Income</th>
@@ -116,11 +117,10 @@
               <tbody>
                 <?php $__currentLoopData = $summary; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle_data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
+                  <td><?php echo e($loop->iteration); ?></td>
                   <td>
-                    <?php echo e($vehicle_data['vehicle']->make); ?>-<?php echo e($vehicle_data['vehicle']->model); ?>
+                   <?php echo e($vehicle_data['vehicle']->license_plate); ?>
 
-                    <br>
-                    <small class="text-muted"><?php echo e($vehicle_data['vehicle']->license_plate); ?></small>
                   </td>
                   <td>
 									<?php echo e($vehicle_data['wheel_name']); ?>
@@ -138,6 +138,7 @@
               </tbody>
               <tfoot>
                 <tr class="total-row">
+                  <th></th>
                   <th>Total</th>
 									<th></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('total_revenue'), 2)); ?></th>

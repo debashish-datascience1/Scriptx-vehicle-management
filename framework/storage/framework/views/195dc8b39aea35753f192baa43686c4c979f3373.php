@@ -102,6 +102,10 @@
                     <td>Tyre Purchase</td>
                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($tyre_purchase, 2)); ?></td>
                 </tr>
+                <tr>
+                    <td>Work Orders</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($work_order_costs, 2)); ?></td>
+                </tr>
                 <tr class="total-row">
                     <td>Total Expenses</td>
                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_expenses, 2)); ?></td>

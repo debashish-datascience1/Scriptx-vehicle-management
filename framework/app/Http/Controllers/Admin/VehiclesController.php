@@ -313,7 +313,7 @@ class VehiclesController extends Controller
         $meta->owner_number = $request->owner_number;
         $meta->rc_number = $request->rc_number;
         $meta->save();
-
+        // dd($request->average);
         $vehicle_id = $vehicle;
 
         return redirect("admin/vehicles/" . $vehicle_id . "/edit?tab=vehicle");
@@ -664,7 +664,7 @@ class VehiclesController extends Controller
                 'emi_amount' => 'required',
                 'loan_duration' => 'required',
                 'duration_unit' => 'required',
-                'loan_about' => '',
+                // 'loan_about' => '',
             ]);
         // dd($data_arr);
         $data_arr['purchase_date'] = Helper::ymd($request->purchase_date);

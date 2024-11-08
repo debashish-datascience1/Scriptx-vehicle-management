@@ -87,4 +87,14 @@ class VehicleModel extends Model
     {
         return $this->belongsTo(Wheel::class, 'wheel_id');
     }
+
+    public function getAverageAttribute()
+    {
+        return $this->getMeta('average', 0);
+    }
+
+    public function setAverageAttribute($value)
+    {
+        $this->setMeta('average', $value);
+    }
 }

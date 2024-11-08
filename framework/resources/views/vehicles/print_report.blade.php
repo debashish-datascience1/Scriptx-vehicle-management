@@ -101,6 +101,7 @@
             <table class="table table-bordered table-striped table-hover fleet-table" id="fleetOverviewTable">
               <thead>
                 <tr>
+                	<th>SL No</th>
                   <th>Vehicle</th>
 									<th>Model (Wheel)</th>
                   <th>Total Income</th>
@@ -115,10 +116,9 @@
               <tbody>
                 @foreach($summary as $vehicle_data)
                 <tr>
+                  <td>{{ $loop->iteration }}</td>
                   <td>
-                    {{$vehicle_data['vehicle']->make}}-{{$vehicle_data['vehicle']->model}}
-                    <br>
-                    <small class="text-muted">{{$vehicle_data['vehicle']->license_plate}}</small>
+                   {{$vehicle_data['vehicle']->license_plate}}
                   </td>
                   <td>
 									{{$vehicle_data['wheel_name']}}
@@ -135,6 +135,7 @@
               </tbody>
               <tfoot>
                 <tr class="total-row">
+                  <th></th>
                   <th>Total</th>
 									<th></th>
                   <th>{{Hyvikk::get('currency')}} {{number_format(collect($summary)->sum('total_revenue'), 2)}}</th>

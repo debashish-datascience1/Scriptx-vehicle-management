@@ -270,8 +270,9 @@ Route::namespace('Admin')->group(function () {
         Route::get('/get-category-info', 'PartsInvoiceController@getCategoryInfo')->name('get.category.info')->middleware('userpermission:4');
         // Route::get('/get-tyre-numbers', 'WorkOrdersController@getTyreNumbers')->name('get.tyre.numbers')->middleware('userpermission:7');
 
-
-
+        Route::get('/reports/get-vehicles-average', 'ReportsController@getVehiclesAverage');
+        Route::post('/reports/update-averages', 'ReportsController@updateAverages');
+        Route::post('/reports/update-wheel-prices', 'ReportsController@updateWheelPrices')->name('reports.update-wheel-prices');
         Route::post('/payroll/payabletype', 'PayrollController@payabletype')->name('payroll.payabletype')->middleware('userpermission:4');
         Route::post('/payroll/purse', 'PayrollController@purse')->name('payroll.purse')->middleware('userpermission:4');
         Route::get("/manage-payroll", "PayrollController@manage_payroll")->name('payroll.managepayroll')->middleware('userpermission:4');
