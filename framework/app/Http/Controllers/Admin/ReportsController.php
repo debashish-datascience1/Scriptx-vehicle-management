@@ -30,6 +30,7 @@ use App\Model\FuelType;
 use App\Model\Payroll;
 use App\Model\DriverVehicleModel;
 use App\Model\EmiModel;
+use App\Model\Fastag;
 use App\Model\IncomeExpense;
 use App\Model\Leave;
 use App\Model\OtherAdjust;
@@ -1049,31 +1050,95 @@ class ReportsController extends Controller
 		return view("reports.stock", $data);
 	}
 
+	// public function booking_post(Request $request)
+	// {
+	// 	$customer_id = $request->customer_id;
+	// 	$vehicle_id = $request->vehicle_id;
+	// 	$from_date = $request->date1;
+	// 	$to_date = $request->date2;
+	// 	$from_date = empty($from_date) ? Bookings::orderBy('pickup', 'asc')->take(1)->first('pickup')->pickup : $from_date;
+	// 	$to_date = empty($to_date) ? Bookings::orderBy('pickup', 'desc')->take(1)->first('pickup')->pickup : $to_date;
+		
+	// 	$from_date = Helper::ymd($from_date);
+	// 	$to_date = Helper::ymd($to_date);
+	// 	if (empty($vehicle_id) && empty($customer_id))
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date]);
+	// 	elseif (empty($vehicle_id))
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('customer_id', $customer_id);
+	// 	elseif (empty($customer_id))
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('vehicle_id', $vehicle_id);
+	// 	else
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where(['vehicle_id' => $vehicle_id, 'customer_id' => $customer_id]);
+	// 	$total = array();
+	// 	foreach ($bookings->get() as $bk) {
+	// 		$total[] = $bk->getMeta('total_price');
+	// 		$totalfuel[] = $bk->getMeta('pet_required');
+	// 		$fodderfuel[] = $bk->getMeta('fodder_consumption');
+	// 		$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
+	// 		$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
+	// 	}
+        
+	// 	$index['vehicles'] = VehicleModel::select(
+	// 		DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
+	// 		'id'
+	// 	)->pluck('vehicle_name', 'id');
+	// 	$index['customers'] = User::where('user_type', 'C')->pluck("name", "id");
+	// 	$index['bookings'] = $bookings->orderBy('pickup', 'ASC')->get();
+	// 	$index['result'] = '';
+	// 	$data['date1'] = null;
+	// 	$data['date2'] = null;
+	// 	$index['total_price'] = round(array_sum($total ?? []),2);
+	// 	$index['total_fuel'] = round(array_sum($totalfuel ?? []),2);
+	// 	$index['total_distance'] = round(array_sum($totaldistance ?? []),2);
+	// 	$index['fodderfuel'] = round(array_sum($fodderfuel ?? []),2);
+	// 	$index['fodderdistance'] = round(array_sum($fodderdistance ?? []),2);
+	// 	$index['request'] = $request->all();
+	// 	$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
+	// 	return view("reports.booking", $index);
+	// }
+
 	public function booking_post(Request $request)
 	{
 		$customer_id = $request->customer_id;
 		$vehicle_id = $request->vehicle_id;
 		$from_date = $request->date1;
 		$to_date = $request->date2;
+		
+		// Get default dates if not provided
 		$from_date = empty($from_date) ? Bookings::orderBy('pickup', 'asc')->take(1)->first('pickup')->pickup : $from_date;
 		$to_date = empty($to_date) ? Bookings::orderBy('pickup', 'desc')->take(1)->first('pickup')->pickup : $to_date;
-		// $abc['vendor_id'] = $vendor_id;
-		// $abc['fuel_type'] = $fuel_type;
-		// $abc['from_date'] = $from_date;
-		// $abc['to_date'] = $to_date;
-		// dd($abc);
-		//same date search
+		
 		$from_date = Helper::ymd($from_date);
 		$to_date = Helper::ymd($to_date);
-		if (empty($vehicle_id) && empty($customer_id))
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date]);
-		elseif (empty($vehicle_id))
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('customer_id', $customer_id);
-		elseif (empty($customer_id))
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('vehicle_id', $vehicle_id);
-		else
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where(['vehicle_id' => $vehicle_id, 'customer_id' => $customer_id]);
-		$total = array();
+		
+		// Add one day to the end date to make the range inclusive
+		$to_date_inclusive = date('Y-m-d', strtotime($to_date . ' +1 day'));
+		
+		// Build the query based on filters
+		if (empty($vehicle_id) && empty($customer_id)) {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date_inclusive]);
+		} elseif (empty($vehicle_id)) {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date_inclusive])
+								->where('customer_id', $customer_id);
+		} elseif (empty($customer_id)) {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date_inclusive])
+								->where('vehicle_id', $vehicle_id);
+		} else {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date_inclusive])
+								->where([
+									'vehicle_id' => $vehicle_id,
+									'customer_id' => $customer_id
+								]);
+		}
+		
+		// Initialize arrays
+		$total = [];
+		$totalfuel = [];
+		$fodderfuel = [];
+		$totaldistance = [];
+		$fodderdistance = [];
+		
+		// Process bookings
 		foreach ($bookings->get() as $bk) {
 			$total[] = $bk->getMeta('total_price');
 			$totalfuel[] = $bk->getMeta('pet_required');
@@ -1081,40 +1146,26 @@ class ReportsController extends Controller
 			$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
 			$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
 		}
-        
+		
+		// Prepare view data
 		$index['vehicles'] = VehicleModel::select(
 			DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
 			'id'
 		)->pluck('vehicle_name', 'id');
-// 		dd(array_sum($total),array_sum($totalfuel),array_sum($totaldistance),array_sum($fodderfuel),array_sum($fodderdistance));
+		
 		$index['customers'] = User::where('user_type', 'C')->pluck("name", "id");
 		$index['bookings'] = $bookings->orderBy('pickup', 'ASC')->get();
 		$index['result'] = '';
 		$data['date1'] = null;
 		$data['date2'] = null;
-		$index['total_price'] = round(array_sum($total ?? []),2);
-		$index['total_fuel'] = round(array_sum($totalfuel ?? []),2);
-		$index['total_distance'] = round(array_sum($totaldistance ?? []),2);
-		$index['fodderfuel'] = round(array_sum($fodderfuel ?? []),2);
-		$index['fodderdistance'] = round(array_sum($fodderdistance ?? []),2);
-		
-		
-// 		$index['total_price'] = Helper::properDecimal(array_sum($total ?? []));
-// 		$index['total_fuel'] = Helper::properDecimal(array_sum($totalfuel ?? []));
-		
-// 		$index['total_distance'] = Helper::properDecimal(array_sum($totaldistance ?? []));
-
-// 		$index['fodderfuel'] = Helper::properDecimal(array_sum($fodderfuel ?? []));
-				
-// 		$index['fodderdistance'] = Helper::properDecimal(array_sum($fodderdistance ?? []));
-// 			dd($index['fodderdistance']);
+		$index['total_price'] = round(array_sum($total ?? []), 2);
+		$index['total_fuel'] = round(array_sum($totalfuel ?? []), 2);
+		$index['total_distance'] = round(array_sum($totaldistance ?? []), 2);
+		$index['fodderfuel'] = round(array_sum($fodderfuel ?? []), 2);
+		$index['fodderdistance'] = round(array_sum($fodderdistance ?? []), 2);
 		$index['request'] = $request->all();
 		$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
-		// dd($bookings->meta()->get());
-		// dd($bookings->meta()->get());
-		// dd($index['bookings']->first());
-		// 		dd($index);
-// 		dd($index);
+		
 		return view("reports.booking", $index);
 	}
 	
@@ -1190,7 +1241,6 @@ class ReportsController extends Controller
 		return view("reports.stock", $index);
 	}
 	
-
 	public function view_booking_details($arr)
 	{
 		//dd('xxxxxx');
@@ -1241,6 +1291,7 @@ class ReportsController extends Controller
 		//$bookListCust = $data['bookings']->groupBy('customer_id')->get();
 		return view("reports.view_booking_details", $data);
 	}
+
 	public function print_booking_details(Request $request)
 	{
 		//dd($request->all());
@@ -1291,6 +1342,7 @@ class ReportsController extends Controller
 		//$bookListCust = $data['bookings']->groupBy('customer_id')->get();
 		return view("reports.view_booking_details_print", $data);
 	}
+
 	public function delinquent_post(Request $request)
 	{
 
@@ -2047,39 +2099,121 @@ class ReportsController extends Controller
 		return view('reports.print_monthly', $data);
 	}
 
+	// public function print_booking(Request $request)
+	// {
+	// 	// dd($request->all());
+	// 	$customer_id = $request->customer_id;
+	// 	$vehicle_id = $request->vehicle_id;
+	// 	$from_date = $request->date1;
+	// 	$to_date = $request->date2;
+	// 	$from_date = empty($from_date) ? Bookings::orderBy('pickup', 'asc')->take(1)->first('pickup')->pickup : $from_date;
+	// 	$to_date = empty($to_date) ? Bookings::orderBy('pickup', 'desc')->take(1)->first('pickup')->pickup : $to_date;
+	// 	// $abc['vendor_id'] = $vendor_id;
+	// 	// $abc['fuel_type'] = $fuel_type;
+	// 	// $abc['from_date'] = $from_date;
+	// 	// $abc['to_date'] = $to_date;
+	// 	// dd($abc);
+	// 	//same date search
+	// 	// 		dd($from_date,$to_date);
+	// 	$from_date = Helper::ymd($from_date);
+	// 	$to_date = Helper::ymd($to_date);
+	// 	if (strtotime($from_date) == strtotime($to_date)) {
+	// 		$from_date = $from_date . " 00:00:00";
+	// 		$to_date = $to_date . " 23:59:59";
+	// 	}
+	// 	if (empty($vehicle_id) && empty($customer_id))
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date]);
+	// 	elseif (empty($vehicle_id))
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('customer_id', $customer_id);
+	// 	elseif (empty($customer_id))
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('vehicle_id', $vehicle_id);
+	// 	else
+	// 		$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where(['vehicle_id' => $vehicle_id, 'customer_id' => $customer_id]);
+
+	// 	// 		dd($bookings,$bookings->get());
+	// 	$total = array();
+	// 	foreach ($bookings->get() as $bk) {
+	// 		$total[] = $bk->getMeta('total_price');
+	// 		$totalfuel[] = $bk->getMeta('pet_required');
+	// 		$fodderfuel[] = $bk->getMeta('fodder_consumption');
+	// 		$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
+	// 		$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
+	// 	}
+
+	// 	$index['vehicles'] = VehicleModel::select(
+	// 		DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
+	// 		'id'
+	// 	)
+	// 		->pluck('vehicle_name', 'id');
+
+	// 	$index['customers'] = User::where('user_type', 'C')->pluck("name", "id");
+	// 	$index['bookings'] = $bookings->orderBy('pickup', 'ASC')->get();
+	// 	$index['result'] = '';
+	// 	$index['date1'] = null;
+	// 	$index['date2'] = null;
+	// 	$index['total_price'] = bcdiv(array_sum($total ?? []), 1, 2);
+	// 	$index['total_fuel'] = bcdiv(array_sum($totalfuel ?? []), 1, 2);
+	// 	$index['total_distance'] = bcdiv(array_sum($totaldistance ?? []), 1, 2);
+	// 	$index['fodderfuel'] = bcdiv(array_sum($fodderfuel ?? []), 1, 2);
+	// 	$index['fodderdistance'] = bcdiv(array_sum($fodderdistance ?? []), 1, 2);
+	// 	$index['request'] = $request->all();
+	// 	$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
+	// 	// dd($index);
+	// 	return view('reports.print_bookings', $index);
+	// }
+
 	public function print_booking(Request $request)
 	{
-		// dd($request->all());
 		$customer_id = $request->customer_id;
 		$vehicle_id = $request->vehicle_id;
 		$from_date = $request->date1;
 		$to_date = $request->date2;
+		
+		// Get default dates if not provided
 		$from_date = empty($from_date) ? Bookings::orderBy('pickup', 'asc')->take(1)->first('pickup')->pickup : $from_date;
 		$to_date = empty($to_date) ? Bookings::orderBy('pickup', 'desc')->take(1)->first('pickup')->pickup : $to_date;
-		// $abc['vendor_id'] = $vendor_id;
-		// $abc['fuel_type'] = $fuel_type;
-		// $abc['from_date'] = $from_date;
-		// $abc['to_date'] = $to_date;
-		// dd($abc);
-		//same date search
-		// 		dd($from_date,$to_date);
+		
+		// Store original dates for display
+		$display_from_date = $from_date;
+		$display_to_date = $to_date;
+		
 		$from_date = Helper::ymd($from_date);
 		$to_date = Helper::ymd($to_date);
+		
+		// Handle same date search
 		if (strtotime($from_date) == strtotime($to_date)) {
 			$from_date = $from_date . " 00:00:00";
 			$to_date = $to_date . " 23:59:59";
+		} else {
+			// If different dates, add one day to end date to make range inclusive
+			$to_date = date('Y-m-d', strtotime($to_date . ' +1 day'));
 		}
-		if (empty($vehicle_id) && empty($customer_id))
+		
+		// Build the query based on filters
+		if (empty($vehicle_id) && empty($customer_id)) {
 			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date]);
-		elseif (empty($vehicle_id))
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('customer_id', $customer_id);
-		elseif (empty($customer_id))
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where('vehicle_id', $vehicle_id);
-		else
-			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])->where(['vehicle_id' => $vehicle_id, 'customer_id' => $customer_id]);
-
-		// 		dd($bookings,$bookings->get());
-		$total = array();
+		} elseif (empty($vehicle_id)) {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])
+								->where('customer_id', $customer_id);
+		} elseif (empty($customer_id)) {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])
+								->where('vehicle_id', $vehicle_id);
+		} else {
+			$bookings = Bookings::whereBetween('pickup', [$from_date, $to_date])
+								->where([
+									'vehicle_id' => $vehicle_id,
+									'customer_id' => $customer_id
+								]);
+		}
+		
+		// Initialize arrays
+		$total = [];
+		$totalfuel = [];
+		$fodderfuel = [];
+		$totaldistance = [];
+		$fodderdistance = [];
+		
+		// Process bookings
 		foreach ($bookings->get() as $bk) {
 			$total[] = $bk->getMeta('total_price');
 			$totalfuel[] = $bk->getMeta('pet_required');
@@ -2087,18 +2221,18 @@ class ReportsController extends Controller
 			$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
 			$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
 		}
-
+		
+		// Prepare view data
 		$index['vehicles'] = VehicleModel::select(
 			DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
 			'id'
-		)
-			->pluck('vehicle_name', 'id');
-
+		)->pluck('vehicle_name', 'id');
+		
 		$index['customers'] = User::where('user_type', 'C')->pluck("name", "id");
 		$index['bookings'] = $bookings->orderBy('pickup', 'ASC')->get();
 		$index['result'] = '';
-		$index['date1'] = null;
-		$index['date2'] = null;
+		$index['date1'] = $display_from_date;
+		$index['date2'] = $display_to_date;
 		$index['total_price'] = bcdiv(array_sum($total ?? []), 1, 2);
 		$index['total_fuel'] = bcdiv(array_sum($totalfuel ?? []), 1, 2);
 		$index['total_distance'] = bcdiv(array_sum($totaldistance ?? []), 1, 2);
@@ -2106,7 +2240,7 @@ class ReportsController extends Controller
 		$index['fodderdistance'] = bcdiv(array_sum($fodderdistance ?? []), 1, 2);
 		$index['request'] = $request->all();
 		$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
-		// dd($index);
+		
 		return view('reports.print_bookings', $index);
 	}
 	
@@ -5081,16 +5215,28 @@ class ReportsController extends Controller
 			->prepend('All Vehicles', 'all');
 
 		// Set date range
-		if ($request->get('date1') == null)
-			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'ASC')->take(1)->first('pickup')->pickup;
-		else
+		if ($request->get('date1') == null) {
+			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->orderBy('pickup', 'ASC')
+				->take(1)
+				->first('pickup')->pickup;
+		} else {
 			$start = date('Y-m-d', strtotime($request->get('date1')));
-
-		if ($request->get('date2') == null)
-			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'DESC')->take(1)->first('pickup')->pickup;
-		else
+		}
+	
+		if ($request->get('date2') == null) {
+			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->orderBy('pickup', 'DESC')
+				->take(1)
+				->first('pickup')->pickup;
+		} else {
 			$end = date('Y-m-d', strtotime($request->get('date2')));
-
+		}
+	
+		// Add time boundaries to make the range inclusive
+		$startDateTime = $start . ' 00:00:00';
+		$endDateTime = $end . ' 23:59:59';
+	
 		$fuelBalanceAdjustments = json_decode($request->get('fuel_balance_adjustments'), true) ?? [];
 		// dd($fuelBalanceAdjustments);
 
@@ -5122,7 +5268,7 @@ class ReportsController extends Controller
 			foreach ($vehicles as $vehicle) {
 				// Get bookings data
 				$bookings = Bookings::where('vehicle_id', $vehicle->id)
-					->whereBetween('pickup', [$start, $end])
+                	->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
 					->get();
 				
 				$totalKms = 0;
@@ -5148,19 +5294,12 @@ class ReportsController extends Controller
 				->whereNull('deleted_at')
 				->get()
 				->sum(function($doc) use ($start, $end) {
-					// Calculate total days the document is valid for
 					$docStart = max(Carbon::parse($doc->date), Carbon::parse($start));
 					$docEnd = min(Carbon::parse($doc->till), Carbon::parse($end));
-					
-					// Calculate document's total validity period in days
 					$totalValidityDays = Carbon::parse($doc->date)->diffInDays(Carbon::parse($doc->till)) + 1;
-					
-					// Calculate daily cost
 					$dailyCost = $doc->amount / $totalValidityDays;
-					
 					// Calculate days in our reporting period
 					$daysInPeriod = $docStart->diffInDays($docEnd) + 1;
-					
 					// Return prorated cost for our period
 					return $dailyCost * $daysInPeriod;
 				});
@@ -5176,7 +5315,14 @@ class ReportsController extends Controller
 				$driver_salary = 0;
 				if ($driver) {
 					$userData = User::where('id', $driver->driver_id)->first();
-					$driver_salary = $userData ? $userData->salary : 0;
+					if ($userData) {
+						$leaves = Leave::where('driver_id', $driver->driver_id)
+							->whereBetween('date', [$start, $end])
+							->where('is_present', 1)
+							->count();
+						$days_present = min($leaves, 30);
+						$driver_salary = ($userData->salary / 30) * $days_present;
+					}
 				}
 				// Get fuel data
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
@@ -5216,8 +5362,19 @@ class ReportsController extends Controller
 				// Get work orders
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
 					->whereBetween('required_by', [$start, $end])
+					->whereNull('deleted_at')
 					->get();
 				
+				$workOrderTotal = WorkOrders::where('vehicle_id', $vehicle->id)
+					->whereBetween('created_at', [$startDateTime, $endDateTime])
+					->whereNull('deleted_at')
+					->sum('grand_total');
+
+				$fastagAmount = Fastag::where('vehicle_id', $vehicle->id)
+					->whereBetween('date', [$startDateTime, $endDateTime])
+					->whereNull('deleted_at') 
+					->sum('amount');
+				// dd($fastagAmount);
 				$maintenanceCost = 0;
 				foreach ($workorders as $wo) {
 					$maintenanceCost += empty($wo->grand_total) ? $wo->price : $wo->grand_total;
@@ -5225,7 +5382,7 @@ class ReportsController extends Controller
 				
 				// Calculate driver advances
 				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
-					->whereBetween('pickup', [$start, $end])
+            		->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
 					->meta()
 					->where(function ($query) {
 						$query->where('bookings_meta.key', '=', 'advance_pay')
@@ -5249,12 +5406,13 @@ class ReportsController extends Controller
 					'fuel_details' => $fuelArray,
 					'tyre_cost' => $tyreCost,
 					'work_orders' => $workorders->count(),
+					'work_order_total' => $workOrderTotal, 
 					'maintenance_cost' => $maintenanceCost,
 					'driver_advance' => $totalAdvance,
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
-					'other' => $totalAdvance,
-                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+					'other' => $totalAdvance + $fastagAmount,
+                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
                 	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
 					'avg_revenue_per_km' => $totalKms > 0 ? $totalPrice / $totalKms : 0,
 					'avg_fuel_cost_per_km' => $totalKms > 0 ? $totalFuelCost / $totalKms : 0
@@ -5274,7 +5432,7 @@ class ReportsController extends Controller
 			
 			// Get bookings data
 			$bookings = Bookings::where('vehicle_id', $vehicle_id)
-				->whereBetween('pickup', [$start, $end])
+            	->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
 				->get();
 
 			foreach ($bookings as $b) {
@@ -5408,15 +5566,27 @@ class ReportsController extends Controller
         	->pluck('name', 'id')
         	->prepend('All Vehicles', 'all');
 
-		if ($request->get('date1') == null)
-			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'ASC')->take(1)->first('pickup')->pickup;
-		else
+		if ($request->get('date1') == null) {
+			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->orderBy('pickup', 'ASC')
+				->take(1)
+				->first('pickup')->pickup;
+		} else {
 			$start = date('Y-m-d', strtotime($request->get('date1')));
-
-		if ($request->get('date2') == null)
-			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))->orderBy('pickup', 'DESC')->take(1)->first('pickup')->pickup;
-		else
+		}
+	
+		if ($request->get('date2') == null) {
+			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->orderBy('pickup', 'DESC')
+				->take(1)
+				->first('pickup')->pickup;
+		} else {
 			$end = date('Y-m-d', strtotime($request->get('date2')));
+		}
+	
+		// Add time boundaries to make the range inclusive
+		$startDateTime = $start . ' 00:00:00';
+		$endDateTime = $end . ' 23:59:59';
 
 		$fuelBalanceAdjustments = json_decode($request->get('fuel_balance_adjustments'), true) ?? [];
 		// dd($fuelBalanceAdjustments);
@@ -5436,7 +5606,7 @@ class ReportsController extends Controller
 			
 			foreach ($vehicles as $vehicle) {
 				$bookings = Bookings::where('vehicle_id', $vehicle->id)
-					->whereBetween('pickup', [$start, $end])
+            		->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
 					->get();
 				
 				$totalKms = 0;
@@ -5511,12 +5681,29 @@ class ReportsController extends Controller
 				$driver_salary = 0;
 				if ($driver) {
 					$userData = User::where('id', $driver->driver_id)->first();
-					$driver_salary = $userData ? $userData->salary : 0;
+					if ($userData) {
+						$leaves = Leave::where('driver_id', $driver->driver_id)
+							->whereBetween('date', [$start, $end])
+							->where('is_present', 1)
+							->count();
+						$days_present = min($leaves, 30);
+						$driver_salary = ($userData->salary / 30) * $days_present;
+					}
 				}
 
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
 					->whereBetween('required_by', [$start, $end])
 					->get();
+				
+				$workOrderTotal = WorkOrders::where('vehicle_id', $vehicle->id)
+					->whereBetween('created_at', [$startDateTime, $endDateTime])
+					->whereNull('deleted_at')
+					->sum('grand_total');
+
+				$fastagAmount = Fastag::where('vehicle_id', $vehicle->id)
+					->whereBetween('date', [$startDateTime, $endDateTime])
+					->whereNull('deleted_at') 
+					->sum('amount');
 				
 				$maintenanceCost = 0;
 				foreach ($workorders as $wo) {
@@ -5524,7 +5711,7 @@ class ReportsController extends Controller
 				}
 
 				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
-					->whereBetween('pickup', [$start, $end])
+            		->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
 					->meta()
 					->where(function ($query) {
 						$query->where('bookings_meta.key', '=', 'advance_pay')
@@ -5546,11 +5733,12 @@ class ReportsController extends Controller
 					'fuel_qty' => $totalFuelQty,
 					'tyre_cost' => $tyreCost,
 					'work_orders' => $workorders->count(),
+					'work_order_total' => $workOrderTotal, 
 					'maintenance_cost' => $maintenanceCost,
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
-					'other' => $totalAdvance,
-					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance,
+					'other' => $totalAdvance + $fastagAmount,
+					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
 				];
 			}
 			
@@ -5561,7 +5749,7 @@ class ReportsController extends Controller
 		} else {
 			// Individual vehicle report
 			$vehicle_id = $request->get('vehicle_id');
-			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
+			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])->get();
 
 			$book = ['kms' => [], 'fuel' => [], 'price' => []];
 			foreach ($bookings as $b) {
@@ -5609,7 +5797,7 @@ class ReportsController extends Controller
 			}
 
 			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
-				->whereBetween('pickup', [$start, $end])
+            	->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
 				->meta()
 				->where(function ($query) {
 					$query->where('bookings_meta.key', '=', 'advance_pay')

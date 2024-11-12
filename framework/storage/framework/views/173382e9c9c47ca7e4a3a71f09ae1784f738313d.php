@@ -110,6 +110,7 @@
                   <th>Driver Salary</th>
                   <th>Other</th>
                   <th>Tyre Cost</th>
+                  <th>Work Order</th>
                   <th>Legal</th>
                   <th>Net Profit/loss</th>
                 </tr>
@@ -131,6 +132,7 @@
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['driver_salary'], 2)); ?></td>
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['other'], 2)); ?></td>
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['tyre_cost'], 2)); ?></td>
+                  <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['work_order_total'], 2)); ?></td>
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['legal_cost'], 2)); ?></td>
                   <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($vehicle_data['net_profit'], 2)); ?></td>
                 </tr>
@@ -146,6 +148,7 @@
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('driver_salary'), 2)); ?></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('other'), 2)); ?></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('tyre_cost'), 2)); ?></th>
+                  <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('work_order_total'), 2)); ?></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('legal_cost'), 2)); ?></th>
                   <th><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format(collect($summary)->sum('net_profit'), 2)); ?></th>
                 </tr>

@@ -152,7 +152,7 @@ input:checked + .slider:before {
                 <?php echo Form::label('wheel_id', __('fleet.wheel'), ['class' => 'col-xs-5 control-label']); ?>
 
                 <div class="col-xs-6">
-                  <select name="wheel_id" class="form-control" required id="wheel_id">
+                  <select name="wheel_id" class="form-control" id="wheel_id">
                     <option value="">Select Wheel</option>
                     <?php $__currentLoopData = $wheels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $wheel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                       <option value="<?php echo e($wheel->id); ?>"><?php echo e($wheel->name); ?></option>

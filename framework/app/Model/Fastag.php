@@ -19,7 +19,8 @@ class Fastag extends Model
         'registration_number',
         'date',
         'transaction_id',
-        'total_amount'
+        'total_amount',
+        'vehicle_id'
     ];
 
     protected $casts = [
