@@ -141,6 +141,7 @@
               <th>Total Distance</th>
               <th>Additional Fuel</th>
               <th>Total Fuel</th>
+              <th>Total Driver Advance</th>
               <th>Grand Total</th>
             </tr>
             <tr>
@@ -148,6 +149,7 @@
               <td><?php echo e(preg_match('/^[0-9]+(\.[0-9]+)?$/', $total_distance) === 1 ? bcdiv($total_distance,1,2) : 0); ?> km</td>
               <td><?php echo e(preg_match('/^[0-9]+(\.[0-9]+)?$/', $fodderfuel) === 1 ? bcdiv($fodderfuel,1,2) : 0); ?> ltr</td>
               <td><?php echo e(preg_match('/^[0-9]+(\.[0-9]+)?$/', $total_fuel) === 1 ? bcdiv($total_fuel,1,2) : 0); ?> ltr</td>
+              <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(preg_match('/^[0-9]+(\.[0-9]+)?$/', $total_advance) === 1 ? bcdiv($total_advance,1,2) : 0); ?></td>
               <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(preg_match('/^[0-9]+(\.[0-9]+)?$/', $total_price) === 1 ? bcdiv($total_price,1,2) : 0); ?></td>
             </tr>
           </table>

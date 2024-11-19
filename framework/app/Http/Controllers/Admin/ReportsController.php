@@ -2212,6 +2212,7 @@ class ReportsController extends Controller
 		$fodderfuel = [];
 		$totaldistance = [];
 		$fodderdistance = [];
+		$totaladvance = []; // New array for driver advance
 		
 		// Process bookings
 		foreach ($bookings->get() as $bk) {
@@ -2220,6 +2221,7 @@ class ReportsController extends Controller
 			$fodderfuel[] = $bk->getMeta('fodder_consumption');
 			$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
 			$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
+			$totaladvance[] = !empty($bk->advance_pay) ? $bk->advance_pay : 0; // Add advance pay to array
 		}
 		
 		// Prepare view data
@@ -2238,6 +2240,7 @@ class ReportsController extends Controller
 		$index['total_distance'] = bcdiv(array_sum($totaldistance ?? []), 1, 2);
 		$index['fodderfuel'] = bcdiv(array_sum($fodderfuel ?? []), 1, 2);
 		$index['fodderdistance'] = bcdiv(array_sum($fodderdistance ?? []), 1, 2);
+		$index['total_advance'] = bcdiv(array_sum($totaladvance ?? []), 1, 2); // Add total advance to index
 		$index['request'] = $request->all();
 		$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
 		
@@ -3378,7 +3381,6 @@ class ReportsController extends Controller
 			->whereNull('deleted_at')
 			->sum('grand_total');
 
-		// Add tyre sales to total income
 		$total_income += $tyre_sales;
 
 		// Calculate fuel costs for all vehicles on the given date
@@ -3397,7 +3399,7 @@ class ReportsController extends Controller
 			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
 
 		// Calculate legal costs for all vehicles
-		$legal_costs = VehicleDocs::whereDate('till', '=', $date)
+		$legal_costs = VehicleDocs::whereDate('date', '=', $date)
 			->whereNull('deleted_at')
 			->sum('amount');
 
@@ -3409,12 +3411,18 @@ class ReportsController extends Controller
 
 		// Calculate work order costs for the day
 		$work_order_costs = DB::table('work_orders')
-			->whereDate('created_at', $date)
+			->whereDate('required_by', $date)
 			->whereNull('deleted_at')
 			->sum('price');
 
-		// Calculate total expenses (now including work orders)
-		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs;
+		// Calculate FastTag expenses for the day
+		$fastag_expenses = DB::table('fastags')
+			->whereDate('date', $date)
+			->whereNull('deleted_at')  
+			->sum('amount');
+
+		// Calculate total expenses (now including FastTag)
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses;
 
 		$cash_balance = $total_income - $total_expenses;
 
@@ -3427,6 +3435,7 @@ class ReportsController extends Controller
 			'legal_costs' => round($legal_costs, 2),
 			'tyre_purchase' => round($tyre_purchase, 2),
 			'work_order_costs' => round($work_order_costs, 2),
+			'fastag_expenses' => round($fastag_expenses, 2),  
 			'cash_balance' => round($cash_balance, 2),
 			'bookings' => $bookings,
 			'tyre_sales' => round($tyre_sales, 2),
@@ -3475,7 +3484,7 @@ class ReportsController extends Controller
 			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
 
 		// Calculate legal costs for all vehicles
-		$legal_costs = VehicleDocs::whereDate('till', '=', $date)
+		$legal_costs = VehicleDocs::whereDate('date', '=', $date)
 			->whereNull('deleted_at')
 			->sum('amount');
 
@@ -3487,12 +3496,18 @@ class ReportsController extends Controller
 
 		// Calculate work order costs for the day
 		$work_order_costs = DB::table('work_orders')
-			->whereDate('created_at', $date)
+			->whereDate('required_by', $date)
 			->whereNull('deleted_at')
 			->sum('price');
 
-		// Calculate total expenses (now including work orders)
-		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs;
+		// Calculate FastTag expenses for the day
+		$fastag_expenses = DB::table('fastags')
+			->whereDate('date', $date)
+			->whereNull('deleted_at')  // Add this if your table has soft deletes
+			->sum('amount');
+
+		// Calculate total expenses (now including FastTag)
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses;
 
 		$cash_balance = $total_income - $total_expenses;
 
@@ -3505,6 +3520,7 @@ class ReportsController extends Controller
 			'legal_costs' => round($legal_costs, 2),
 			'tyre_purchase' => round($tyre_purchase, 2),
 			'work_order_costs' => round($work_order_costs, 2),
+			'fastag_expenses' => round($fastag_expenses, 2),  // Add this line
 			'cash_balance' => round($cash_balance, 2),
 			'bookings' => $bookings,
 			'tyre_sales' => round($tyre_sales, 2),
@@ -5130,11 +5146,32 @@ class ReportsController extends Controller
 	// other adjust report ends
 
 
+	// public function vehicleOverview()
+	// {
+	// 	$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+	// 		->pluck('name', 'id')
+	// 		->prepend('All Vehicles', 'all');  // Add "All" option
+	// 	$data['request'] = null;
+	// 	return view('vehicles.report', $data);
+	// }
 	public function vehicleOverview()
 	{
-		$data['vehicles'] = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
-			->pluck('name', 'id')
-			->prepend('All Vehicles', 'all');  // Add "All" option
+		// Get group ID for 'ranisati'
+		$groupId = DB::table('vehicle_group')
+			->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower('ranisati') . '%'])
+			->value('id');
+
+		// If group is found, get vehicles for that group
+		if ($groupId) {
+			$data['vehicles'] = VehicleModel::where('group_id', $groupId)
+				->select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+				->pluck('name', 'id')
+				->prepend('All Vehicles', 'all');
+		} else {
+			// If group not found, return empty collection with just "All Vehicles"
+			$data['vehicles'] = collect([['all' => 'All Vehicles']]);
+		}
+
 		$data['request'] = null;
 		return view('vehicles.report', $data);
 	}
@@ -5199,6 +5236,19 @@ class ReportsController extends Controller
 			return response()->json(['success' => true]);
 		} catch (\Exception $e) {
 			return response()->json(['success' => false, 'error' => $e->getMessage()]);
+		}
+	}
+
+	public function updateFuelBalance(Request $request)
+	{
+		try {
+			$vehicle = VehicleModel::findOrFail($request->vehicle_id);
+			$vehicle->fuel_balance = $request->fuel_balance;
+			$vehicle->save();
+			
+			return response()->json(['success' => true]);
+		} catch (\Exception $e) {
+			return response()->json(['success' => false, 'message' => $e->getMessage()]);
 		}
 	}
 

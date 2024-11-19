@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,45 +12,57 @@
             line-height: 1.4;
             color: #333;
         }
+
         .container {
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
-        h1, h2 {
+
+        h1,
+        h2 {
             text-align: center;
             margin-bottom: 20px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
+
         th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
+
         .summary {
             margin-bottom: 20px;
         }
+
         .summary div {
             margin-bottom: 10px;
         }
+
         .section {
             margin-bottom: 30px;
         }
+
         .total-row {
             font-weight: bold;
             background-color: #f2f2f2;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Cash Book Report</h1>
@@ -106,6 +119,10 @@
                     <td>Work Orders</td>
                     <td>{{ Hyvikk::get('currency') }} {{ number_format($work_order_costs, 2) }}</td>
                 </tr>
+                <tr>
+                    <td>FastTag Expenses</td>
+                    <td>{{ Hyvikk::get('currency') }} {{ number_format($fastag_expenses, 2) }}</td>
+                </tr>
                 <tr class="total-row">
                     <td>Total Expenses</td>
                     <td>{{ Hyvikk::get('currency') }} {{ number_format($total_expenses, 2) }}</td>
@@ -114,7 +131,8 @@
         </div>
 
         <div class="summary">
-            <div><strong>Cash Balance:</strong> {{ Hyvikk::get('currency') }} {{ number_format($cash_balance, 2) }}</div>
+            <div><strong>Cash Balance:</strong> {{ Hyvikk::get('currency') }} {{ number_format($cash_balance, 2) }}
+            </div>
         </div>
     </div>
 
@@ -124,4 +142,5 @@
         }
     </script>
 </body>
+
 </html>

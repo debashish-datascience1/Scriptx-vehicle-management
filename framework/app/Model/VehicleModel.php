@@ -14,7 +14,7 @@ class VehicleModel extends Model
     protected $dates = ['deleted_at'];
     protected $table = "vehicles";
     protected $metaTable = 'vehicles_meta'; //optional.
-    protected $fillable = ['make', 'wheel', 'model', 'type', 'year', 'engine_type', 'horse_power', 'color', 'license_plate', 'mileage', 'int_mileage', 'in_service', 'user_id', 'insurance_number', 'documents', 'vehicle_image', 'exp_date', 'reg_exp_date', 'lic_exp_date', 'group_id', 'type_id', 'engine_no', 'chassis_no', 'rc_image'];
+    protected $fillable = ['make', 'wheel', 'model', 'type', 'year', 'engine_type', 'horse_power', 'color', 'license_plate', 'fuel_balance', 'mileage', 'int_mileage', 'in_service', 'user_id', 'insurance_number', 'documents', 'vehicle_image', 'exp_date', 'reg_exp_date', 'lic_exp_date', 'group_id', 'type_id', 'engine_no', 'chassis_no', 'rc_image'];
 
     protected function getMetaKeyName()
     {
@@ -29,6 +29,10 @@ class VehicleModel extends Model
     public function vehicles()
     {
         return $this->hasMany(EmiModel::class, "vehicle_id");
+    }
+
+    public function getFuelBalanceAttribute($value) {
+        return $value ?? 0;
     }
 
     public function income()

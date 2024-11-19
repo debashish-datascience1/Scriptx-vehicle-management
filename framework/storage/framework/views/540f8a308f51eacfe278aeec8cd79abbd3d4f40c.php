@@ -765,11 +765,16 @@
                     <div class="form-group row">
                         <label for="fuel_balance_${vehicleId}" class="col-sm-6 col-form-label">${vehicleName}</label>
                         <div class="col-sm-3">
-                            <input type="number" class="form-control fuel-balance-input" id="fuel_balance_${vehicleId}" 
-                                name="fuel_balance[${vehicleName}]" value="0">
+                            <input type="number" 
+                                class="form-control fuel-balance-input" 
+                                id="fuel_balance_${vehicleId}" 
+                                name="fuel_balance[${vehicleName}]" 
+                                data-vehicle-id="${vehicleId}"
+                                value="0">
                         </div>
                         <div class="col-sm-3">
-                            <input type="number" class="form-control average-input" 
+                            <input type="number" 
+                                class="form-control average-input" 
                                 name="average[${vehicleId}]" 
                                 value="${average || ''}" 
                                 step="0.01">
@@ -781,51 +786,51 @@
 
 
             $('#saveFuelBalance').on('click', function() {
-    var fuelBalanceData = {};
-    var averageData = {};
-    
-    // Collect fuel balance data
-    $('.fuel-balance-input').each(function() {
-        var vehicleName = $(this).attr('name').match(/\[(.*?)\]/)[1];
-        fuelBalanceData[vehicleName] = $(this).val();
-    });
+                var fuelBalanceData = {};
+                var averageData = {};
+                
+                // Collect fuel balance data
+                $('.fuel-balance-input').each(function() {
+                    var vehicleName = $(this).attr('name').match(/\[(.*?)\]/)[1];
+                    fuelBalanceData[vehicleName] = $(this).val();
+                });
 
-    // Collect average data
-    $('.average-input').each(function() {
-        var vehicleId = $(this).attr('name').match(/\[(.*?)\]/)[1];
-        averageData[vehicleId] = $(this).val();
-    });
+                // Collect average data
+                $('.average-input').each(function() {
+                    var vehicleId = $(this).attr('name').match(/\[(.*?)\]/)[1];
+                    averageData[vehicleId] = $(this).val();
+                });
 
-    // Save both fuel balance and average data
-    $.ajax({
-        url: '/VehicleMgmt/admin/reports/update-averages',
-        method: 'POST',
-        data: {
-            averages: averageData,
-            _token: $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                // Continue with the original form submission
-                $('input[name="fuel_balance_adjustments"]').remove();
-                $('<input>').attr({
-                    type: 'hidden',
-                    name: 'fuel_balance_adjustments',
-                    value: JSON.stringify(fuelBalanceData)
-                }).appendTo('form.form-block');
+                // Save both fuel balance and average data
+                $.ajax({
+                    url: '/VehicleMgmt/admin/reports/update-averages',
+                    method: 'POST',
+                    data: {
+                        averages: averageData,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Continue with the original form submission
+                            $('input[name="fuel_balance_adjustments"]').remove();
+                            $('<input>').attr({
+                                type: 'hidden',
+                                name: 'fuel_balance_adjustments',
+                                value: JSON.stringify(fuelBalanceData)
+                            }).appendTo('form.form-block');
 
-                $('#fuelBalanceModal').modal('hide');
-                submitReport();
-            } else {
-                alert('Error saving average values. Please try again.');
-            }
-        },
-        error: function(xhr) {
-            console.error('Error saving average values:', xhr);
-            alert('Error saving average values. Please try again.');
-        }
-    });
-});
+                            $('#fuelBalanceModal').modal('hide');
+                            submitReport();
+                        } else {
+                            alert('Error saving average values. Please try again.');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error saving average values:', xhr);
+                        alert('Error saving average values. Please try again.');
+                    }
+                });
+            });
 
             function submitReport() {
                 var isPrint = $('#wheelPriceModal').data('isPrint');
@@ -891,6 +896,36 @@
                     tbody.append(row);
                 });
             }
+        });
+
+       // Add this event handler right after your existing modal code
+        $(document).ready(function() {
+            // Handle input change for fuel balance
+            $(document).on('change', '.fuel-balance-input', function() {
+                var vehicleId = $(this).closest('.form-group').find('.average-input').attr('name').match(/\[(.*?)\]/)[1];
+                var fuelBalance = $(this).val();
+                
+                $.ajax({
+                    url: '/VehicleMgmt/admin/reports/update-fuel-balance',
+                    method: 'POST',
+                    data: {
+                        vehicle_id: vehicleId,
+                        fuel_balance: fuelBalance,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if(response.success) {
+                            console.log('Fuel balance updated successfully');
+                        } else {
+                            alert('Error updating fuel balance');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
+                        alert('Error updating fuel balance');
+                    }
+                });
+            });
         });
     </script>
 <?php $__env->stopSection(); ?>

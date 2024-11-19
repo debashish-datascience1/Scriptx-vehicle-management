@@ -151,6 +151,11 @@
                                 <strong>Work Orders:</strong>
                                 <span>{{ Hyvikk::get('currency') }} {{ number_format($work_order_costs, 2) }}</span>
                             </div>
+                            <!-- Add the new FastTag expense line here -->
+                            <div class="summary-item">
+                                <strong>FastTag Expenses:</strong>
+                                <span>{{ Hyvikk::get('currency') }} {{ number_format($fastag_expenses, 2) }}</span>
+                            </div>
                             <div class="summary-item">
                                 <strong>Total Expenses:</strong>
                                 <span>{{ Hyvikk::get('currency') }} {{ number_format($total_expenses, 2) }}</span>

@@ -154,6 +154,11 @@
                                 <strong>Work Orders:</strong>
                                 <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($work_order_costs, 2)); ?></span>
                             </div>
+                            <!-- Add the new FastTag expense line here -->
+                            <div class="summary-item">
+                                <strong>FastTag Expenses:</strong>
+                                <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fastag_expenses, 2)); ?></span>
+                            </div>
                             <div class="summary-item">
                                 <strong>Total Expenses:</strong>
                                 <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_expenses, 2)); ?></span>

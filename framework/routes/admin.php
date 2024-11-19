@@ -272,6 +272,7 @@ Route::namespace('Admin')->group(function () {
 
         Route::get('/reports/get-vehicles-average', 'ReportsController@getVehiclesAverage');
         Route::post('/reports/update-averages', 'ReportsController@updateAverages');
+        Route::post('/reports/update-fuel-balance', 'ReportsController@updateFuelBalance')->name('admin.update-fuel-balance');
         Route::post('/reports/update-wheel-prices', 'ReportsController@updateWheelPrices')->name('reports.update-wheel-prices');
         Route::post('/payroll/payabletype', 'PayrollController@payabletype')->name('payroll.payabletype')->middleware('userpermission:4');
         Route::post('/payroll/purse', 'PayrollController@purse')->name('payroll.purse')->middleware('userpermission:4');
