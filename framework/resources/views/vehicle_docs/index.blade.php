@@ -106,12 +106,13 @@
                   </button>
                   <div class="dropdown-menu custom" role="menu">
                     <a class="dropdown-item mybtn vevent" data-id="{{$row->id}}" data-toggle="modal" data-target="#viewModal" title="@lang('fleet.view')"><i class="fa fa-eye" aria-hidden="true" style="color:#269abc;"></i> @lang('fleet.view')</a>
-                    {{-- <a class="dropdown-item" href="{{ url("admin/leave/".$row->id."/edit")}}"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')</a>
-                    <a class="dropdown-item" data-id="{{$row->id}}" data-toggle="modal" data-target="#myModal"><span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> @lang('fleet.delete')</a>  --}}
-                  </div>
+                    <a class="dropdown-item"  href="{{ route('vehicle-docs.edit', $row->id) }}"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> @lang('fleet.edit')</a>
+                    <a class="dropdown-item delete-btn" href="#" data-id="{{$row->id}}">
+                        <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> @lang('fleet.delete')
+                    </a>
                 </div>
-                {!! Form::open(['url' => 'admin/bookings/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'book_'.$row->id]) !!}
-                {!! Form::hidden("id",$row->id) !!}
+                </div>
+                {!! Form::open(['route' => ['vehicle-docs.destroy', $row->id], 'method' => 'DELETE', 'class' => 'form-horizontal delete-form', 'id' => 'delete_'.$row->id]) !!}
                 {!! Form::close() !!}
                 </td>
               </tr>
@@ -166,7 +167,14 @@
       })
   })
 
-
+  $(document).on('click', '.delete-btn', function(e) {
+      e.preventDefault();
+      var id = $(this).data('id');
+      
+      if(confirm('Are you sure you want to delete this vehicle document?')) {
+          $('#delete_' + id).submit();
+      }
+  });
 
   $('#chk_all').on('click',function(){
     if(this.checked){

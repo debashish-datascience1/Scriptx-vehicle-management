@@ -26,8 +26,6 @@ class VehicleDocsController extends Controller
     public function index()
     {
         $index['docs'] = VehicleDocs::orderBy('id', 'DESC')->get();
-        // $index['docs'] = [];
-        // dd($index);
         return view('vehicle_docs.index', $index);
     }
 
@@ -290,19 +288,114 @@ class VehicleDocsController extends Controller
      */
     public function edit($id)
     {
-        //
+        $doc = VehicleDocs::findOrFail($id);
+        
+        $vehiArray = array();
+        $vehicles =  VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))->where('in_service', 1)->get();
+        foreach ($vehicles as $v) {
+            $insu_expdate = $v->getMeta('ins_exp_date');
+            $insu_dur = $v->getMeta('ins_renew_duration');
+            $fitness_expdate = $v->getMeta('fitness_expdate');
+            $fitness_dur = $v->getMeta('fitness_renew_duration');
+            $roadtax_expdate = $v->getMeta('road_expdate');
+            $roadtax_dur = $v->getMeta('roadtax_renew_duration');
+            $permit_expdate = $v->getMeta('permit_expdate');
+            $permit_dur = $v->getMeta('permit_renew_duration');
+            $pollution_expdate = $v->getMeta('pollution_expdate');
+            $pollution_dur = $v->getMeta('pollution_renew_duration');
+    
+            if (((!empty($insu_dur)  && !empty($insu_expdate)) || (!empty($fitness_dur)  && !empty($fitness_expdate)) || (!empty($roadtax_dur)  && !empty($roadtax_expdate)) || (!empty($permit_dur)   && !empty($permit_expdate)) || (!empty($pollution_dur)  && !empty($pollution_expdate))) && Helper::checkEligibleRenewalVehicle($v->id)->status) {
+                $v->is_renewable = 1;
+                $vehiArray[$v->id] = $v->name;
+            } else {
+                $v->is_renewable = null;
+            }
+        }
+    
+        $data['vehicles'] = $vehiArray;
+        $data['method'] = Params::where('code', "PaymentMethod")->where('id', '!=', '16')->pluck('label', 'id');
+        
+        // Vendor dropdown
+        $data['vendors'] = Vendor::where('type', 'Document')->pluck('name', 'id');
+        
+        // Bank accounts dropdown
+        $data['bankAccount'] = BankAccount::select("id", DB::raw("CONCAT(bank,'(',account_no,')') as bank"))->pluck('bank', 'id');
+        
+        // Document details
+        $data['doc'] = $doc;
+        $data['edit'] = true; // Flag to differentiate between create and edit views
+    
+        return view('vehicle_docs.edit', $data);
     }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    
     public function update(Request $request, $id)
     {
-        //
+        $vehicleDoc = VehicleDocs::findOrFail($id);
+    
+        $date = !empty($request->get('date')) ? date("Y-m-d", strtotime($request->get('date'))) : null;
+        $amount = $request->get('amount');
+        $vendor_id = $request->get('vendor');
+        $bank = $request->get('bank');
+        $method = $request->get('method');
+        $vehicle_id = $request->get('vehicle_id');
+        $doc_id = $request->get('doc_id');
+        $ddno = $request->get('ddno');
+        $remarks = $request->get('remarks');
+    
+        $durationNameArray = [36 => 'ins_renew_duration', 37 => 'fitness_renew_duration', 38 => 'roadtax_renew_duration', 39 => 'permit_renew_duration', 40 => 'pollution_renew_duration'];
+        $durationUnitArray = [36 => 'insurance_duration_unit', 37 => 'fitness_duration_unit', 38 => 'roadtax_duration_unit', 39 => 'permit_duration_unit', 40 => 'pollution_duration_unit'];
+    
+        $vehicleMod = VehicleModel::find($vehicle_id);
+        $driver_id = !empty($vehicleMod->driver) && !empty($vehicleMod->driver->assigned_driver) ? $vehicleMod->driver->assigned_driver->id : null;
+    
+        $durationTime = $vehicleMod->getMeta($durationNameArray[$doc_id]);
+        $durationUnit = $vehicleMod->getMeta($durationUnitArray[$doc_id]);
+        $till = new Carbon($date);
+    
+        if ($durationUnit == 'years')
+            $till->addYears($durationTime);
+        elseif ($durationUnit == 'months')
+            $till->addMonths($durationTime);
+        else
+            $till->addDays($durationTime);
+    
+        // Update Vehicle Document
+        $dataUpdate = [
+            'vehicle_id' => $vehicle_id,
+            'driver_id' => $driver_id,
+            'vendor_id' => $vendor_id,
+            'param_id' => $doc_id,
+            'date' => $date,
+            'till' => $till,
+            'amount' => bcdiv($amount, 1, 2),
+            'status' => 1,
+            'remarks' => $remarks,
+            'method' => $method,
+            'ddno' => $ddno,
+        ];
+        $vehicleDoc->update($dataUpdate);
+    
+        // Update Transaction
+        $transaction = $vehicleDoc->transaction;
+        if ($transaction) {
+            $accountTransa['bank_id'] = $bank;
+            $accountTransa['total'] = bcdiv($amount, 1, 2);
+            $transaction->update($accountTransa);
+    
+            // Update Income/Expense
+            $expense = $transaction->income_Expense;
+            if ($expense) {
+                $expenseUpdate = [
+                    'payment_method' => $method,
+                    'date' => $date,
+                    'amount' => bcdiv($amount, 1, 2),
+                    'remarks' => $remarks,
+                ];
+                $expense->update($expenseUpdate);
+            }
+        }
+    
+        return redirect()->route('vehicle-docs.index')->with('success', 'Vehicle Document updated successfully');
     }
 
     /**
@@ -313,7 +406,34 @@ class VehicleDocsController extends Controller
      */
     public function destroy($id)
     {
-        //
+        try {
+            \Log::info('Attempting to delete vehicle document with ID: ' . $id);
+
+            $vehicleDoc = VehicleDocs::findOrFail($id);
+            
+            // Delete associated transaction if exists
+            if ($vehicleDoc->transaction) {
+                // Delete associated income/expense record
+                $vehicleDoc->transaction->income_Expense()->delete();
+                
+                // Delete the transaction
+                $vehicleDoc->transaction()->delete();
+            }
+
+            // Soft delete the vehicle document
+            $vehicleDoc->delete();
+
+            \Log::info('Vehicle document deleted successfully: ' . $id);
+
+            return redirect()->route('vehicle-docs.index')
+                ->with('success', 'Vehicle document deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting vehicle document: ' . $e->getMessage());
+            \Log::error('Exception trace: ' . $e->getTraceAsString());
+
+            return redirect()->route('vehicle-docs.index')
+                ->with('error', 'Unable to delete the vehicle document. ' . $e->getMessage());
+        }
     }
 
     public function view_event($id)

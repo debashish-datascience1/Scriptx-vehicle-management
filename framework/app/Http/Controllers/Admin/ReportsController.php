@@ -5248,7 +5248,135 @@ class ReportsController extends Controller
 			
 			return response()->json(['success' => true]);
 		} catch (\Exception $e) {
-			return response()->json(['success' => false, 'message' => $e->getMessage()]);
+			\Log::error('Fuel Balance Update Error: ' . $e->getMessage());
+			return response()->json(['success' => false, 'message' => $e->getMessage()], 200); // Changed from 500 to 200
+		}
+	}
+
+	public function getVehiclesFuelBalance(Request $request)
+	{
+		try {
+			// Get dates from request
+			$date1 = $request->get('date1');
+			$date2 = $request->get('date2');
+			
+			// Determine date format and convert accordingly
+			$startDate = $this->parseAndFormatDate($date1) ?? date('Y-m-d');
+			$endDate = $this->parseAndFormatDate($date2) ?? date('Y-m-d');
+			
+			$vehicleId = $request->get('vehicle_id');
+
+			// Get vehicles query
+			$query = VehicleModel::query();
+			if ($vehicleId && $vehicleId !== 'all') {
+				$query->where('id', $vehicleId);
+			}
+
+			// Get vehicles with their fuel records
+			$vehicles = $query->get();
+			
+			$results = [];
+			
+			foreach ($vehicles as $vehicle) {
+				// Get fuel records for date range
+				$fuelRecords = FuelModel::where('vehicle_id', $vehicle->id)
+					->whereDate('date', '>=', $startDate)
+					->whereDate('date', '<=', $endDate)
+					->get();
+				
+				// Get bookings for date range
+				$bookings = Bookings::where('vehicle_id', $vehicle->id)
+					->whereDate('pickup', '>=', $startDate)
+					->whereDate('pickup', '<=', $endDate)
+					->get();
+
+				// Calculate metrics
+				$initialBalance = floatval($vehicle->fuel_balance ?? 0);
+				$totalFuel = floatval($fuelRecords->sum('qty'));
+				$totalWithBalance = $totalFuel + $initialBalance;
+				
+				// Calculate total kilometers
+				$totalKms = 0;
+				foreach ($bookings as $booking) {
+					$distance = $booking->getMeta('distance');
+					if (is_string($distance)) {
+						$distanceValue = explode(' ', $distance)[0];
+						$totalKms += is_numeric($distanceValue) ? floatval($distanceValue) : 0;
+					}
+				}
+
+				$average = floatval($vehicle->average ?? 0);
+				if ($average > 0) {
+					$expectedConsumption = $totalKms / $average;
+					$remainingFuel = $totalWithBalance - $expectedConsumption;
+					
+					// Create vehicle identifier
+					$vehicleName = trim(implode('-', array_filter([
+						$vehicle->make,
+						$vehicle->model,
+						$vehicle->license_plate
+					])));
+
+					$results[$vehicleName] = [
+						'initial_balance' => round($initialBalance, 2),
+						'total_fuel' => round($totalFuel, 2),
+						'total_fuel_with_balance' => round($totalWithBalance, 2),
+						'total_kms' => round($totalKms, 2),
+						'average' => round($average, 2),
+						'expected_consumption' => round($expectedConsumption, 2),
+						'remaining_fuel' => round($remainingFuel, 2)
+					];
+				}
+			}
+
+			// Log the results for debugging
+			\Log::info('Fuel Balance Calculation Results', [
+				'start_date' => $startDate,
+				'end_date' => $endDate,
+				'vehicle_id' => $vehicleId,
+				'results' => $results
+			]);
+
+			return response()->json([
+				'success' => true,
+				'fuel_balances' => $results
+			]);
+
+		} catch (\Exception $e) {
+			\Log::error('Fuel Balance Error: ' . $e->getMessage(), [
+				'date1' => $request->get('date1'),
+				'date2' => $request->get('date2'),
+				'vehicle_id' => $request->get('vehicle_id'),
+				'trace' => $e->getTraceAsString()
+			]);
+			
+			return response()->json([
+				'success' => false,
+				'message' => 'Error calculating fuel balance: ' . $e->getMessage()
+			], 500);
+		}
+	}
+	
+	// Helper method to parse and format dates flexibly
+	private function parseAndFormatDate($dateString)
+	{
+		if (!$dateString) {
+			return null;
+		}
+	
+		try {
+			// Try parsing as DD-MM-YYYY first
+			try {
+				return Carbon::createFromFormat('d-m-Y', $dateString)->format('Y-m-d');
+			} catch (\Exception $e) {
+				// If that fails, try parsing as YYYY-MM-DD
+				return Carbon::parse($dateString)->format('Y-m-d');
+			}
+		} catch (\Exception $e) {
+			Log::error('Date Parsing Error: ' . $e->getMessage(), [
+				'date' => $dateString
+			]);
+			return null;
 		}
 	}
 
@@ -5377,6 +5505,7 @@ class ReportsController extends Controller
 				// Get fuel data
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
 					->whereBetween('date', [$start, $end])
+					->whereNull('deleted_at')
 					->get();
 				
 				$fuelArray = [];
@@ -5392,21 +5521,21 @@ class ReportsController extends Controller
 					$totalFuelQty += $f->qty;
 				}
 
-				$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
-				if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
-					$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
-					if (isset($fuelArray['Diesel'])) {
-						$fuelArray['Diesel']['ltr'][] = $adjustment;
-						$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
-						$totalFuelQty += $adjustment;
-						$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
-					} elseif (isset($fuelArray['Petrol'])) {
-						$fuelArray['Petrol']['ltr'][] = $adjustment;
-						$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
-						$totalFuelQty += $adjustment;
-						$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
-					}
-				}
+				// $vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+				// if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+				// 	$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+				// 	if (isset($fuelArray['Diesel'])) {
+				// 		$fuelArray['Diesel']['ltr'][] = $adjustment;
+				// 		$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
+				// 		$totalFuelQty += $adjustment;
+				// 		$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
+				// 	} elseif (isset($fuelArray['Petrol'])) {
+				// 		$fuelArray['Petrol']['ltr'][] = $adjustment;
+				// 		$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
+				// 		$totalFuelQty += $adjustment;
+				// 		$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
+				// 	}
+				// }
 
 				
 				// Get work orders
@@ -5499,6 +5628,7 @@ class ReportsController extends Controller
 			// Get fuel data
 			 $fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
             ->whereBetween('date', [$start, $end])
+			->whereNull('deleted_at')
             ->get();
         
 			$fuelArray = [];
@@ -5514,22 +5644,22 @@ class ReportsController extends Controller
 			}
 
 			// Apply fuel balance adjustment for single vehicle
-			$vehicle = VehicleModel::find($vehicle_id);
-			$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
-			if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
-				$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
-				if (isset($fuelArray['Diesel'])) {
-					$fuelArray['Diesel']['ltr'][] = $adjustment;
-					$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
-					$totalFuelQty += $adjustment;
-					$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
-				} elseif (isset($fuelArray['Petrol'])) {
-					$fuelArray['Petrol']['ltr'][] = $adjustment;
-					$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
-					$totalFuelQty += $adjustment;
-					$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
-				}
-			}
+			// $vehicle = VehicleModel::find($vehicle_id);
+			// $vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+			// if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+			// 	$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+			// 	if (isset($fuelArray['Diesel'])) {
+			// 		$fuelArray['Diesel']['ltr'][] = $adjustment;
+			// 		$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
+			// 		$totalFuelQty += $adjustment;
+			// 		$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
+			// 	} elseif (isset($fuelArray['Petrol'])) {
+			// 		$fuelArray['Petrol']['ltr'][] = $adjustment;
+			// 		$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
+			// 		$totalFuelQty += $adjustment;
+			// 		$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
+			// 	}
+			// }
 
 			// Get driver advances
 			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
@@ -5719,13 +5849,13 @@ class ReportsController extends Controller
 
 				$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
 				$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
-            if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
-                $adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
-                $totalFuelQty += $adjustment;
-                // Assuming the cost per unit is the same as the last fuel entry
-                $lastFuelCostPerUnit = $fuelModel->last()->cost_per_unit ?? 0;
-                $totalFuelCost += $adjustment * $lastFuelCostPerUnit;
-            }
+            // if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+            //     $adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+            //     $totalFuelQty += $adjustment;
+            //     // Assuming the cost per unit is the same as the last fuel entry
+            //     $lastFuelCostPerUnit = $fuelModel->last()->cost_per_unit ?? 0;
+            //     $totalFuelCost += $adjustment * $lastFuelCostPerUnit;
+            // }
 
 				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
 				$driver_salary = 0;
@@ -5829,22 +5959,22 @@ class ReportsController extends Controller
 				$totalFuelQty += $f->qty;
 			}
 
-			$vehicle = VehicleModel::find($vehicle_id);
-			$vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
-			if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
-				$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
-				if (isset($fuelArray['Diesel'])) {
-					$fuelArray['Diesel']['ltr'][] = $adjustment;
-					$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
-					$totalFuelQty += $adjustment;
-					$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
-				} elseif (isset($fuelArray['Petrol'])) {
-					$fuelArray['Petrol']['ltr'][] = $adjustment;
-					$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
-					$totalFuelQty += $adjustment;
-					$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
-				}
-			}
+			// $vehicle = VehicleModel::find($vehicle_id);
+			// $vehicleIdentifier = $vehicle->make . '-' . $vehicle->model . '-' . $vehicle->license_plate;
+			// if (isset($fuelBalanceAdjustments[$vehicleIdentifier])) {
+			// 	$adjustment = (float)$fuelBalanceAdjustments[$vehicleIdentifier];
+			// 	if (isset($fuelArray['Diesel'])) {
+			// 		$fuelArray['Diesel']['ltr'][] = $adjustment;
+			// 		$fuelArray['Diesel']['total'][] = $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]); // Assuming same cost per unit
+			// 		$totalFuelQty += $adjustment;
+			// 		$totalFuelCost += $adjustment * ($fuelArray['Diesel']['total'][0] / $fuelArray['Diesel']['ltr'][0]);
+			// 	} elseif (isset($fuelArray['Petrol'])) {
+			// 		$fuelArray['Petrol']['ltr'][] = $adjustment;
+			// 		$fuelArray['Petrol']['total'][] = $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]); // Assuming same cost per unit
+			// 		$totalFuelQty += $adjustment;
+			// 		$totalFuelCost += $adjustment * ($fuelArray['Petrol']['total'][0] / $fuelArray['Petrol']['ltr'][0]);
+			// 	}
+			// }
 
 			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
             	->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
@@ -5960,8 +6090,6 @@ class ReportsController extends Controller
 		// dd($start);
 		// dd($end);
 
-
-
 		if (!empty($vehicle_id) && !empty($documents)) {
 			$data['docs'] = VehicleDocs::where(['vehicle_id' => $vehicle_id, 'param_id' => $documents])->whereBetween('date', [$start, $end])->orderBy('id', 'DESC')->get();
 		} else if (!empty($vehicle_id) && empty($documents)) {
@@ -5971,11 +6099,7 @@ class ReportsController extends Controller
 		} else {
 			$data['docs'] = VehicleDocs::whereBetween('date', [$start, $end])->orderBy('id', 'DESC')->get();
 		}
-		// dd($data);
-
-		// Helper::totalBookingIncome($vehicle_id);
-		// $data['details'] = WorkOrders::select(['vendor_id', DB::raw('sum(price) as total')])->whereBetween('created_at', [$start, $end])->whereIn('vehicle_id', $vehicle_ids)->groupBy('vendor_id')->get();
-		// dd();
+		
 		$data['documents'] = Params::where('code', 'RenewDocuments')->pluck('label', 'id');
 		$data['result'] = "";
 		$data['request'] = $request->all();
@@ -5989,7 +6113,6 @@ class ReportsController extends Controller
 	public function documentRenewReport_print(Request $request)
 	{
 
-		// dd($request->all());
 
 		$data['vehicle'] = $vehicle = VehicleModel::find($request->get('vehicle_id'));
 		$data['docs'] = $docs = VehicleModel::find($request->get('documents'));
@@ -6006,10 +6129,6 @@ class ReportsController extends Controller
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
 
-		// dd($start);
-		// dd($end);
-
-
 
 		if (!empty($vehicle) && !empty($docs)) {
 			$data['docs'] = VehicleDocs::where(['vehicle_id' => $vehicle->id, 'param_id' => $docs->id])->whereBetween('date', [$start, $end])->orderBy('id', 'DESC')->get();
@@ -6021,8 +6140,6 @@ class ReportsController extends Controller
 			$data['docs'] = VehicleDocs::whereBetween('date', [$start, $end])->orderBy('id', 'DESC')->get();
 		}
 		// dd($data);
-
-
 		$data['documents'] = Params::where('code', 'RenewDocuments')->pluck('label', 'id');
 		$data['result'] = "";
 		$data['date'] = date("Y-m-d H:i:s");

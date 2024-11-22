@@ -135,11 +135,13 @@ Route::namespace('Admin')->group(function () {
         Route::post('/reports/upcoming-renewal', 'ReportsController@upcomingreport_post')->name('reports.upcoming-report')->middleware('userpermission:4');
         Route::post('/print-upcoming-renewal-report', 'ReportsController@print_upcomingreport')->middleware('userpermission:4');
         Route::get('/reports/vehicle-docs', 'ReportsController@documentRenewReport')->name('reports.vehicle-docs')->middleware('userpermission:4');
+        Route::delete('/vehicle-docs/{id}', 'VehicleDocsController@destroy')->name('vehicle-docs.destroy');
         Route::post('/reports/vehicle-docs', 'ReportsController@documentRenewReport_post')->name('reports.vehicle-docs')->middleware('userpermission:4');
         Route::post('/print-vehicle-docs-report', 'ReportsController@documentRenewReport_print')->middleware('userpermission:4');
         Route::get('/vehicle-docs/view_event/{id}', 'VehicleDocsController@view_event')->middleware('userpermission:1');
         Route::get('/vehicle-docs/renew-vehicles/{id}', 'VehicleDocsController@renewVehicles')->name('vehicle-docs.renew-vehicles')->middleware('userpermission:1');
-
+        Route::get('/vehicle-docs/{id}/edit', 'VehicleDocsController@edit')->name('vehicle-docs.edit');
+        Route::put('/vehicle-docs/{id}', 'VehicleDocsController@update')->name('vehicle-docs.update');
         Route::post('/vehicle-docs/single-save', 'VehicleDocsController@singleStore')->name('vehicle-docs.single-save')->middleware('userpermission:1');
         Route::post('/vehicle-docs/get-next-date', 'VehicleDocsController@getNextDate')->name('vehicle-docs.getNext')->middleware('userpermission:1');
         Route::resource('/vehicle-docs', 'VehicleDocsController')->middleware('userpermission:1');
@@ -273,6 +275,7 @@ Route::namespace('Admin')->group(function () {
         Route::get('/reports/get-vehicles-average', 'ReportsController@getVehiclesAverage');
         Route::post('/reports/update-averages', 'ReportsController@updateAverages');
         Route::post('/reports/update-fuel-balance', 'ReportsController@updateFuelBalance')->name('admin.update-fuel-balance');
+        Route::get('/reports/get-vehicles-fuel-balance', 'ReportsController@getVehiclesFuelBalance')->name('reports.get-vehicles-fuel-balance');
         Route::post('/reports/update-wheel-prices', 'ReportsController@updateWheelPrices')->name('reports.update-wheel-prices');
         Route::post('/payroll/payabletype', 'PayrollController@payabletype')->name('payroll.payabletype')->middleware('userpermission:4');
         Route::post('/payroll/purse', 'PayrollController@purse')->name('payroll.purse')->middleware('userpermission:4');

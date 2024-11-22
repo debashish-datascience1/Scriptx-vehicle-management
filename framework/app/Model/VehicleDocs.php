@@ -45,4 +45,8 @@ class VehicleDocs extends Model
     {
         return $this->hasOne("App\Model\Vendor", "id", "vendor_id");
     }
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
 }

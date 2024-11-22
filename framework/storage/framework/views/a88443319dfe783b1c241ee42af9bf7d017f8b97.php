@@ -105,12 +105,13 @@
                   </button>
                   <div class="dropdown-menu custom" role="menu">
                     <a class="dropdown-item mybtn vevent" data-id="<?php echo e($row->id); ?>" data-toggle="modal" data-target="#viewModal" title="<?php echo app('translator')->getFromJson('fleet.view'); ?>"><i class="fa fa-eye" aria-hidden="true" style="color:#269abc;"></i> <?php echo app('translator')->getFromJson('fleet.view'); ?></a>
-                    
-                  </div>
+                    <a class="dropdown-item"  href="<?php echo e(route('vehicle-docs.edit', $row->id)); ?>"> <span aria-hidden="true" class="fa fa-edit" style="color: #f0ad4e;"></span> <?php echo app('translator')->getFromJson('fleet.edit'); ?></a>
+                    <a class="dropdown-item delete-btn" href="#" data-id="<?php echo e($row->id); ?>">
+                        <span aria-hidden="true" class="fa fa-trash" style="color: #dd4b39"></span> <?php echo app('translator')->getFromJson('fleet.delete'); ?>
+                    </a>
                 </div>
-                <?php echo Form::open(['url' => 'admin/bookings/'.$row->id,'method'=>'DELETE','class'=>'form-horizontal','id'=>'book_'.$row->id]); ?>
-
-                <?php echo Form::hidden("id",$row->id); ?>
+                </div>
+                <?php echo Form::open(['route' => ['vehicle-docs.destroy', $row->id], 'method' => 'DELETE', 'class' => 'form-horizontal delete-form', 'id' => 'delete_'.$row->id]); ?>
 
                 <?php echo Form::close(); ?>
 
@@ -167,7 +168,14 @@
       })
   })
 
-
+  $(document).on('click', '.delete-btn', function(e) {
+      e.preventDefault();
+      var id = $(this).data('id');
+      
+      if(confirm('Are you sure you want to delete this vehicle document?')) {
+          $('#delete_' + id).submit();
+      }
+  });
 
   $('#chk_all').on('click',function(){
     if(this.checked){

@@ -688,93 +688,257 @@
                 });
             });
 
-            function showFuelBalanceModal() {
-                $('#fuelBalanceForm').empty();
+            // Function to format date in DD-MM-YYYY format
+            function formatDate(date) {
+                if (!date) return '';
 
-                $.ajax({
-                    url: '/VehicleMgmt/admin/reports/get-vehicles-average',
-                    method: 'GET',
-                    success: function(response) {
-                        const averages = response.averages;
+                // Check if date is already in YYYY-MM-DD format
+                if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    // Convert YYYY-MM-DD to DD-MM-YYYY
+                    const parts = date.split('-');
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+
+                // If date is in DD-MM-YYYY format, return as-is
+                return date;
+            }
+
+            function showFuelBalanceModal() {
+                // Show loading state immediately
+                $('#fuelBalanceForm').html(
+                    '<div class="text-center"><div class="spinner-border" role="status"></div><p>Loading fuel balances...</p></div>'
+                );
+                $('#fuelBalanceModal').modal('show');
+
+                // Get and format dates
+                const date1 = formatDate($('#date1').val());
+                const date2 = formatDate($('#date2').val());
+                const vehicleId = $('#vehicle_id').val();
+
+                // Function to safely handle responses
+                function handleResponse(response) {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new TypeError("Expected JSON response");
+                    }
+                    return response.json();
+                }
+
+                // Load fuel balances and averages
+                Promise.all([
+                        fetch(
+                            `/VehicleMgmt/admin/reports/get-vehicles-fuel-balance?date1=${date1}&date2=${date2}&vehicle_id=${vehicleId}`
+                        )
+                        .then(handleResponse)
+                        .catch(error => {
+                            console.error('Fuel balance fetch error:', error);
+                            return {
+                                fuel_balances: {}
+                            };
+                        }),
+                        fetch('/VehicleMgmt/admin/reports/get-vehicles-average')
+                        .then(handleResponse)
+                        .catch(error => {
+                            console.error('Averages fetch error:', error);
+                            return {
+                                averages: {}
+                            };
+                        })
+                    ])
+                    .then(([fuelResponse, avgResponse]) => {
+                        const fuelBalances = fuelResponse.fuel_balances || {};
+                        const averages = avgResponse.averages || {};
+
+                        $('#fuelBalanceForm').empty();
+
+                        // Add header row
+                        $('#fuelBalanceForm').append(`
+            <div class="form-group row font-weight-bold mb-3">
+                <div class="col-sm-6">Vehicle</div>
+                <div class="col-sm-3">Fuel Balance</div>
+                <div class="col-sm-3">Average</div>
+            </div>
+        `);
 
                         if ($('#vehicle_id').val() === 'all') {
                             $('#vehicle_id option').each(function() {
-                                var vehicleId = $(this).val();
-                                var vehicleName = $(this).text();
+                                const vehicleId = $(this).val();
+                                const vehicleName = $(this).text();
                                 if (vehicleId !== 'all' && vehicleId !== '') {
-                                    appendFuelBalanceInput(vehicleId, vehicleName, averages[
-                                        vehicleId]);
+                                    appendFuelBalanceInput(
+                                        vehicleId,
+                                        vehicleName,
+                                        averages[vehicleId] || 0,
+                                        (fuelBalances[vehicleName] ? fuelBalances[vehicleName]
+                                            .remaining_fuel : 0) || 0
+                                    );
                                 }
                             });
                         } else {
-                            var vehicleId = $('#vehicle_id').val();
-                            var vehicleName = $('#vehicle_id option:selected').text();
-                            if (vehicleId !== '' && vehicleName !== 'Select Vehicle') {
-                                appendFuelBalanceInput(vehicleId, vehicleName, averages[vehicleId]);
+                            const vehicleId = $('#vehicle_id').val();
+                            const vehicleName = $('#vehicle_id option:selected').text();
+                            if (vehicleId && vehicleName !== 'Select Vehicle') {
+                                appendFuelBalanceInput(
+                                    vehicleId,
+                                    vehicleName,
+                                    averages[vehicleId] || 0,
+                                    (fuelBalances[vehicleName] ? fuelBalances[vehicleName].remaining_fuel :
+                                        0) || 0
+                                );
                             }
                         }
-
-                        $('#fuelBalanceModal').modal('show');
-                    },
-                    error: function(xhr) {
-                        console.error('Error loading vehicle averages:', xhr);
-                        alert('Error loading vehicle averages. Please try again.');
-                    }
-                });
+                    })
+                    .catch(error => {
+                        console.error('Error in Promise.all:', error);
+                        $('#fuelBalanceForm').html(`
+            <div class="alert alert-danger">
+                <strong>Error loading data:</strong> ${error.message}
+                <br>Please try refreshing the page or contact support if the problem persists.
+            </div>
+        `);
+                    });
             }
 
-            function appendFuelBalanceInput(vehicleId, vehicleName, average) {
-                var input = `
-                    <div class="form-group row">
-                        <label for="fuel_balance_${vehicleId}" class="col-sm-6 col-form-label">${vehicleName}</label>
-                        <div class="col-sm-3">
-                            <input type="number" 
-                                class="form-control fuel-balance-input" 
-                                id="fuel_balance_${vehicleId}" 
-                                name="fuel_balance[${vehicleName}]" 
-                                data-vehicle-id="${vehicleId}"
-                                value="0">
-                        </div>
-                        <div class="col-sm-3">
-                            <input type="number" 
-                                class="form-control average-input" 
-                                name="average[${vehicleId}]" 
-                                value="${average || ''}" 
-                                step="0.01">
-                        </div>
+            function appendFuelBalanceInput(vehicleId, vehicleName, average, fuelBalance) {
+                const input = `
+                <div class="form-group row">
+                    <label class="col-sm-6 col-form-label">${vehicleName}</label>
+                    <div class="col-sm-3">
+                        <input type="number" 
+                            class="form-control fuel-balance-input" 
+                            name="fuel_balance[${vehicleName}]"
+                            data-vehicle-id="${vehicleId}"
+                            value="${parseFloat(fuelBalance || 0).toFixed(2)}"
+                            step="0.01">
                     </div>
-                `;
+                    <div class="col-sm-3">
+                        <input type="number" 
+                            class="form-control average-input" 
+                            name="average[${vehicleId}]"
+                            value="${parseFloat(average || 0).toFixed(2)}"
+                            step="0.01">
+                    </div>
+                </div>
+            `;
                 $('#fuelBalanceForm').append(input);
             }
 
+            // Handle fuel balance input changes
+            $(document).on('change', '.fuel-balance-input', function() {
+                const vehicleId = $(this).data('vehicle-id');
+                const fuelBalance = $(this).val();
 
-            $('#saveFuelBalance').on('click', function() {
-                var fuelBalanceData = {};
-                var averageData = {};
-
-                // Collect fuel balance data
-                $('.fuel-balance-input').each(function() {
-                    var vehicleName = $(this).attr('name').match(/\[(.*?)\]/)[1];
-                    fuelBalanceData[vehicleName] = $(this).val();
-                });
-
-                // Collect average data
-                $('.average-input').each(function() {
-                    var vehicleId = $(this).attr('name').match(/\[(.*?)\]/)[1];
-                    averageData[vehicleId] = $(this).val();
-                });
-
-                // Save both fuel balance and average data
                 $.ajax({
-                    url: '/VehicleMgmt/admin/reports/update-averages',
-                    method: 'POST',
-                    data: {
-                        averages: averageData,
-                        _token: $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
+                        url: '/VehicleMgmt/admin/reports/update-fuel-balance',
+                        method: 'POST',
+                        data: {
+                            vehicle_id: vehicleId,
+                            fuel_balance: fuelBalance,
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        }
+                    })
+                    .done(function(response) {
                         if (response.success) {
-                            // Continue with the original form submission
+                            // Show success feedback
+                            const $input = $(this);
+                            $input.addClass('is-valid');
+                            setTimeout(() => $input.removeClass('is-valid'), 2000);
+                        } else {
+                            throw new Error(response.message || 'Failed to update fuel balance');
+                        }
+                    })
+                    .fail(function(xhr) {
+                        console.error('Error updating fuel balance:', xhr);
+                        const $input = $(this);
+                        $input.addClass('is-invalid');
+                        $('<div class="invalid-feedback">').text('Failed to update fuel balance')
+                            .insertAfter($input);
+                        setTimeout(() => {
+                            $input.removeClass('is-invalid');
+                            $input.siblings('.invalid-feedback').remove();
+                        }, 3000);
+                    });
+            });
+
+            // Initialize datepickers
+            $(document).ready(function() {
+                $('#date1, #date2').datepicker({
+                    autoclose: true,
+                    format: 'dd-mm-yyyy'
+                });
+            });
+
+
+            $(document).ready(function() {
+                $('#saveFuelBalance').off('click').on('click', function() {
+                    // Show loading state only on the button
+                    const $saveButton = $('#saveFuelBalance');
+                    $saveButton.prop('disabled', true)
+                        .html(
+                            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...'
+                            );
+
+                    // Collect fuel balance data
+                    const fuelBalanceData = {};
+                    const averageData = {};
+                    const fuelBalancePromises = [];
+
+                    // Collect fuel balance inputs
+                    $('.fuel-balance-input').each(function() {
+                        const vehicleName = $(this).attr('name').match(/\[(.*?)\]/)[1];
+                        const vehicleId = $(this).data('vehicle-id');
+                        const fuelBalance = parseFloat($(this).val()) || 0;
+                        fuelBalanceData[vehicleName] = fuelBalance;
+
+                        const promise = $.ajax({
+                            url: '/VehicleMgmt/admin/reports/update-fuel-balance',
+                            method: 'POST',
+                            data: {
+                                vehicle_id: vehicleId,
+                                fuel_balance: fuelBalance,
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            }
+                        }).catch(error => {
+                            console.error('Fuel balance update error:', error);
+                            return Promise.resolve();
+                        });
+
+                        fuelBalancePromises.push(promise);
+                    });
+
+                    // Collect average data
+                    $('.average-input').each(function() {
+                        const vehicleId = $(this).attr('name').match(/\[(.*?)\]/)[1];
+                        averageData[vehicleId] = parseFloat($(this).val()) || 0;
+                    });
+
+                    // Add loading indicator to the form area
+                    const $formArea = $('#fuelBalanceForm');
+                    const $loadingOverlay = $(
+                        '<div class="text-center mt-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Processing...</p></div>'
+                        );
+                    $formArea.append($loadingOverlay);
+
+                    // Process all updates
+                    Promise.all(fuelBalancePromises)
+                        .then(() => {
+                            return $.ajax({
+                                url: '/VehicleMgmt/admin/reports/update-averages',
+                                method: 'POST',
+                                data: {
+                                    averages: averageData,
+                                    _token: $('meta[name="csrf-token"]').attr('content')
+                                }
+                            }).catch(error => {
+                                console.error('Average update error:', error);
+                                return Promise.resolve();
+                            });
+                        })
+                        .then(() => {
+                            // Update hidden input
                             $('input[name="fuel_balance_adjustments"]').remove();
                             $('<input>').attr({
                                 type: 'hidden',
@@ -782,17 +946,81 @@
                                 value: JSON.stringify(fuelBalanceData)
                             }).appendTo('form.form-block');
 
+                            // Close modal
+                            $('#fuelBalanceModal').modal('hide');
+
+                            // Add a small loading indicator to the report area
+                            const $reportArea = $('#reportContent');
+                            const $reportLoading = $(
+                                '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Generating report...</p></div>'
+                                );
+                            $reportArea.html($reportLoading);
+
+                            // Submit the report
+                            submitReport();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert(
+                                'An error occurred while saving. The report will still be generated.');
                             $('#fuelBalanceModal').modal('hide');
                             submitReport();
-                        } else {
-                            alert('Error saving average values. Please try again.');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error saving average values:', xhr);
-                        alert('Error saving average values. Please try again.');
+                        })
+                        .finally(() => {
+                            // Reset button state and remove loading overlay
+                            $saveButton.prop('disabled', false).html('Save and Continue');
+                            $loadingOverlay.remove();
+                        });
+                });
+            });
+
+            // Add some CSS for the loading indicators
+            $('<style>')
+                .text(`
+        .loading-overlay {
+            position: relative;
+            min-height: 100px;
+        }
+        .loading-content {
+            padding: 20px;
+            text-align: center;
+        }
+    `)
+                .appendTo('head');
+
+
+            // Add ability to track changes
+            let originalValues = {};
+
+            function trackOriginalValues() {
+                $('.fuel-balance-input').each(function() {
+                    const vehicleId = $(this).data('vehicle-id');
+                    originalValues[vehicleId] = $(this).val();
+                });
+            }
+
+            // Call this when modal opens
+            $('#fuelBalanceModal').on('shown.bs.modal', function() {
+                trackOriginalValues();
+            });
+
+            // Add warning when closing with unsaved changes
+            $('#fuelBalanceModal').on('hide.bs.modal', function(e) {
+                let hasChanges = false;
+                $('.fuel-balance-input').each(function() {
+                    const vehicleId = $(this).data('vehicle-id');
+                    if ($(this).val() !== originalValues[vehicleId]) {
+                        hasChanges = true;
+                        return false;
                     }
                 });
+
+                if (hasChanges) {
+                    const confirmed = confirm('You have unsaved changes. Are you sure you want to close?');
+                    if (!confirmed) {
+                        e.preventDefault();
+                    }
+                }
             });
 
             function submitReport() {
