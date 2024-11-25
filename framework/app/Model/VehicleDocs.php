@@ -14,7 +14,7 @@ class VehicleDocs extends Model
     protected $dates = ['deleted_at'];
     protected $table = "vehicle_docs";
     // protected $metaTable = 'vehicles_meta'; //optional.
-    protected $fillable = ['vehicle_id','driver_id','amount','vendor_id','param_id','is_renewed','date','till','status','remarks','method','ddno'];
+    protected $fillable = ['vehicle_id','driver_id','amount','vendor_id','param_id','is_renewed','date','till','status','remarks','method','ddno','payment_date'];
 
     // public function reviews()
     // {

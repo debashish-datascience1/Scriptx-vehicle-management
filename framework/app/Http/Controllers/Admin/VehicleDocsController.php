@@ -178,7 +178,23 @@ class VehicleDocsController extends Controller
 
     public function singleStore(Request $request)
     {
+
+        \Log::info('SingleStore Request Parameters:', [
+            'date' => $request->get('date'),
+            'payment_date' => $request->get('payment_date'),
+            'amount' => $request->get('amount'),
+            'vendor_id' => $request->get('vendor'),
+            'bank' => $request->get('bank'),
+            'method' => $request->get('method'),
+            'vehicle_id' => $request->get('vehicle_id'),
+            'doc_id' => $request->get('doc_id'),
+            'ddno' => $request->get('ddno'),
+            'remarks' => $request->get('remarks'),
+            'all_data' => $request->all()
+        ]);
+        // dd($request->all());
         $requestDate = !empty($request->get('date')) ? Carbon::createFromFormat('d-m-Y', $request->get('date')) : null;
+        $paymentDate = !empty($request->get('payment_date')) ? Carbon::createFromFormat('d-m-Y', $request->get('payment_date')) : null;
         $amount = $request->get('amount');
         $vendor_id = $request->get('vendor');
         $bank = $request->get('bank');
@@ -247,6 +263,7 @@ class VehicleDocsController extends Controller
             'vendor_id' => $vendor_id,
             'param_id' => $doc_id,
             'date' => $baseDate->format('Y-m-d'),
+            'payment_date' => $paymentDate ? $paymentDate->format('Y-m-d') : null,
             'till' => $till->format('Y-m-d'),
             'amount' => bcdiv($amount, 1, 2),
             'status' => 1,
@@ -374,6 +391,34 @@ class VehicleDocsController extends Controller
 
         // Format response
         $label = "<label> Valid Till : " . $newExpiryDate->format("d-m-Y") . "</label>";
+        return $label;
+    }
+
+    public function getNextDateEdit(Request $request)
+    {
+        // return $request->all();
+        $date = !empty($request->date) ? date("Y-m-d", strtotime($request->date)) : null;
+        $vehicle_id = $request->vehicle_id;
+        $doc_id = $request->doc_id;
+        $vdata = VehicleModel::find($vehicle_id);
+        $durationNameArray = [36 => 'ins_renew_duration', 37 => 'fitness_renew_duration', 38 => 'roadtax_renew_duration', 39 => 'permit_renew_duration', 40 => 'pollution_renew_duration'];
+        $durationUnitArray = [36 => 'insurance_duration_unit', 37 => 'fitness_duration_unit', 38 => 'roadtax_duration_unit', 39 => 'permit_duration_unit', 40 => 'pollution_duration_unit'];
+        $durationTime = $vdata->getMeta($durationNameArray[$doc_id]);
+        $durationUnit = $vdata->getMeta($durationUnitArray[$doc_id]);
+        $date = new Carbon($date);
+
+        if ($durationUnit == 'years') {
+            $date->addYears($durationTime)->subDay();
+        } elseif ($durationUnit == 'months') {
+            $date->addMonths($durationTime)->subDay();
+        } else { // days
+            $date->addDays($durationTime - 1);
+        }
+
+        // $newDate = $date->addDays($durationDays);
+        $label = "<label> Valid Till : ";
+        $label .= $date->format("d-m-Y");
+        $label .= "</label>";
         return $label;
     }
 
@@ -506,6 +551,7 @@ class VehicleDocsController extends Controller
         $vehicleDoc = VehicleDocs::findOrFail($id);
     
         $date = !empty($request->get('date')) ? date("Y-m-d", strtotime($request->get('date'))) : null;
+        $payment_date = !empty($request->get('payment_date')) ? date("Y-m-d", strtotime($request->get('payment_date'))) : null;
         $amount = $request->get('amount');
         $vendor_id = $request->get('vendor');
         $bank = $request->get('bank');
@@ -525,12 +571,13 @@ class VehicleDocsController extends Controller
         $durationUnit = $vehicleMod->getMeta($durationUnitArray[$doc_id]);
         $till = new Carbon($date);
     
-        if ($durationUnit == 'years')
-            $till->addYears($durationTime);
-        elseif ($durationUnit == 'months')
-            $till->addMonths($durationTime);
-        else
-            $till->addDays($durationTime);
+        if ($durationUnit == 'years') {
+            $till->addYears($durationTime)->subDay();
+        } elseif ($durationUnit == 'months') {
+            $till->addMonths($durationTime)->subDay();
+        } else { // days
+            $till->addDays($durationTime - 1);
+        }
     
         // Update Vehicle Document
         $dataUpdate = [
@@ -539,6 +586,7 @@ class VehicleDocsController extends Controller
             'vendor_id' => $vendor_id,
             'param_id' => $doc_id,
             'date' => $date,
+            'payment_date' => $payment_date,  // Add this line
             'till' => $till,
             'amount' => bcdiv($amount, 1, 2),
             'status' => 1,
@@ -570,6 +618,134 @@ class VehicleDocsController extends Controller
     
         return redirect()->route('vehicle-docs.index')->with('success', 'Vehicle Document updated successfully');
     }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $vehicleDoc = VehicleDocs::findOrFail($id);
+
+    //     $requestDate = !empty($request->get('date')) ? Carbon::createFromFormat('d-m-Y', $request->get('date')) : null;
+    //     $paymentDate = !empty($request->get('payment_date')) ? Carbon::createFromFormat('d-m-Y', $request->get('payment_date')) : null;
+    //     $amount = $request->get('amount');
+    //     $vendor_id = $request->get('vendor');
+    //     $bank = $request->get('bank');
+    //     $method = $request->get('method');
+    //     $vehicle_id = $request->get('vehicle_id');
+    //     $doc_id = $request->get('doc_id');
+    //     $ddno = $request->get('ddno');
+    //     $remarks = $request->get('remarks');
+
+    //     $durationNameArray = [
+    //         36 => 'ins_renew_duration', 
+    //         37 => 'fitness_renew_duration', 
+    //         38 => 'roadtax_renew_duration', 
+    //         39 => 'permit_renew_duration', 
+    //         40 => 'pollution_renew_duration'
+    //     ];
+        
+    //     $durationUnitArray = [
+    //         36 => 'insurance_duration_unit', 
+    //         37 => 'fitness_duration_unit', 
+    //         38 => 'roadtax_duration_unit', 
+    //         39 => 'permit_duration_unit', 
+    //         40 => 'pollution_duration_unit'
+    //     ];
+
+    //     $expiryKeyMap = [
+    //         36 => 'ins_exp_date',
+    //         37 => 'fitness_expdate',
+    //         38 => 'road_expdate',
+    //         39 => 'permit_expdate',
+    //         40 => 'pollution_expdate'
+    //     ];
+
+    //     $vehicleMod = VehicleModel::find($vehicle_id);
+    //     $driver_id = !empty($vehicleMod->driver) && !empty($vehicleMod->driver->assigned_driver) ? 
+    //         $vehicleMod->driver->assigned_driver->id : null;
+
+    //     // Get current expiry date
+    //     $currentExpiryDate = $vehicleMod->getMeta($expiryKeyMap[$doc_id]);
+    //     $currentExpiryDate = !empty($currentExpiryDate) ? 
+    //         Carbon::createFromFormat('Y-m-d', $currentExpiryDate) : null;
+
+    //     // Determine base date for calculations
+    //     $baseDate = $requestDate;
+    //     if ($currentExpiryDate && $currentExpiryDate->gt($requestDate)) {
+    //         $baseDate = $currentExpiryDate;
+    //     }
+
+    //     // Calculate new expiry date
+    //     $durationTime = $vehicleMod->getMeta($durationNameArray[$doc_id]);
+    //     $durationUnit = $vehicleMod->getMeta($durationUnitArray[$doc_id]);
+    //     $till = clone $baseDate;
+
+    //     if ($durationUnit == 'years') {
+    //         $till->addYears($durationTime)->subDay();
+    //     } elseif ($durationUnit == 'months') {
+    //         $till->addMonths($durationTime)->subDay();
+    //     } else { // days
+    //         $till->addDays($durationTime - 1);
+    //     }
+
+    //     // Update Vehicle Document
+    //     $dataUpdate = [
+    //         'vehicle_id' => $vehicle_id,
+    //         'driver_id' => $driver_id,
+    //         'vendor_id' => $vendor_id,
+    //         'param_id' => $doc_id,
+    //         'date' => $baseDate->format('Y-m-d'),
+    //         'payment_date' => $paymentDate ? $paymentDate->format('Y-m-d') : null,
+    //         'till' => $till->format('Y-m-d'),
+    //         'amount' => bcdiv($amount, 1, 2),
+    //         'status' => 1,
+    //         'remarks' => $remarks,
+    //         'method' => $method,
+    //         'ddno' => $ddno,
+    //     ];
+    //     $vehicleDoc->update($dataUpdate);
+
+    //     // Update expiry date in vehicles_meta
+    //     if (isset($expiryKeyMap[$doc_id])) {
+    //         \DB::table('vehicles_meta')
+    //             ->where('vehicle_id', $vehicle_id)
+    //             ->where('key', $expiryKeyMap[$doc_id])
+    //             ->where('type', 'string')
+    //             ->update([
+    //                 'value' => $till->format('Y-m-d'),
+    //                 'updated_at' => now()
+    //             ]);
+    //     }
+
+    //     // Update Transaction
+    //     $transaction = $vehicleDoc->transaction;
+    //     if ($transaction) {
+    //         $accountTransa['bank_id'] = $bank;
+    //         $accountTransa['total'] = bcdiv($amount, 1, 2);
+    //         $transaction->update($accountTransa);
+
+    //         // Update Income/Expense
+    //         $expense = $transaction->income_Expense;
+    //         if ($expense) {
+    //             $expenseUpdate = [
+    //                 'payment_method' => $method,
+    //                 'date' => $baseDate->format('Y-m-d'),
+    //                 'amount' => bcdiv($amount, 1, 2),
+    //                 'remarks' => $remarks,
+    //             ];
+    //             $expense->update($expenseUpdate);
+    //         }
+    //     }
+
+    //     \Log::info('Document update details:', [
+    //         'vehicle_id' => $vehicle_id,
+    //         'doc_id' => $doc_id,
+    //         'meta_key' => $expiryKeyMap[$doc_id] ?? 'not found',
+    //         'base_date' => $baseDate->format('Y-m-d'),
+    //         'till_date' => $till->format('Y-m-d'),
+    //         'current_expiry' => $currentExpiryDate ? $currentExpiryDate->format('Y-m-d') : 'none'
+    //     ]);
+
+    //     return redirect()->route('vehicle-docs.index')->with('success', 'Vehicle Document updated successfully');
+    // }
 
     /**
      * Remove the specified resource from storage.

@@ -144,6 +144,7 @@ Route::namespace('Admin')->group(function () {
         Route::put('/vehicle-docs/{id}', 'VehicleDocsController@update')->name('vehicle-docs.update');
         Route::post('/vehicle-docs/single-save', 'VehicleDocsController@singleStore')->name('vehicle-docs.single-save')->middleware('userpermission:1');
         Route::post('/vehicle-docs/get-next-date', 'VehicleDocsController@getNextDate')->name('vehicle-docs.getNext')->middleware('userpermission:1');
+        Route::post('/vehicle-docs/get-next-date-edit', 'VehicleDocsController@getNextDateEdit')->name('vehicle-docs.getNextEdit')->middleware('userpermission:1');
         Route::resource('/vehicle-docs', 'VehicleDocsController')->middleware('userpermission:1');
 
 
