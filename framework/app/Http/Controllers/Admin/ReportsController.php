@@ -3366,7 +3366,9 @@ class ReportsController extends Controller
 		$date = $request->date;
 		$date = Helper::ymd($date); 
 
-		$bookings = Bookings::whereDate('pickup', $date)->get();
+		$bookings = Bookings::whereDate('pickup', $date)
+			->whereNull('deleted_at')
+			->get();
 
 		$total_income = 0;
 		$total_expenses = 0; 
@@ -3384,22 +3386,26 @@ class ReportsController extends Controller
 		$total_income += $tyre_sales;
 
 		// Calculate fuel costs for all vehicles on the given date
-		$fuel_costs = FuelModel::whereDate('date', $date)->sum(DB::raw('qty * cost_per_unit'));
+		$fuel_costs = FuelModel::whereDate('date', $date)
+			->whereNull('deleted_at')
+			->sum(DB::raw('qty * cost_per_unit'));
 
 		// Calculate other costs (driver advances) for all vehicles on the given date
 		$other_costs = DB::table('bookings')
 			->whereDate('pickup', $date)
+			->whereNull('deleted_at')
 			->whereExists(function ($query) {
 				$query->select(DB::raw(1))
 					->from('bookings_meta')
 					->whereRaw('bookings_meta.booking_id = bookings.id')
 					->where('key', 'advance_pay')
+					->whereNull('deleted_at')  // Added for bookings_meta table
 					->whereRaw('value IS NOT NULL AND value != 0');
 			})
-			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
+			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay" AND deleted_at IS NULL)'));
 
 		// Calculate legal costs for all vehicles
-		$legal_costs = VehicleDocs::whereDate('date', '=', $date)
+		$legal_costs = VehicleDocs::whereDate('updated_at', '=', $date)
 			->whereNull('deleted_at')
 			->sum('amount');
 
@@ -3416,14 +3422,13 @@ class ReportsController extends Controller
 			->sum('price');
 
 		// Calculate FastTag expenses for the day
-		$fastag_expenses = DB::table('fastags')
+		$fastag_expenses = DB::table('bank_transactions')
 			->whereDate('date', $date)
-			->whereNull('deleted_at')  
+			->whereNull('deleted_at')
 			->sum('amount');
 
-		// Calculate total expenses (now including FastTag)
+		// Rest of the code remains the same
 		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses;
-
 		$cash_balance = $total_income - $total_expenses;
 
 		$data = [
@@ -3450,7 +3455,9 @@ class ReportsController extends Controller
 		$date = $request->date;
 		$date = Helper::ymd($date);
 
-		$bookings = Bookings::whereDate('pickup', $date)->get();
+		$bookings = Bookings::whereDate('pickup', $date)
+			->whereNull('deleted_at')
+			->get();
 
 		$total_income = 0;
 		$total_expenses = 0;
@@ -3469,22 +3476,26 @@ class ReportsController extends Controller
 		$total_income += $tyre_sales;
 
 		// Calculate fuel costs for all vehicles on the given date
-		$fuel_costs = FuelModel::whereDate('date', $date)->sum(DB::raw('qty * cost_per_unit'));
+		$fuel_costs = FuelModel::whereDate('date', $date)
+			->whereNull('deleted_at')
+			->sum(DB::raw('qty * cost_per_unit'));
 
 		// Calculate other costs (driver advances) for all vehicles on the given date
 		$other_costs = DB::table('bookings')
 			->whereDate('pickup', $date)
+			->whereNull('deleted_at')
 			->whereExists(function ($query) {
 				$query->select(DB::raw(1))
 					->from('bookings_meta')
 					->whereRaw('bookings_meta.booking_id = bookings.id')
 					->where('key', 'advance_pay')
+					->whereNull('deleted_at')  // Added for bookings_meta table
 					->whereRaw('value IS NOT NULL AND value != 0');
 			})
-			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay")'));
+			->sum(DB::raw('(SELECT CAST(value AS DECIMAL(10,2)) FROM bookings_meta WHERE bookings_meta.booking_id = bookings.id AND `key` = "advance_pay" AND deleted_at IS NULL)'));
 
 		// Calculate legal costs for all vehicles
-		$legal_costs = VehicleDocs::whereDate('date', '=', $date)
+		$legal_costs = VehicleDocs::whereDate('updated_at', '=', $date)
 			->whereNull('deleted_at')
 			->sum('amount');
 
@@ -3501,9 +3512,9 @@ class ReportsController extends Controller
 			->sum('price');
 
 		// Calculate FastTag expenses for the day
-		$fastag_expenses = DB::table('fastags')
+		$fastag_expenses = DB::table('bank_transactions')
 			->whereDate('date', $date)
-			->whereNull('deleted_at')  // Add this if your table has soft deletes
+			->whereNull('deleted_at')
 			->sum('amount');
 
 		// Calculate total expenses (now including FastTag)
@@ -3520,7 +3531,7 @@ class ReportsController extends Controller
 			'legal_costs' => round($legal_costs, 2),
 			'tyre_purchase' => round($tyre_purchase, 2),
 			'work_order_costs' => round($work_order_costs, 2),
-			'fastag_expenses' => round($fastag_expenses, 2),  // Add this line
+			'fastag_expenses' => round($fastag_expenses, 2),
 			'cash_balance' => round($cash_balance, 2),
 			'bookings' => $bookings,
 			'tyre_sales' => round($tyre_sales, 2),
@@ -5385,9 +5396,11 @@ class ReportsController extends Controller
 
 		$groupId = DB::table('vehicle_group')
 			->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower('ranisati') . '%'])
+			->whereNull('deleted_at')
 			->value('id');
 		// dd($groupId);
 		$data['vehicles'] = VehicleModel::where('group_id', $groupId)
+			->whereNull('deleted_at')
 			->select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
 			->pluck('name', 'id')
 			->prepend('All Vehicles', 'all');
@@ -5395,6 +5408,7 @@ class ReportsController extends Controller
 		// Set date range
 		if ($request->get('date1') == null) {
 			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->whereNull('deleted_at')  // Added check
 				->orderBy('pickup', 'ASC')
 				->take(1)
 				->first('pickup')->pickup;
@@ -5404,6 +5418,7 @@ class ReportsController extends Controller
 	
 		if ($request->get('date2') == null) {
 			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->whereNull('deleted_at')  // Added check
 				->orderBy('pickup', 'DESC')
 				->take(1)
 				->first('pickup')->pickup;
@@ -5430,6 +5445,7 @@ class ReportsController extends Controller
 
 			// Get all vehicles for processing
 			$vehicles = VehicleModel::where('group_id', $groupId)
+			->whereNull('vehicles.deleted_at') 
             ->leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
             ->select('vehicles.*', 'wheels.name as wheel_name')
             ->orderBy('vehicles.id');			
@@ -5447,6 +5463,7 @@ class ReportsController extends Controller
 				// Get bookings data
 				$bookings = Bookings::where('vehicle_id', $vehicle->id)
                 	->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
+					->whereNull('deleted_at')  // Added check
 					->get();
 				
 				$totalKms = 0;
@@ -5489,14 +5506,18 @@ class ReportsController extends Controller
 				}
 				// dd($updatedWheelPrices);
 
-				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)
+					->first();
 				$driver_salary = 0;
 				if ($driver) {
-					$userData = User::where('id', $driver->driver_id)->first();
+					$userData = User::where('id', $driver->driver_id)
+						->whereNull('deleted_at')  // Added check
+						->first();	
 					if ($userData) {
 						$leaves = Leave::where('driver_id', $driver->driver_id)
 							->whereBetween('date', [$start, $end])
 							->where('is_present', 1)
+							->whereNull('deleted_at')
 							->count();
 						$days_present = min($leaves, 30);
 						$driver_salary = ($userData->salary / 30) * $days_present;
@@ -5562,6 +5583,7 @@ class ReportsController extends Controller
 				// Calculate driver advances
 				$advanceBookings = Bookings::where('vehicle_id', $vehicle->id)
             		->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
+					// ->whereNull('deleted_at')  // Added check
 					->meta()
 					->where(function ($query) {
 						$query->where('bookings_meta.key', '=', 'advance_pay')
@@ -5612,6 +5634,7 @@ class ReportsController extends Controller
 			// Get bookings data
 			$bookings = Bookings::where('vehicle_id', $vehicle_id)
             	->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
+				->whereNull('deleted_at')  // Added check
 				->get();
 
 			foreach ($bookings as $b) {
@@ -5664,6 +5687,7 @@ class ReportsController extends Controller
 			// Get driver advances
 			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
 				->whereBetween('pickup', [$start, $end])
+				// ->whereNull('deleted_at')
 				->meta()
 				->where(function ($query) {
 					$query->where('bookings_meta.key', '=', 'advance_pay')
@@ -5692,6 +5716,7 @@ class ReportsController extends Controller
 			// Get work orders
 			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
 				->whereBetween('required_by', [$start, $end])
+				->whereNull('deleted_at')  // Added check
 				->get();
 			
 			$prepArray = [];
@@ -5717,6 +5742,7 @@ class ReportsController extends Controller
 			$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
 			$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))
 				->whereIn('work_id', $workOrderIds)
+				->whereNull('deleted_at')  // Added check
 				->groupBy('part_id')
 				->get();
 
@@ -5740,14 +5766,17 @@ class ReportsController extends Controller
 
 		$groupId = DB::table('vehicle_group')
         	->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower('ranisati') . '%'])
+			->whereNull('deleted_at')
         	->value('id');
 		$data['vehicles'] = VehicleModel::where('group_id', $groupId)
+			->whereNull('deleted_at')
         	->select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
         	->pluck('name', 'id')
         	->prepend('All Vehicles', 'all');
 
 		if ($request->get('date1') == null) {
 			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->whereNull('deleted_at')
 				->orderBy('pickup', 'ASC')
 				->take(1)
 				->first('pickup')->pickup;
@@ -5757,6 +5786,7 @@ class ReportsController extends Controller
 	
 		if ($request->get('date2') == null) {
 			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+				->whereNull('deleted_at')
 				->orderBy('pickup', 'DESC')
 				->take(1)
 				->first('pickup')->pickup;
@@ -5776,6 +5806,7 @@ class ReportsController extends Controller
 			$data['vehicle'] = null;
 			
 			$vehicles = VehicleModel::where('group_id', $groupId)
+				->whereNull('vehicles.deleted_at') 
 				->leftJoin('wheels', 'vehicles.wheel', '=', 'wheels.id')
 				->select('vehicles.*', 'wheels.name as wheel_name')
 				->orderBy('vehicles.id')
@@ -5787,6 +5818,7 @@ class ReportsController extends Controller
 			foreach ($vehicles as $vehicle) {
 				$bookings = Bookings::where('vehicle_id', $vehicle->id)
             		->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])
+					->whereNull('deleted_at') 
 					->get();
 				
 				$totalKms = 0;
@@ -5837,6 +5869,7 @@ class ReportsController extends Controller
 				
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
 					->whereBetween('date', [$start, $end])
+					->whereNull('deleted_at') 
 					->get();
 				
 				$totalFuelCost = 0;
@@ -5857,13 +5890,17 @@ class ReportsController extends Controller
             //     $totalFuelCost += $adjustment * $lastFuelCostPerUnit;
             // }
 
-				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)->first();
+				$driver = DriverVehicleModel::where('vehicle_id', $vehicle->id)
+					->first();
 				$driver_salary = 0;
 				if ($driver) {
-					$userData = User::where('id', $driver->driver_id)->first();
+					$userData = User::where('id', $driver->driver_id)
+						->whereNull('deleted_at')  // Added check
+						->first();	
 					if ($userData) {
 						$leaves = Leave::where('driver_id', $driver->driver_id)
 							->whereBetween('date', [$start, $end])
+							->whereNull('deleted_at')  // Added check
 							->where('is_present', 1)
 							->count();
 						$days_present = min($leaves, 30);
@@ -5873,6 +5910,7 @@ class ReportsController extends Controller
 
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
 					->whereBetween('required_by', [$start, $end])
+					->whereNull('deleted_at')  // Added check
 					->get();
 				
 				$workOrderTotal = WorkOrders::where('vehicle_id', $vehicle->id)
@@ -5929,7 +5967,7 @@ class ReportsController extends Controller
 		} else {
 			// Individual vehicle report
 			$vehicle_id = $request->get('vehicle_id');
-			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])->get();
+			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])->whereNull('deleted_at')->get();
 
 			$book = ['kms' => [], 'fuel' => [], 'price' => []];
 			foreach ($bookings as $b) {
@@ -5944,6 +5982,7 @@ class ReportsController extends Controller
 
 			$fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
 				->whereBetween('date', [$start, $end])
+				->whereNull('deleted_at')  // Added check
 				->get();
 			
 			$fuelArray = [];
@@ -6002,6 +6041,7 @@ class ReportsController extends Controller
 
 			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
 				->whereBetween('required_by', [$start, $end])
+				->whereNull('deleted_at')  // Added check
 				->get();
 			$prepArray = ['gtotal' => [], 'cgst' => [], 'sgst' => [], 'vendors' => [], 'status' => [], 'id' => []];
 			foreach ($workorders as $wo) {
@@ -6024,11 +6064,12 @@ class ReportsController extends Controller
 			$workOrderIds = isset($prepArray['id']) && count($prepArray['id']) > 0 ? $prepArray['id'] : [];
 			$data['partsUsed'] = PartsUsedModel::select('part_id', DB::raw('SUM(total) as total'), DB::raw('SUM(qty) as qty'))
 				->whereIn('work_id', $workOrderIds)
+				->whereNull('deleted_at')  // Added check
 				->groupBy('part_id')
 				->get();
 
 			$data['request'] = $request->all();
-			$data['vehicle'] = $vehicle;
+			$data['vehicle'] = VehicleModel::where('id', $vehicle_id)->first();
 			$data['from_date'] = $start;
 			$data['to_date'] = $end;
 			$data['book'] = Helper::toCollection($book);

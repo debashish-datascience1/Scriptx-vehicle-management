@@ -719,10 +719,16 @@ class Helper
 
     public static function renewLastday($date)
     {
-        $to = Carbon::now();
-        $from = Carbon::createFromFormat('Y-m-d', $date);
-        return $to->diffInDays($from, false);
-        // dd($to->diffInDays($from,false));
+        if (empty($date)) return 0;
+        
+        $early_renewal_date = date('Y-m-d', strtotime($date . ' -1 month'));
+        $current_date = date('Y-m-d');
+        
+        if (strtotime($current_date) >= strtotime($early_renewal_date)) {
+            return 0; // Eligible for renewal
+        }
+        
+        return ceil((strtotime($early_renewal_date) - strtotime($current_date)) / (60 * 60 * 24));
     }
 
     public static function accountBalance($id)
@@ -829,43 +835,54 @@ class Helper
         return self::toCollection($newArray);
     }
 
-    public static function checkEligibleRenewalVehicle($vehicle_id, $date_offset = 0) //$date_offset is used for how many days before the user can see the upcoming renew vehicles
-    {
-        $renewDocs = Params::where('code', 'RenewDocuments')->get();
-        $docparamArray = [
-            36 => ['ins_renew_duration', 'ins_renew_amount', 'ins_exp_date'],
-            37 => ['fitness_renew_duration', 'fitness_renew_amount', 'fitness_expdate'],
-            38 => ['roadtax_renew_duration', 'roadtax_renew_amount', 'road_expdate'],
-            39 => ['permit_renew_duration', 'permit_renew_amount', 'permit_expdate'],
-            40 => ['pollution_renew_duration', 'pollution_renew_amount', 'pollution_expdate']
-        ];
-        $ez_array = array();
-        foreach ($renewDocs as $rn) {
-            $dbDoc = VehicleDocs::where(['vehicle_id' => $vehicle_id, 'param_id' => $rn->id]);
-            if ($dbDoc->exists()) {
-                $date = $dbDoc->orderBy('id', 'DESC')->first()->till;
-            } else {
-                $date = VehicleModel::find($vehicle_id)->getMeta($docparamArray[$rn->id][2]);
-            }
-
-            if (!empty($date)) {
-                if (!empty($date_offset) && $date_offset != 0)
-                    $is_eligible = strtotime(date("Y-m-d") . "-$date_offset days") >= strtotime($date) ? 1 : 0;
-                else
-                    $is_eligible = strtotime(date("Y-m-d")) >= strtotime($date) ? 1 : 0;
-            } else {
-                $is_eligible = 0;
-            }
-            array_push($ez_array, $is_eligible);
-        }
-
-        if (array_sum($ez_array) > 0) {
-            $resp['status'] = true;
+    public static function checkEligibleRenewalVehicle($vehicle_id, $date_offset = 30) // Changed default to 30 days
+{
+    $renewDocs = Params::where('code', 'RenewDocuments')->get();
+    $docparamArray = [
+        36 => ['ins_renew_duration', 'ins_renew_amount', 'ins_exp_date'],
+        37 => ['fitness_renew_duration', 'fitness_renew_amount', 'fitness_expdate'],
+        38 => ['roadtax_renew_duration', 'roadtax_renew_amount', 'road_expdate'],
+        39 => ['permit_renew_duration', 'permit_renew_amount', 'permit_expdate'],
+        40 => ['pollution_renew_duration', 'pollution_renew_amount', 'pollution_expdate']
+    ];
+    $ez_array = array();
+    
+    foreach ($renewDocs as $rn) {
+        $dbDoc = VehicleDocs::where(['vehicle_id' => $vehicle_id, 'param_id' => $rn->id]);
+        if ($dbDoc->exists()) {
+            $date = $dbDoc->orderBy('id', 'DESC')->first()->till;
         } else {
-            $resp['status'] = false;
+            $date = VehicleModel::find($vehicle_id)->getMeta($docparamArray[$rn->id][2]);
         }
-        return Helper::toCollection($resp);
+
+        if (!empty($date)) {
+            // Calculate date 1 month before expiration
+            $early_renewal_date = date('Y-m-d', strtotime($date . ' -1 month'));
+            $is_eligible = strtotime(date('Y-m-d')) >= strtotime($early_renewal_date) ? 1 : 0;
+        } else {
+            $is_eligible = 0;
+        }
+        array_push($ez_array, $is_eligible);
     }
+
+    if (array_sum($ez_array) > 0) {
+        $resp['status'] = true;
+    } else {
+        $resp['status'] = false;
+    }
+    return Helper::toCollection($resp);
+}
+
+// Add this new helper method to calculate days until renewal is allowed
+public static function daysUntilRenewalAllowed($expiration_date) 
+{
+    $early_renewal_date = date('Y-m-d', strtotime($expiration_date . ' -1 month'));
+    $current_date = date('Y-m-d');
+    
+    $days = floor((strtotime($early_renewal_date) - strtotime($current_date)) / (60 * 60 * 24));
+    return $days > 0 ? $days : 0;
+}
+
 
     public static function fuelPackageData(String $string = null)
     {
