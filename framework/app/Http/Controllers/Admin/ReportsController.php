@@ -736,8 +736,14 @@ class ReportsController extends Controller
 			$t->org_id = $shalom->exists() ? $shalom->first()->customer_id : null;
 			$t->date = $shalom->exists() ? $shalom->first()->pickup : null;
 			$t->is_bulk = null;
-		}
 
+			$customer_payment = DB::table('bookings_meta')
+			->where('booking_id', $t->from_id)
+			->where('key', 'payment_amount')
+			->value('value');
+		
+			$t->customer_payment = $customer_payment;
+		}
 		$transactions = $transactions->where('org_id', $customer_id)->where('date', '!=', null);
 		// dd($transactions);
 		$bulkPayment = BulkPayment::get();
@@ -750,6 +756,10 @@ class ReportsController extends Controller
 
 				// dd($check_vendorid,$customer_id);
 				if ($check_vendorid == $customer_id) { //ensuring searched vendor data inserted
+					$customer_payment = DB::table('bookings_meta')
+						->where('booking_id', $bp->id)
+						->where('key', 'payment_amount')
+						->value('value');
 					$ref_no = empty($bp->single_bulk_list) ? null : $bp->single_bulk_list->transaction->getRefNo->ref_no; //reference no or transactionid
 					// dd(123);
 					$prep = [
@@ -769,6 +779,7 @@ class ReportsController extends Controller
 						"org_id" => $bp->cv_id,
 						"date" => $bp->date,
 						"is_bulk" => 1,
+						"customer_payment" => $customer_payment,
 						// 'bulk_data' => $bp,
 					];
 					$baked = Helper::toCollection($prep);
@@ -847,6 +858,13 @@ class ReportsController extends Controller
 			$t->org_id = $shalom->exists() ? $shalom->first()->customer_id : null;
 			$t->date = $shalom->exists() ? $shalom->first()->pickup : null;
 			$t->is_bulk = null;
+
+			$customer_payment = DB::table('bookings_meta')
+			->where('booking_id', $t->from_id)
+			->where('key', 'payment_amount')
+			->value('value');
+		
+			$t->customer_payment = $customer_payment;
 		}
 
 		$transactions = $transactions->where('org_id', $customer_id)->where('date', '!=', null);
@@ -860,7 +878,11 @@ class ReportsController extends Controller
 				$check_vendorid = empty($bp->single_bulk_list) ? null : $bp->single_bulk_list->transaction->booking->customer_id;
 
 				// dd($check_vendorid,$customer_id);
-				if ($check_vendorid == $customer_id) { //ensuring searched vendor data inserted
+				if ($check_vendorid == $customer_id) {
+					$customer_payment = DB::table('bookings_meta')
+						->where('booking_id', $bp->id)
+						->where('key', 'payment_amount')
+						->value('value'); //ensuring searched vendor data inserted
 					$ref_no = empty($bp->single_bulk_list) ? null : $bp->single_bulk_list->transaction->getRefNo->ref_no; //reference no or transactionid
 					// dd(123);
 					$prep = [
@@ -880,6 +902,8 @@ class ReportsController extends Controller
 						"org_id" => $bp->cv_id,
 						"date" => $bp->date,
 						"is_bulk" => 1,
+						"customer_payment" => $customer_payment,
+
 						// 'bulk_data' => $bp,
 					];
 					$baked = Helper::toCollection($prep);
@@ -926,10 +950,6 @@ class ReportsController extends Controller
 			$opening_balance = $customer_balance;
 			$curr_transactions = $transactions;
 		}
-
-
-
-
 		// dd($transactions->reverse()->toArray());
 		$customers = DB::table('bookings')->join('users', 'bookings.customer_id', '=', 'users.id')->select('users.name as customer_name', 'users.id as customer_id')->groupBy('bookings.customer_id')->pluck('customer_name', 'customer_id');
 
@@ -1020,6 +1040,132 @@ class ReportsController extends Controller
 	// 	// }
 	// 	return view("reports.booking", $data);
 	// }
+
+	public function fastag()
+	{
+		$bank_accounts = BankAccount::where(function ($query) {
+			$query->whereRaw('LOWER(bank) LIKE ?', ['%fastag%'])
+				->orWhereRaw('LOWER(bank) LIKE ?', ['%fast tag%']);
+		})->get();
+	
+		// Create a dropdown with actual bank account IDs, preserving original keys
+		$dropdown = ['all' => 'ALL'];
+		foreach ($bank_accounts as $account) {
+			$dropdown[$account->id] = $account->bank;
+		}
+		$data['bank_accounts'] = $dropdown;
+	
+		return view('reports.fastag', $data);
+	}
+	
+	public function fastagPost(Request $request)
+	{
+		$bank_accounts = BankAccount::where(function ($query) {
+			$query->whereRaw('LOWER(bank) LIKE ?', ['%fastag%'])
+				->orWhereRaw('LOWER(bank) LIKE ?', ['%fast tag%']);
+		})->get();
+	
+		// Create a dropdown with actual bank account IDs, preserving original keys
+		$dropdown = ['all' => 'ALL'];
+		foreach ($bank_accounts as $account) {
+			$dropdown[$account->id] = $account->bank;
+		}
+		$data['bank_accounts'] = $dropdown;
+	
+		$data['request'] = $request;
+	
+		// Validate input
+		$request->validate([
+			'bank_account_id' => 'required',
+			'from_date' => 'required',
+			'to_date' => 'required'
+		]);
+	
+		// Convert dates to proper format
+		$from_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->from_date)));
+		$to_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->to_date)));
+	
+		// Base query for Fastag transactions
+		$query = Fastag::where('deleted_at', null)
+			->whereBetween('date', [$from_date, $to_date]);
+	
+		// If 'all' is not selected, filter by bank account
+		if ($request->bank_account_id !== 'all') {
+			$query->where('bank_account_id', $request->bank_account_id);
+		}
+	
+		// Fetch Fastag records
+		$data['transactions'] = $query->get()
+			->map(function ($transaction) {
+				// Remove transaction_id and id from the result
+				return collect($transaction->toArray())
+					->except(['id', 'transaction_id'])
+					->all();
+			});
+	
+		// Calculate total amount
+		$data['total_amount'] = $query->sum('amount');
+	
+		return view('reports.fastag', $data);
+	}
+
+	public function printFastagReport(Request $request)
+	{
+		// Validate input
+		$request->validate([
+			'bank_account_id' => 'required',
+			'from_date' => 'required',
+			'to_date' => 'required'
+		]);
+
+		// Convert dates to proper format
+		$from_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->from_date)));
+		$to_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->to_date)));
+
+		// Base query for Fastag transactions
+		$query = Fastag::where('deleted_at', null)
+			->whereBetween('date', [$from_date, $to_date]);
+
+		// Handle 'ALL' option
+		if ($request->bank_account_id === 'all') {
+			// Get all Fastag bank accounts
+			$fastagBankAccounts = BankAccount::where(function ($query) {
+				$query->whereRaw('LOWER(bank) LIKE ?', ['%fastag%'])
+					->orWhereRaw('LOWER(bank) LIKE ?', ['%fast tag%']);
+			})->get();
+
+			// Fetch Fastag records for all bank accounts
+			$transactions = $query->whereIn('bank_account_id', $fastagBankAccounts->pluck('id'))->get();
+
+			// Calculate total amount for all bank accounts
+			$total_amount = $query->whereIn('bank_account_id', $fastagBankAccounts->pluck('id'))->sum('amount');
+
+			// Prepare a dummy bank account object for the report
+			$bankAccount = new \stdClass();
+			$bankAccount->bank = 'ALL Fastag Accounts';
+			$bankAccount->account_no = '-';
+		} else {
+			// Fetch Bank Account Details
+			$bankAccount = BankAccount::findOrFail($request->bank_account_id);
+
+			// Fetch Fastag records for specific bank account
+			$transactions = $query->where('bank_account_id', $request->bank_account_id)->get();
+
+			// Calculate total amount for specific bank account
+			$total_amount = $query->where('bank_account_id', $request->bank_account_id)->sum('amount');
+		}
+
+		// Prepare view data
+		$data = [
+			'transactions' => $transactions,
+			'total_amount' => $total_amount,
+			'bank_account' => $bankAccount,
+			'from_date' => $from_date,
+			'to_date' => $to_date
+		];
+
+		return view('reports.print-fastag', $data);
+	}
 
 	public function booking()
 	{

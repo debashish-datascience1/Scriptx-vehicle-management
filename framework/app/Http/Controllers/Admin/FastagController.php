@@ -120,7 +120,8 @@ class FastagController extends Controller
                     'vehicle_id' => $vehicleId,  // Explicitly set the vehicle_id
                     'registration_number' => $registrationNumber,
                     'transaction_id' => $transaction_id,
-                    'total_amount' => $total
+                    'total_amount' => $total,
+                    'bank_account_id' => $fastagId
                 ]);
             }
 
@@ -181,61 +182,67 @@ class FastagController extends Controller
         return view('fastag.edit', $data);
    }
 
-   public function update(Request $request, $id)
-   {
-       $validatedData = $request->validate([
-           'vehicle_id' => 'required|array',
-           'vehicle_id.*' => 'exists:vehicles,id',
-           'fastag' => 'required|exists:bank_account,id',
-           'date' => 'required|array',
-           'date.*' => 'required|date',
-           'toll_gate_name' => 'required|array',
-           'toll_gate_name.*' => 'required|string|max:255',
-           'amount' => 'required|array',
-           'amount.*' => 'required|numeric|min:0',
-           'grand_total' => 'required|numeric|min:0',
-       ]);
-   
-       try {
-           DB::beginTransaction();
-   
-           $fastag = Fastag::findOrFail($id);
-           $transaction_id = $fastag->transaction_id;
-   
-           // Delete existing entries for this transaction
-           Fastag::where('transaction_id', $transaction_id)->delete();
-   
-           $total = $request->grand_total;
-           $fastagId = $validatedData['fastag'];
-   
-           foreach ($validatedData['vehicle_id'] as $key => $vehicleId) {
-               // Fetch the vehicle registration number
-               $vehicle = VehicleModel::findOrFail($vehicleId);
-               $registrationNumber = "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}";
-   
-               $this->createFastagEntry(
-                   $validatedData['toll_gate_name'][$key],
-                   $validatedData['amount'][$key],
-                   $fastagId,
-                   $validatedData['date'][$key],
-                   $registrationNumber,
-                   $vehicleId,  // Pass vehicle_id to the create function
-                   $transaction_id,
-                   $total
-               );
-           }
-   
-           DB::commit();
-           return redirect()->route('fastag.index')
-               ->with('success', 'Fastag entries updated successfully.');
-   
-       } catch (\Exception $e) {
-           DB::rollBack();
-           \Log::error('FastTag Update Error: ' . $e->getMessage());
-           return redirect()->route('fastag.index')
-               ->with('error', 'Error updating Fastag entries. Please try again.');
-       }
-   }
+    public function update(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'vehicle_id' => 'required|array',
+            'vehicle_id.*' => 'exists:vehicles,id',
+            'fastag' => 'required|exists:bank_account,id',
+            'date' => 'required|array',
+            'date.*' => 'required|date',
+            'toll_gate_name' => 'required|array',
+            'toll_gate_name.*' => 'required|string|max:255',
+            'amount' => 'required|array',
+            'amount.*' => 'required|numeric|min:0',
+            'grand_total' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $fastag = Fastag::findOrFail($id);
+            $transaction_id = $fastag->transaction_id;
+
+            // Delete existing entries for this transaction
+            Fastag::where('transaction_id', $transaction_id)->delete();
+
+            $total = $request->grand_total;
+            $fastagId = $validatedData['fastag'];
+
+            foreach ($validatedData['vehicle_id'] as $key => $vehicleId) {
+                // Fetch the vehicle registration number
+                $vehicle = VehicleModel::findOrFail($vehicleId);
+                $registrationNumber = "{$vehicle->make} - {$vehicle->model} - {$vehicle->license_plate}";
+                
+                // Fetch bank account details
+                $bankAccount = BankAccount::findOrFail($fastagId);
+                $fastagNumber = "{$bankAccount->bank} - {$bankAccount->account_no}";
+
+                // Create new Fastag entry with bank_account_id
+                Fastag::create([
+                    'toll_gate_name' => $validatedData['toll_gate_name'][$key],
+                    'amount' => $validatedData['amount'][$key],
+                    'fastag' => $fastagNumber,
+                    'date' => $validatedData['date'][$key],
+                    'vehicle_id' => $vehicleId,
+                    'registration_number' => $registrationNumber,
+                    'transaction_id' => $transaction_id,
+                    'total_amount' => $total,
+                    'bank_account_id' => $fastagId  // Add bank_account_id
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('fastag.index')
+                ->with('success', 'Fastag entries updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('FastTag Update Error: ' . $e->getMessage());
+            return redirect()->route('fastag.index')
+                ->with('error', 'Error updating Fastag entries. Please try again.');
+        }
+    }
 
     public function destroy($id)
     {

@@ -908,6 +908,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="{{ route('reports.fastag') }}" class="nav-link @if(Request::is('admin/reports/fastag')) active @endif">
+                  <i class="fa fa-tags nav-icon"></i>
+                  <p>Fastag Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="{{ route('reports.fuel') }}" class="nav-link @if(Request::is('admin/reports/fuel')) active @endif">
                   <i class="fa fa-truck nav-icon"></i>
                   <p>@lang('fleet.fuelReport')</p>

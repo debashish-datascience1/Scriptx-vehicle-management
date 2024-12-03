@@ -20,7 +20,8 @@ class Fastag extends Model
         'date',
         'transaction_id',
         'total_amount',
-        'vehicle_id'
+        'vehicle_id',
+        'bank_account_id'
     ];
 
     protected $casts = [
@@ -32,6 +33,11 @@ class Fastag extends Model
     public function vehicle()
     {
         return $this->belongsTo(VehicleModel::class);
+    }
+
+    public function bankAccount()
+    {
+        return $this->belongsTo(BankAccount::class, 'bank_account_id');
     }
 
 }

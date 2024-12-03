@@ -135,13 +135,13 @@
                   @endif
                 </td>
                 <td>
-                  @if($row->is_bulk==1)
-                     {{bcdiv($row->total,1,2)}}
+                  @if($row->customer_payment !== null)
+                    {{bcdiv($row->customer_payment, 1, 2)}}
                   @else
                     -
                   @endif
                 </td>
-                <td>{{bcdiv($row->new_total,1,2)}}</td>
+                <td>{{bcdiv($row->total,1,2) - bcdiv($row->customer_payment, 1, 2)}}</td>
               </tr>
               @endforeach
               

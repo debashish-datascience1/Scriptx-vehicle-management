@@ -130,7 +130,9 @@ Route::namespace('Admin')->group(function () {
         Route::resource('service-reminder', 'ServiceReminderController')->middleware('userpermission:9');
         Route::resource('service-item', 'ServiceItemsController')->middleware('userpermission:9');
 
-
+        Route::get('/reports/fastag', 'ReportsController@fastag')->name('reports.fastag');
+        Route::post('/reports/fastag', 'ReportsController@fastagPost')->name('reports.fastag');
+        Route::post('print-fastag-report', 'ReportsController@printFastagReport')->name('print.fastag.report');
         Route::get('/reports/upcoming-renewal', 'ReportsController@upcomingreport')->name('reports.upcoming-report')->middleware('userpermission:4');
         Route::post('/reports/upcoming-renewal', 'ReportsController@upcomingreport_post')->name('reports.upcoming-report')->middleware('userpermission:4');
         Route::post('/print-upcoming-renewal-report', 'ReportsController@print_upcomingreport')->middleware('userpermission:4');

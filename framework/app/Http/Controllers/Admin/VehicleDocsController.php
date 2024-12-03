@@ -509,8 +509,17 @@ class VehicleDocsController extends Controller
         $doc = VehicleDocs::findOrFail($id);
         
         $vehiArray = array();
-        $vehicles =  VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))->where('in_service', 1)->get();
+        $vehicles = VehicleModel::select("id", DB::raw("CONCAT(make,'-',model,'-',license_plate) as name"))
+            ->where('in_service', 1)
+            ->get();
+
         foreach ($vehicles as $v) {
+            // Always include the vehicle from the original document
+            if ($v->id == $doc->vehicle_id) {
+                $vehiArray[$v->id] = $v->name;
+                continue;
+            }
+
             $insu_expdate = $v->getMeta('ins_exp_date');
             $insu_dur = $v->getMeta('ins_renew_duration');
             $fitness_expdate = $v->getMeta('fitness_expdate');
@@ -521,15 +530,20 @@ class VehicleDocsController extends Controller
             $permit_dur = $v->getMeta('permit_renew_duration');
             $pollution_expdate = $v->getMeta('pollution_expdate');
             $pollution_dur = $v->getMeta('pollution_renew_duration');
-    
-            if (((!empty($insu_dur)  && !empty($insu_expdate)) || (!empty($fitness_dur)  && !empty($fitness_expdate)) || (!empty($roadtax_dur)  && !empty($roadtax_expdate)) || (!empty($permit_dur)   && !empty($permit_expdate)) || (!empty($pollution_dur)  && !empty($pollution_expdate))) && Helper::checkEligibleRenewalVehicle($v->id)->status) {
+
+            if (((!empty($insu_dur) && !empty($insu_expdate)) || 
+                (!empty($fitness_dur) && !empty($fitness_expdate)) || 
+                (!empty($roadtax_dur) && !empty($roadtax_expdate)) || 
+                (!empty($permit_dur) && !empty($permit_expdate)) || 
+                (!empty($pollution_dur) && !empty($pollution_expdate))) && 
+                Helper::checkEligibleRenewalVehicle($v->id)->status) {
                 $v->is_renewable = 1;
                 $vehiArray[$v->id] = $v->name;
             } else {
                 $v->is_renewable = null;
             }
         }
-    
+
         $data['vehicles'] = $vehiArray;
         $data['method'] = Params::where('code', "PaymentMethod")->where('id', '!=', '16')->pluck('label', 'id');
         
@@ -542,7 +556,7 @@ class VehicleDocsController extends Controller
         // Document details
         $data['doc'] = $doc;
         $data['edit'] = true; // Flag to differentiate between create and edit views
-    
+
         return view('vehicle_docs.edit', $data);
     }
     

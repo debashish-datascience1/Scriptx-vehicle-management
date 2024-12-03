@@ -143,14 +143,14 @@
                   <?php endif; ?>
                 </td>
                 <td>
-                  <?php if($row->is_bulk==1): ?>
-                     <?php echo e(bcdiv($row->total,1,2)); ?>
+                  <?php if($row->customer_payment !== null): ?>
+                    <?php echo e(bcdiv($row->customer_payment, 1, 2)); ?>
 
                   <?php else: ?>
                     -
                   <?php endif; ?>
                 </td>
-                <td><?php echo e(bcdiv($row->new_total,1,2)); ?></td>
+                <td><?php echo e(bcdiv($row->total,1,2) - bcdiv($row->customer_payment, 1, 2)); ?></td>
               </tr>
               <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               

@@ -835,6 +835,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="<?php echo e(route('reports.fastag')); ?>" class="nav-link <?php if(Request::is('admin/reports/fastag')): ?> active <?php endif; ?>">
+                  <i class="fa fa-tags nav-icon"></i>
+                  <p>Fastag Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="<?php echo e(route('reports.fuel')); ?>" class="nav-link <?php if(Request::is('admin/reports/fuel')): ?> active <?php endif; ?>">
                   <i class="fa fa-truck nav-icon"></i>
                   <p><?php echo app('translator')->getFromJson('fleet.fuelReport'); ?></p>
