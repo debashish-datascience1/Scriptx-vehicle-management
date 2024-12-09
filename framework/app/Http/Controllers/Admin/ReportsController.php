@@ -9,6 +9,7 @@ use App\Model\Bookings;
 use Carbon\Carbon;
 use App\Model\ExpCats;
 use App\Model\Expense;
+use App\Model\FuelBalance;
 use App\Model\PartsModel;
 use App\Model\PartsCategoryModel;
 use App\Model\FuelModel;
@@ -726,24 +727,39 @@ class ReportsController extends Controller
 		$from_date = $request->from_date;
 		$to_date = $request->to_date;
 
-		$transactions = Transaction::where(['param_id' => '18', 'type' => '23'])->where(function ($q) {
-			$q->where('advance_for', '!=', '21')
+		$transactions = Transaction::where(['param_id' => '18', 'type' => '23'])
+			->where(function ($q) {
+				$q->where('advance_for', '!=', '21')
 				->orWhereRaw('transactions.advance_for IS NULL');
-		})->get();
-		// dd($transactions);
-		foreach ($transactions as $t) {
-			$shalom = Bookings::where('id', $t->from_id);
-			$t->org_id = $shalom->exists() ? $shalom->first()->customer_id : null;
-			$t->date = $shalom->exists() ? $shalom->first()->pickup : null;
-			$t->is_bulk = null;
+			})
+			// Eager load related booking to reduce queries
+			->with([
+				'booking' => function($query) {
+					$query->select('id', 'customer_id', 'pickup', 'pickup_addr', 'dest_addr', 'vehicle_id')
+						  ->with('vehicle:id,license_plate');
+				}
+			])
+			->get();
 
-			$customer_payment = DB::table('bookings_meta')
-			->where('booking_id', $t->from_id)
+		// Batch fetch booking meta in one query
+		$bookingIds = $transactions->pluck('from_id');
+		$bookingMetaPayments = DB::table('bookings_meta')
+			->whereIn('booking_id', $bookingIds)
 			->where('key', 'payment_amount')
-			->value('value');
-		
-			$t->customer_payment = $customer_payment;
-		}
+			->pluck('value', 'booking_id');
+
+		$incomeExpenseRemarks = IncomeExpense::whereIn('transaction_id', $transactions->pluck('id'))
+			->pluck('remarks', 'transaction_id');
+	
+		$transactions->transform(function ($t) use ($bookingMetaPayments, $incomeExpenseRemarks) {
+			$t->org_id = $t->booking ? $t->booking->customer_id : null;
+			$t->date = $t->booking ? $t->booking->pickup : null;
+			$t->is_bulk = null;
+			$t->customer_payment = $bookingMetaPayments[$t->from_id] ?? null;
+			$t->remarks = $incomeExpenseRemarks[$t->id] ?? null;
+			return $t;
+		});
+
 		$transactions = $transactions->where('org_id', $customer_id)->where('date', '!=', null);
 		// dd($transactions);
 		$bulkPayment = BulkPayment::get();
@@ -848,25 +864,39 @@ class ReportsController extends Controller
 		$from_date = $request->from_date;
 		$to_date = $request->to_date;
 
-		$transactions = Transaction::where(['param_id' => '18', 'type' => '23'])->where(function ($q) {
-			$q->where('advance_for', '!=', '21')
+		$transactions = Transaction::where(['param_id' => '18', 'type' => '23'])
+			->where(function ($q) {
+				$q->where('advance_for', '!=', '21')
 				->orWhereRaw('transactions.advance_for IS NULL');
-		})->get();
-		// dd($transactions);
-		foreach ($transactions as $t) {
-			$shalom = Bookings::where('id', $t->from_id);
-			$t->org_id = $shalom->exists() ? $shalom->first()->customer_id : null;
-			$t->date = $shalom->exists() ? $shalom->first()->pickup : null;
-			$t->is_bulk = null;
+			})
+			// Eager load related booking to reduce queries
+			->with([
+				'booking' => function($query) {
+					$query->select('id', 'customer_id', 'pickup', 'pickup_addr', 'dest_addr', 'vehicle_id')
+						  ->with('vehicle:id,license_plate');
+				}
+			])
+			->get();
 
-			$customer_payment = DB::table('bookings_meta')
-			->where('booking_id', $t->from_id)
+		// Batch fetch booking meta in one query
+		$bookingIds = $transactions->pluck('from_id');
+		$bookingMetaPayments = DB::table('bookings_meta')
+			->whereIn('booking_id', $bookingIds)
 			->where('key', 'payment_amount')
-			->value('value');
-		
-			$t->customer_payment = $customer_payment;
-		}
+			->pluck('value', 'booking_id');
 
+		$incomeExpenseRemarks = IncomeExpense::whereIn('transaction_id', $transactions->pluck('id'))
+			->pluck('remarks', 'transaction_id');
+	
+		$transactions->transform(function ($t) use ($bookingMetaPayments, $incomeExpenseRemarks) {
+			$t->org_id = $t->booking ? $t->booking->customer_id : null;
+			$t->date = $t->booking ? $t->booking->pickup : null;
+			$t->is_bulk = null;
+			$t->customer_payment = $bookingMetaPayments[$t->from_id] ?? null;
+			$t->remarks = $incomeExpenseRemarks[$t->id] ?? null;
+			return $t;
+		});
+		
 		$transactions = $transactions->where('org_id', $customer_id)->where('date', '!=', null);
 		// dd($transactions);
 		$bulkPayment = BulkPayment::get();
@@ -1281,7 +1311,7 @@ class ReportsController extends Controller
 		$total = [];
 		$totalfuel = [];
 		$fodderfuel = [];
-		$totaldistance = [];
+		$bookingdistance = [];
 		$fodderdistance = [];
 		
 		// Process bookings
@@ -1289,9 +1319,12 @@ class ReportsController extends Controller
 			$total[] = $bk->getMeta('total_price');
 			$totalfuel[] = $bk->getMeta('pet_required');
 			$fodderfuel[] = $bk->getMeta('fodder_consumption');
-			$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
+			$bookingdistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
 			$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
 		}
+		
+		// Calculate total distance
+		$total_distance = round(array_sum($bookingdistance ?? []) + array_sum($fodderdistance ?? []), 2);
 		
 		// Prepare view data
 		$index['vehicles'] = VehicleModel::select(
@@ -1306,7 +1339,8 @@ class ReportsController extends Controller
 		$data['date2'] = null;
 		$index['total_price'] = round(array_sum($total ?? []), 2);
 		$index['total_fuel'] = round(array_sum($totalfuel ?? []), 2);
-		$index['total_distance'] = round(array_sum($totaldistance ?? []), 2);
+		$index['booking_distance'] = round(array_sum($bookingdistance ?? []), 2);
+		$index['total_distance'] = $total_distance;
 		$index['fodderfuel'] = round(array_sum($fodderfuel ?? []), 2);
 		$index['fodderdistance'] = round(array_sum($fodderdistance ?? []), 2);
 		$index['request'] = $request->all();
@@ -2356,19 +2390,22 @@ class ReportsController extends Controller
 		$total = [];
 		$totalfuel = [];
 		$fodderfuel = [];
-		$totaldistance = [];
+		$bookingdistance = [];
 		$fodderdistance = [];
-		$totaladvance = []; // New array for driver advance
+		$totaladvance = [];
 		
 		// Process bookings
 		foreach ($bookings->get() as $bk) {
 			$total[] = $bk->getMeta('total_price');
 			$totalfuel[] = $bk->getMeta('pet_required');
 			$fodderfuel[] = $bk->getMeta('fodder_consumption');
-			$totaldistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
+			$bookingdistance[] = !empty($bk->getMeta('distance')) ? explode(" ", $bk->getMeta('distance'))[0] : 0;
 			$fodderdistance[] = !empty($bk->getMeta('fodder_km')) ? explode(" ", $bk->getMeta('fodder_km'))[0] : 0;
-			$totaladvance[] = !empty($bk->advance_pay) ? $bk->advance_pay : 0; // Add advance pay to array
+			$totaladvance[] = !empty($bk->advance_pay) ? $bk->advance_pay : 0;
 		}
+		
+		// Calculate total distance
+		$total_distance = bcdiv(array_sum($bookingdistance ?? []) + array_sum($fodderdistance ?? []), 1, 2);
 		
 		// Prepare view data
 		$index['vehicles'] = VehicleModel::select(
@@ -2383,10 +2420,11 @@ class ReportsController extends Controller
 		$index['date2'] = $display_to_date;
 		$index['total_price'] = bcdiv(array_sum($total ?? []), 1, 2);
 		$index['total_fuel'] = bcdiv(array_sum($totalfuel ?? []), 1, 2);
-		$index['total_distance'] = bcdiv(array_sum($totaldistance ?? []), 1, 2);
+		$index['booking_distance'] = bcdiv(array_sum($bookingdistance ?? []), 1, 2);
+		$index['total_distance'] = $total_distance;
 		$index['fodderfuel'] = bcdiv(array_sum($fodderfuel ?? []), 1, 2);
 		$index['fodderdistance'] = bcdiv(array_sum($fodderdistance ?? []), 1, 2);
-		$index['total_advance'] = bcdiv(array_sum($totaladvance ?? []), 1, 2); // Add total advance to index
+		$index['total_advance'] = bcdiv(array_sum($totaladvance ?? []), 1, 2);
 		$index['request'] = $request->all();
 		$index['loadset'] = Params::where('code', 'LoadSetting')->pluck('label', 'id');
 		
@@ -5396,30 +5434,195 @@ class ReportsController extends Controller
 		}
 	}
 
-	public function updateFuelBalance(Request $request)
+	public function updateFuelBalance(Request $request) 
 	{
 		try {
+			// Find the vehicle
 			$vehicle = VehicleModel::findOrFail($request->vehicle_id);
+			
+			// Update vehicle's fuel balance
 			$vehicle->fuel_balance = $request->fuel_balance;
 			$vehicle->save();
 			
-			return response()->json(['success' => true]);
+			// Update or create the fuel balance record
+			FuelBalance::where([
+				'vehicle_id' => $request->vehicle_id,
+				'month' => $request->month,
+				'year' => $request->year
+			])->update([
+				'month_end_balance' => $request->fuel_balance
+			]);
+			
+			return response()->json(['success' => true], 200);
 		} catch (\Exception $e) {
 			\Log::error('Fuel Balance Update Error: ' . $e->getMessage());
-			return response()->json(['success' => false, 'message' => $e->getMessage()], 200); // Changed from 500 to 200
+			return response()->json(['success' => false, 'message' => $e->getMessage()], 200);
 		}
 	}
+
+	// public function getVehiclesFuelBalance(Request $request)
+	// {
+	// 	try {
+	// 		\Log::info('Request Data: ', $request->all());
+
+	// 		$selectedMonth = $request->get('date1', date('m'));
+	// 		$selectedYear = $request->get('date2', date('Y'));
+
+	// 		// Create start and end dates for the selected month
+	// 		$start = date('01-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+	// 		$end = date('t-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+
+	// 		// Convert to datetime for database queries
+	// 		$startDate = date('Y-m-d 00:00:00', strtotime($start));
+	// 		$endDate = date('Y-m-d 23:59:59', strtotime($end));
+			
+	// 		$vehicleId = $request->get('vehicle_id');
+
+	// 		// Get vehicles query
+	// 		$query = VehicleModel::query();
+	// 		if ($vehicleId && $vehicleId !== 'all') {
+	// 			$query->where('id', $vehicleId);
+	// 		}
+
+	// 		// Get vehicles with their fuel records
+	// 		$vehicles = $query->get();
+			
+	// 		$results = [];
+			
+	// 		foreach ($vehicles as $vehicle) {
+	// 			// Fetch initial balance from fuel_balance table
+	// 			$fuelBalanceRecord = FuelBalance::where('vehicle_id', $vehicle->id)
+	// 				->where('month', $selectedMonth)
+	// 				->where('year', $selectedYear)
+	// 				->first();
+				
+	// 			// Get fuel records for date range
+	// 			$fuelRecords = FuelModel::where('vehicle_id', $vehicle->id)
+	// 				->whereDate('date', '>=', $startDate)
+	// 				->whereDate('date', '<=', $endDate)
+	// 				->get();
+				
+	// 			// Get bookings for date range
+	// 			$bookings = Bookings::where('vehicle_id', $vehicle->id)
+	// 				->whereDate('pickup', '>=', $startDate)
+	// 				->whereDate('pickup', '<=', $endDate)
+	// 				->get();
+
+	// 			// Calculate initial balance
+	// 			$initialBalance = $fuelBalanceRecord ? floatval($fuelBalanceRecord->month_end_balance) : 0;
+	// 			$totalFuel = floatval($fuelRecords->sum('qty'));
+	// 			$totalWithBalance = $totalFuel + $initialBalance;
+				
+	// 			// Calculate total kilometers
+	// 			$totalKms = 0;
+	// 			foreach ($bookings as $booking) {
+	// 				// Calculate distance
+	// 				$distance = $booking->getMeta('distance');
+	// 				$fodderDistance = $booking->getMeta('fodder_km');
+
+	// 				// Process distance
+	// 				if (is_string($distance)) {
+	// 					$distanceValue = explode(' ', $distance)[0];
+	// 					$totalKms += is_numeric($distanceValue) ? floatval($distanceValue) : 0;
+	// 				}
+
+	// 				// Process fodder distance
+	// 				if (is_string($fodderDistance)) {
+	// 					$fodderDistanceValue = explode(' ', $fodderDistance)[0];
+	// 					$totalKms += is_numeric($fodderDistanceValue) ? floatval($fodderDistanceValue) : 0;
+	// 				}
+	// 			}
+	// 			\Log::info('Total Kilometers Calculation', [
+	// 				'vehicle_id' => $vehicle->id,
+	// 				'total_kms' => $totalKms
+	// 			]);
+
+	// 			$average = floatval($vehicle->average ?? 0);
+	// 			if ($average > 0) {
+	// 				$expectedConsumption = $totalKms / $average;
+	// 				$remainingFuel = $totalWithBalance - $expectedConsumption;
+					
+	// 				// Create vehicle identifier
+	// 				$vehicleName = trim(implode('-', array_filter([
+	// 					$vehicle->make,
+	// 					$vehicle->model,
+	// 					$vehicle->license_plate
+	// 				])));
+
+	// 				$results[$vehicleName] = [
+	// 					'initial_balance' => round($initialBalance, 2),
+	// 					'total_fuel' => round($totalFuel, 2),
+	// 					'total_fuel_with_balance' => round($totalWithBalance, 2),
+	// 					'total_kms' => round($totalKms, 2),
+	// 					'average' => round($average, 2),
+	// 					'expected_consumption' => round($expectedConsumption, 2),
+	// 					'remaining_fuel' => round($remainingFuel, 2)
+	// 				];
+	// 			}
+	// 		}
+
+	// 		// Log the results for debugging
+	// 		\Log::info('Fuel Balance Calculation Results', [
+	// 			'start_date' => $startDate,
+	// 			'end_date' => $endDate,
+	// 			'vehicle_id' => $vehicleId,
+	// 			'results' => $results
+	// 		]);
+
+	// 		$storageRequest = new Request([
+	// 			'month' => $selectedMonth,
+	// 			'year' => $selectedYear,
+	// 			'fuel_balances' => $results,
+	// 			'vehicle_id' => $vehicleId
+	// 		]);
+			
+	// 		$this->storeFuelBalanceRecords($storageRequest);    
+
+	// 		return response()->json([
+	// 			'success' => true,
+	// 			'fuel_balances' => $results
+	// 		]);
+
+	// 	} catch (\Exception $e) {
+	// 		\Log::error('Fuel Balance Error: ' . $e->getMessage(), [
+	// 			'date1' => $request->get('date1'),
+	// 			'date2' => $request->get('date2'),
+	// 			'vehicle_id' => $request->get('vehicle_id'),
+	// 			'trace' => $e->getTraceAsString()
+	// 		]);
+			
+	// 		return response()->json([
+	// 			'success' => false,
+	// 			'message' => 'Error calculating fuel balance: ' . $e->getMessage()
+	// 		], 500);
+	// 	}
+	// }
 
 	public function getVehiclesFuelBalance(Request $request)
 	{
 		try {
-			// Get dates from request
-			$date1 = $request->get('date1');
-			$date2 = $request->get('date2');
-			
-			// Determine date format and convert accordingly
-			$startDate = $this->parseAndFormatDate($date1) ?? date('Y-m-d');
-			$endDate = $this->parseAndFormatDate($date2) ?? date('Y-m-d');
+			\Log::info('Request Data: ', $request->all());
+
+			$selectedMonth = $request->get('date1', date('m'));
+			$selectedYear = $request->get('date2', date('Y'));
+
+			// Calculate previous month and year
+			$previousMonth = $selectedMonth - 1;
+			$previousYear = $selectedYear;
+
+			// Handle year rollover for January
+			if ($previousMonth == 0) {
+				$previousMonth = 12;
+				$previousYear -= 1;
+			}
+
+			// Create start and end dates for the selected month
+			$start = date('01-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+			$end = date('t-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+
+			// Convert to datetime for database queries
+			$startDate = date('Y-m-d 00:00:00', strtotime($start));
+			$endDate = date('Y-m-d 23:59:59', strtotime($end));
 			
 			$vehicleId = $request->get('vehicle_id');
 
@@ -5435,6 +5638,12 @@ class ReportsController extends Controller
 			$results = [];
 			
 			foreach ($vehicles as $vehicle) {
+				// Fetch initial balance from previous month's fuel_balance table
+				$fuelBalanceRecord = FuelBalance::where('vehicle_id', $vehicle->id)
+					->where('month', $previousMonth)
+					->where('year', $previousYear)
+					->first();
+				
 				// Get fuel records for date range
 				$fuelRecords = FuelModel::where('vehicle_id', $vehicle->id)
 					->whereDate('date', '>=', $startDate)
@@ -5447,18 +5656,28 @@ class ReportsController extends Controller
 					->whereDate('pickup', '<=', $endDate)
 					->get();
 
-				// Calculate metrics
-				$initialBalance = floatval($vehicle->fuel_balance ?? 0);
+				// Calculate initial balance from previous month's end balance
+				$initialBalance = $fuelBalanceRecord ? floatval($fuelBalanceRecord->month_end_balance) : 0;
 				$totalFuel = floatval($fuelRecords->sum('qty'));
 				$totalWithBalance = $totalFuel + $initialBalance;
 				
-				// Calculate total kilometers
+				// Calculate total kilometers (rest of the code remains the same as in your original method)
 				$totalKms = 0;
 				foreach ($bookings as $booking) {
+					// Calculate distance
 					$distance = $booking->getMeta('distance');
+					$fodderDistance = $booking->getMeta('fodder_km');
+
+					// Process distance
 					if (is_string($distance)) {
 						$distanceValue = explode(' ', $distance)[0];
 						$totalKms += is_numeric($distanceValue) ? floatval($distanceValue) : 0;
+					}
+
+					// Process fodder distance
+					if (is_string($fodderDistance)) {
+						$fodderDistanceValue = explode(' ', $fodderDistance)[0];
+						$totalKms += is_numeric($fodderDistanceValue) ? floatval($fodderDistanceValue) : 0;
 					}
 				}
 
@@ -5491,8 +5710,19 @@ class ReportsController extends Controller
 				'start_date' => $startDate,
 				'end_date' => $endDate,
 				'vehicle_id' => $vehicleId,
+				'previous_month' => $previousMonth,
+				'previous_year' => $previousYear,
 				'results' => $results
 			]);
+
+			$storageRequest = new Request([
+				'month' => $selectedMonth,
+				'year' => $selectedYear,
+				'fuel_balances' => $results,
+				'vehicle_id' => $vehicleId
+			]);
+			
+			$this->storeFuelBalanceRecords($storageRequest);    
 
 			return response()->json([
 				'success' => true,
@@ -5513,7 +5743,121 @@ class ReportsController extends Controller
 			], 500);
 		}
 	}
-	
+
+	public function storeFuelBalanceRecords(Request $request)
+	{
+		try {
+			$month = $request->input('month', date('m'));
+			$year = $request->input('year', date('Y'));
+			$fuelBalances = $request->input('fuel_balances', []);
+			$vehicleId = $request->input('vehicle_id', 'all');
+
+			// Prepare logging
+			$processedVehicles = [];
+			$unprocessedVehicles = [];
+
+			DB::beginTransaction();
+
+			// If vehicle_id is 'all', get all vehicles in the Ranisati group
+			if ($vehicleId === 'all') {
+				$groupId = DB::table('vehicle_group')
+					->whereRaw('LOWER(name) LIKE ?', ['%ranisati%'])
+					->whereNull('deleted_at')
+					->value('id');
+
+				if (!$groupId) {
+					\Log::warning('No Ranisati vehicle group found');
+					return response()->json([
+						'success' => false,
+						'message' => 'Vehicle group "Ranisati" not found'
+					], 404);
+				}
+
+				// Process all vehicles in the group
+				$vehicles = VehicleModel::where('group_id', $groupId)
+					->whereNull('deleted_at')
+					->get();
+			} else {
+				// If a specific vehicle is selected
+				$vehicles = VehicleModel::where('id', $vehicleId)
+					->whereNull('deleted_at')
+					->get();
+			}
+
+			// Process each vehicle
+			foreach ($vehicles as $vehicle) {
+				// Create vehicle identifier
+				$vehicleName = trim(implode('-', array_filter([
+					$vehicle->make,
+					$vehicle->model,
+					$vehicle->license_plate
+				])));
+
+				// Check if balance exists for this vehicle
+				$balanceData = $fuelBalances[$vehicleName] ?? null;
+
+				if (!$balanceData) {
+					\Log::warning("No balance data for vehicle", [
+						'vehicle_id' => $vehicle->id,
+						'vehicle_name' => $vehicleName
+					]);
+					$unprocessedVehicles[] = $vehicleName;
+					continue;
+				}
+
+				// Store or update fuel balance
+				$initialBalance = floatval($balanceData['initial_balance'] ?? 0);
+				$remainingFuel = floatval($balanceData['remaining_fuel'] ?? 0);
+
+				$fuelBalance = FuelBalance::updateOrCreate(
+					[
+						'vehicle_id' => $vehicle->id,
+						'month' => $month,
+						'year' => $year
+					],
+					[
+						'balance' => $initialBalance,
+						'month_end_balance' => $remainingFuel
+					]
+				);
+
+				$processedVehicles[] = $vehicle->id;
+			}
+
+			DB::commit();
+
+			// Logging
+			\Log::info('Fuel Balance Processing Summary', [
+				'total_vehicles' => $vehicles->count(),
+				'total_processed' => count($processedVehicles),
+				'processed_vehicles' => $processedVehicles,
+				'unprocessed_vehicles' => $unprocessedVehicles,
+				'month' => $month,
+				'year' => $year
+			]);
+
+			return response()->json([
+				'success' => true,
+				'message' => 'Fuel balance records stored successfully',
+				'processed' => count($processedVehicles),
+				'unprocessed' => $unprocessedVehicles
+			]);
+
+		} catch (\Exception $e) {
+			DB::rollBack();
+			
+			\Log::error('Fuel Balance Storage Error', [
+				'message' => $e->getMessage(),
+				'trace' => $e->getTraceAsString(),
+				'request_data' => $request->all()
+			]);
+
+			return response()->json([
+				'success' => false,
+				'message' => 'Error storing fuel balance records: ' . $e->getMessage()
+			], 500);
+		}
+	}
 	// Helper method to parse and format dates flexibly
 	private function parseAndFormatDate($dateString)
 	{
@@ -5540,6 +5884,9 @@ class ReportsController extends Controller
 	public function vehicleOverview_post(Request $request)
 	{
 
+		\Log::info('Request Data:22 ', $request->all());
+
+
 		$groupId = DB::table('vehicle_group')
 			->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower('ranisati') . '%'])
 			->whereNull('deleted_at')
@@ -5551,30 +5898,16 @@ class ReportsController extends Controller
 			->pluck('name', 'id')
 			->prepend('All Vehicles', 'all');
 
-		// Set date range
-		if ($request->get('date1') == null) {
-			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
-				->whereNull('deleted_at')  
-				->orderBy('pickup', 'ASC')
-				->take(1)
-				->first('pickup')->pickup;
-		} else {
-			$start = date('Y-m-d', strtotime($request->get('date1')));
-		}
-	
-		if ($request->get('date2') == null) {
-			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
-				->whereNull('deleted_at')  
-				->orderBy('pickup', 'DESC')
-				->take(1)
-				->first('pickup')->pickup;
-		} else {
-			$end = date('Y-m-d', strtotime($request->get('date2')));
-		}
-	
-		// Add time boundaries to make the range inclusive
-		$startDateTime = $start . ' 00:00:00';
-		$endDateTime = $end . ' 23:59:59';
+		$selectedMonth = $request->get('month', date('m'));
+		$selectedYear = $request->get('year', date('Y'));
+
+		// Create start and end dates for the selected month
+		$start = date('01-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+		$end = date('t-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+
+		// Convert to datetime for database queries
+		$startDateTime = date('Y-m-d 00:00:00', strtotime($start));
+		$endDateTime = date('Y-m-d 23:59:59', strtotime($end));
 	
 		$fuelBalanceAdjustments = json_decode($request->get('fuel_balance_adjustments'), true) ?? [];
 		// dd($fuelBalanceAdjustments);
@@ -5584,8 +5917,10 @@ class ReportsController extends Controller
 			$data['all_vehicles'] = true;
 			$data['vehicle'] = null; // Add this line to explicitly set vehicle to null
 			// $vehicles = VehicleModel::all();
-			session(['report_start_date' => $start]);
-			session(['report_end_date' => $end]);
+			session(['report_start_date' => $startDateTime]);
+			session(['report_end_date' => $endDateTime]);
+			session(['report_month' => $selectedMonth]);
+			session(['report_year' => $selectedYear]);
 			session(['wheel_prices' => $request->get('wheel_prices')]);
 			session(['fuel_balance_adjustments' => $request->get('fuel_balance_adjustments')]);
 
@@ -5612,31 +5947,55 @@ class ReportsController extends Controller
 					->whereNull('deleted_at')  
 					->get();
 				
+				// $totalKms = 0;
+				// $totalFuel = 0;
+				// $totalPrice = 0;
+				
+				// foreach ($bookings as $booking) {
+				// 	$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
+				// 	$totalFuel += (float)$booking->getMeta('pet_required');
+				// 	$totalPrice += (float)$booking->getMeta('total_price');
+				// }
 				$totalKms = 0;
 				$totalFuel = 0;
 				$totalPrice = 0;
 				
 				foreach ($bookings as $booking) {
-					$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
-					$totalFuel += (float)$booking->getMeta('pet_required');
+					// Process distance
+					$distance = $booking->getMeta('distance');
+					$fodderDistance = $booking->getMeta('fodder_km');
+				
+					// Calculate total kilometers
+					if (is_string($distance)) {
+						$totalKms += (float)explode(" ", $distance)[0];
+					}
+					if (is_string($fodderDistance)) {
+						$totalKms += (float)explode(" ", $fodderDistance)[0];
+					}
+				
+					// Process pet required (fuel)
+					$petRequired = $booking->getMeta('pet_required');
+					$totalFuel += is_numeric($petRequired) ? (float)$petRequired : 0;
+				
+					// Process total price
 					$totalPrice += (float)$booking->getMeta('total_price');
 				}
 				$wheelName = $vehicle->wheel_name ?? 'N/A';
 				// Modified legal cost calculation
 				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
-				->where(function($query) use ($start, $end) {
-					$query->whereBetween('date', [$start, $end])
-						->orWhereBetween('till', [$start, $end])
-						->orWhere(function($q) use ($start, $end) {
-							$q->where('date', '<=', $start)
-								->where('till', '>=', $end);
+				->where(function($query) use ($startDateTime, $endDateTime) {
+					$query->whereBetween('date', [$startDateTime, $endDateTime])
+						->orWhereBetween('till', [$startDateTime, $endDateTime])
+						->orWhere(function($q) use ($startDateTime, $endDateTime) {
+							$q->where('date', '<=', $startDateTime)
+								->where('till', '>=', $endDateTime);
 						});
 				})
 				->whereNull('deleted_at')
 				->get()
-				->sum(function($doc) use ($start, $end) {
-					$docStart = max(Carbon::parse($doc->date), Carbon::parse($start));
-					$docEnd = min(Carbon::parse($doc->till), Carbon::parse($end));
+				->sum(function($doc) use ($startDateTime, $endDateTime) {
+					$docStart = max(Carbon::parse($doc->date), Carbon::parse($startDateTime));
+					$docEnd = min(Carbon::parse($doc->till), Carbon::parse($endDateTime));
 					$totalValidityDays = Carbon::parse($doc->date)->diffInDays(Carbon::parse($doc->till)) + 1;
 					$dailyCost = $doc->amount / $totalValidityDays;
 					// Calculate days in our reporting period
@@ -5661,7 +6020,7 @@ class ReportsController extends Controller
 						->first();	
 					if ($userData) {
 						$leaves = Leave::where('driver_id', $driver->driver_id)
-							->whereBetween('date', [$start, $end])
+							->whereBetween('date', [$startDateTime, $endDateTime])
 							->where('is_present', 1)
 							->whereNull('deleted_at')
 							->count();
@@ -5671,7 +6030,7 @@ class ReportsController extends Controller
 				}
 				// Get fuel data
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
-					->whereBetween('date', [$start, $end])
+					->whereBetween('date', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at')
 					->get();
 				
@@ -5707,7 +6066,7 @@ class ReportsController extends Controller
 				
 				// Get work orders
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
-					->whereBetween('required_by', [$start, $end])
+					->whereBetween('required_by', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at')
 					->get();
 				
@@ -5737,9 +6096,22 @@ class ReportsController extends Controller
 				
 				$totalAdvance = 0;
 				foreach ($advanceBookings as $ad) {
-					$totalAdvance += !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+					$advanceAmount = !empty($ad->getMeta('advance_pay')) ? $ad->getMeta('advance_pay') : 0;
+					$totalAdvance += $advanceAmount;
 				}
-				
+
+				// Create a new variable to track advances with 'Advance' label
+				$advanceWithLabel = 0;
+				$driver_advance_details = AdvanceDriver::whereIn('booking_id', $advanceBookings->pluck('id'))
+					->whereHas('param_name', function($query) {
+						$query->where('label', 'Advance');
+					})
+					->get();
+
+				foreach ($driver_advance_details as $detail) {
+					$advanceWithLabel += $detail->value;
+				}
+
 				$summary[] = [
 					'vehicle' => $vehicle,
 					// 'bookings_count' => $bookings->count(),
@@ -5757,7 +6129,7 @@ class ReportsController extends Controller
 					'driver_advance' => $totalAdvance,
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
-					'other' => $totalAdvance + $fastagAmount,
+					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel,
                 	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
                 	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
 					'avg_revenue_per_km' => $totalKms > 0 ? $totalPrice / $totalKms : 0,
@@ -5766,8 +6138,8 @@ class ReportsController extends Controller
 			}
 			
 			$data['summary'] = $summary;
-			$data['from_date'] = $start;
-			$data['to_date'] = $end;
+			$data['from_date'] = $startDateTime;
+			$data['to_date'] = $endDateTime;
 			if(!$request->has('export')) {
 				$data['pagination'] = $vehicles;
 			}
@@ -5783,11 +6155,22 @@ class ReportsController extends Controller
 				->get();
 
 			foreach ($bookings as $b) {
-				$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
+				// Process distance
+				$distance = $b->getMeta('distance');
+				$fodderDistance = $b->getMeta('fodder_km');
+			
+				// Add distances to kms array
+				if (is_string($distance)) {
+					$book['kms'][] = (float)explode(" ", $distance)[0];
+				}
+				if (is_string($fodderDistance)) {
+					$book['kms'][] = (float)explode(" ", $fodderDistance)[0];
+				}
+				
 				$book['fuel'][] = $b->getMeta('pet_required');
 				$book['price'][] = $b->getMeta('total_price');
 			}
-			
+				
 			$book['totalbooking'] = $bookings->count();
 			$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
 			$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
@@ -5795,7 +6178,7 @@ class ReportsController extends Controller
 
 			// Get fuel data
 			 $fuelModel = FuelModel::where('vehicle_id', $vehicle_id)
-            ->whereBetween('date', [$start, $end])
+            ->whereBetween('date', [$startDateTime, $endDateTime])
 			->whereNull('deleted_at')
             ->get();
         
@@ -5831,7 +6214,7 @@ class ReportsController extends Controller
 
 			// Get driver advances
 			$advanceBookings = Bookings::where('vehicle_id', $vehicle_id)
-				->whereBetween('pickup', [$start, $end])
+				->whereBetween('pickup', [$startDateTime, $endDateTime])
 				// ->whereNull('deleted_at')
 				->meta()
 				->where(function ($query) {
@@ -5860,7 +6243,7 @@ class ReportsController extends Controller
 
 			// Get work orders
 			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
-				->whereBetween('required_by', [$start, $end])
+				->whereBetween('created_at', [$startDateTime, $endDateTime])
 				->whereNull('deleted_at')  
 				->get();
 			
@@ -5892,8 +6275,8 @@ class ReportsController extends Controller
 				->get();
 
 			$data['vehicle'] = VehicleModel::where('id', $vehicle_id)->first();
-			$data['from_date'] = $start;
-			$data['to_date'] = $end;
+			$data['from_date'] = $startDateTime;
+			$data['to_date'] = $endDateTime;
 			$data['book'] = Helper::toCollection($book);
 			$data['fuels'] = Helper::toCollection($fuelArray);
 			$data['advances'] = Helper::toCollection($advance);
@@ -5909,6 +6292,9 @@ class ReportsController extends Controller
 	public function vehicleOverview_print(Request $request)
 	{
 
+		\Log::info('Request Data: ', $request->all());
+
+
 		$groupId = DB::table('vehicle_group')
         	->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower('ranisati') . '%'])
 			->whereNull('deleted_at')
@@ -5919,29 +6305,41 @@ class ReportsController extends Controller
         	->pluck('name', 'id')
         	->prepend('All Vehicles', 'all');
 
-		if ($request->get('date1') == null) {
-			$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
-				->whereNull('deleted_at')
-				->orderBy('pickup', 'ASC')
-				->take(1)
-				->first('pickup')->pickup;
-		} else {
-			$start = date('Y-m-d', strtotime($request->get('date1')));
-		}
+		// if ($request->get('date1') == null) {
+		// 	$start = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+		// 		->whereNull('deleted_at')
+		// 		->orderBy('pickup', 'ASC')
+		// 		->take(1)
+		// 		->first('pickup')->pickup;
+		// } else {
+		// 	$start = date('Y-m-d', strtotime($request->get('date1')));
+		// }
 	
-		if ($request->get('date2') == null) {
-			$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
-				->whereNull('deleted_at')
-				->orderBy('pickup', 'DESC')
-				->take(1)
-				->first('pickup')->pickup;
-		} else {
-			$end = date('Y-m-d', strtotime($request->get('date2')));
-		}
+		// if ($request->get('date2') == null) {
+		// 	$end = Bookings::select(DB::raw('DATE(pickup) as pickup'))
+		// 		->whereNull('deleted_at')
+		// 		->orderBy('pickup', 'DESC')
+		// 		->take(1)
+		// 		->first('pickup')->pickup;
+		// } else {
+		// 	$end = date('Y-m-d', strtotime($request->get('date2')));
+		// }
 	
-		// Add time boundaries to make the range inclusive
-		$startDateTime = $start . ' 00:00:00';
-		$endDateTime = $end . ' 23:59:59';
+		// // Add time boundaries to make the range inclusive
+		// $startDateTime = $start . ' 00:00:00';
+		// $endDateTime = $end . ' 23:59:59';
+
+		$selectedMonth = $request->get('month', date('m'));
+		$selectedYear = $request->get('year', date('Y'));
+
+		// Create start and end dates for the selected month
+		$start = date('01-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+		$end = date('t-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
+
+		// Convert to datetime for database queries
+		$startDateTime = date('Y-m-d 00:00:00', strtotime($start));
+		$endDateTime = date('Y-m-d 23:59:59', strtotime($end));
+	
 
 		$fuelBalanceAdjustments = json_decode($request->get('fuel_balance_adjustments'), true) ?? [];
 		// dd($fuelBalanceAdjustments);
@@ -5966,13 +6364,37 @@ class ReportsController extends Controller
 					->whereNull('deleted_at') 
 					->get();
 				
+				// $totalKms = 0;
+				// $totalFuel = 0;
+				// $totalPrice = 0;
+				
+				// foreach ($bookings as $booking) {
+				// 	$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
+				// 	$totalFuel += (float)$booking->getMeta('pet_required');
+				// 	$totalPrice += (float)$booking->getMeta('total_price');
+				// }
 				$totalKms = 0;
 				$totalFuel = 0;
 				$totalPrice = 0;
 				
 				foreach ($bookings as $booking) {
-					$totalKms += (float)explode(" ", $booking->getMeta('distance'))[0];
-					$totalFuel += (float)$booking->getMeta('pet_required');
+					// Process distance
+					$distance = $booking->getMeta('distance');
+					$fodderDistance = $booking->getMeta('fodder_km');
+				
+					// Calculate total kilometers
+					if (is_string($distance)) {
+						$totalKms += (float)explode(" ", $distance)[0];
+					}
+					if (is_string($fodderDistance)) {
+						$totalKms += (float)explode(" ", $fodderDistance)[0];
+					}
+				
+					// Process pet required (fuel)
+					$petRequired = $booking->getMeta('pet_required');
+					$totalFuel += is_numeric($petRequired) ? (float)$petRequired : 0;
+				
+					// Process total price
 					$totalPrice += (float)$booking->getMeta('total_price');
 				}
 
@@ -5984,20 +6406,20 @@ class ReportsController extends Controller
 				$wheelName = $vehicle->wheel_name ?? 'N/A';
 				
 				$legalCost = VehicleDocs::where('vehicle_id', $vehicle->id)
-					->where(function($query) use ($start, $end) {
-						$query->whereBetween('date', [$start, $end])
-							->orWhereBetween('till', [$start, $end])
-							->orWhere(function($q) use ($start, $end) {
-								$q->where('date', '<=', $start)
-									->where('till', '>=', $end);
+					->where(function($query) use ($startDateTime, $endDateTime) {
+						$query->whereBetween('date', [$startDateTime, $endDateTime])
+							->orWhereBetween('till', [$startDateTime, $endDateTime])
+							->orWhere(function($q) use ($startDateTime, $endDateTime) {
+								$q->where('date', '<=', $startDateTime)
+									->where('till', '>=', $endDateTime);
 							});
 					})
 					->whereNull('deleted_at')
 					->get()
-					->sum(function($doc) use ($start, $end) {
+					->sum(function($doc) use ($startDateTime, $endDateTime) {
 						// Calculate total days the document is valid for
-						$docStart = max(Carbon::parse($doc->date), Carbon::parse($start));
-						$docEnd = min(Carbon::parse($doc->till), Carbon::parse($end));
+						$docStart = max(Carbon::parse($doc->date), Carbon::parse($startDateTime));
+						$docEnd = min(Carbon::parse($doc->till), Carbon::parse($endDateTime));
 						
 						// Calculate document's total validity period in days
 						$totalValidityDays = Carbon::parse($doc->date)->diffInDays(Carbon::parse($doc->till)) + 1;
@@ -6013,7 +6435,7 @@ class ReportsController extends Controller
 					});
 				
 				$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
-					->whereBetween('date', [$start, $end])
+					->whereBetween('date', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at') 
 					->get();
 				
@@ -6044,7 +6466,7 @@ class ReportsController extends Controller
 						->first();	
 					if ($userData) {
 						$leaves = Leave::where('driver_id', $driver->driver_id)
-							->whereBetween('date', [$start, $end])
+							->whereBetween('date', [$startDateTime, $endDateTime])
 							->whereNull('deleted_at')  
 							->where('is_present', 1)
 							->count();
@@ -6054,7 +6476,7 @@ class ReportsController extends Controller
 				}
 
 				$workorders = WorkOrders::where('vehicle_id', $vehicle->id)
-					->whereBetween('required_by', [$start, $end])
+					->whereBetween('required_by', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at')  
 					->get();
 				
@@ -6106,22 +6528,42 @@ class ReportsController extends Controller
 			}
 			
 			$data['summary'] = $summary;
-			$data['from_date'] = $start;
-			$data['to_date'] = $end;
+			$data['from_date'] = $startDateTime;
+			$data['to_date'] = $endDateTime;
 			
 		} else {
 			// Individual vehicle report
 			$vehicle_id = $request->get('vehicle_id');
 			$bookings = Bookings::where('vehicle_id', $vehicle_id)->whereRaw('pickup >= ? AND pickup <= ?', [$startDateTime, $endDateTime])->whereNull('deleted_at')->get();
 
+			// $book = ['kms' => [], 'fuel' => [], 'price' => []];
+			// foreach ($bookings as $b) {
+			// 	$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
+			// 	$book['fuel'][] = $b->getMeta('pet_required');
+			// 	$book['price'][] = $b->getMeta('total_price');
+			// }
+			// $book['totalbooking'] = $bookings->count();
+			// $book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
 			$book = ['kms' => [], 'fuel' => [], 'price' => []];
 			foreach ($bookings as $b) {
-				$book['kms'][] = explode(" ", $b->getMeta('distance'))[0];
+				// Process distance
+				$distance = $b->getMeta('distance');
+				$fodderDistance = $b->getMeta('fodder_km');
+
+				// Add distances to kms array
+				if (is_string($distance)) {
+					$book['kms'][] = (float)explode(" ", $distance)[0];
+				}
+				if (is_string($fodderDistance)) {
+					$book['kms'][] = (float)explode(" ", $fodderDistance)[0];
+				}
+
 				$book['fuel'][] = $b->getMeta('pet_required');
 				$book['price'][] = $b->getMeta('total_price');
 			}
+
 			$book['totalbooking'] = $bookings->count();
-			$book['totalkms'] = isset($book['kms']) && count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
+			$book['totalkms'] = count($book['kms']) > 0 ? array_sum($book['kms']) : 0.00;
 			$book['totalfuel'] = isset($book['fuel']) && count($book['fuel']) > 0 ? array_sum($book['fuel']) : 0.00;
 			$book['totalprice'] = isset($book['price']) && count($book['price']) > 0 ? array_sum($book['price']) : 0.00;
 
@@ -6185,7 +6627,7 @@ class ReportsController extends Controller
 			}
 
 			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
-				->whereBetween('required_by', [$start, $end])
+				->whereBetween('required_by', [$startDateTime, $endDateTime])
 				->whereNull('deleted_at')  
 				->get();
 			$prepArray = ['gtotal' => [], 'cgst' => [], 'sgst' => [], 'vendors' => [], 'status' => [], 'id' => []];

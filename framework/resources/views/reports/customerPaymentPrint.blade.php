@@ -33,8 +33,6 @@
 </head>
 
 <body onload="window.print();">
-    {{-- @php($date_format_setting=(Hyvikk::get('date_format'))?Hyvikk::get('date_format'):'d-m-Y') --}}
-
     <div class="wrapper">
         <!-- Main content -->
         <section class="invoice">
@@ -48,18 +46,17 @@
                             {{ Hyvikk::get('app_name') }}
                         </span>
                         <small class="pull-right"> <b>@lang('fleet.date') : </b>
-                            {{ Helper::getCanonicalDateTime(date('Y-m-d H:i:s'), 'default') }} /
-                            {{ Helper::getCanonicalDateTime(date('Y-m-d H:i:s')) }}</small>
-                    </h2>
+                            <strong>{{ Helper::getCanonicalDateTime(date('Y-m-d H:i:s'), 'default') }} /
+                                {{ Helper::getCanonicalDateTime(date('Y-m-d H:i:s')) }}</strong></small>
                 </div>
                 <!-- /.col -->
             </div>
             <div class="row">
                 <div class="col-md-12 text-center">
                     <h3>Customer Payment Report</h3>
-                    <h4>{{ $customer_data->name }}</h4>
-                    <small>{{ Helper::getCanonicalDate($from_date, 'default') }} -
-                        {{ Helper::getCanonicalDate($to_date, 'default') }}</small>
+                    <h4><strong>{{ $customer_data->name }}</strong></h4>
+                    <small><strong>{{ Helper::getCanonicalDate($from_date, 'default') }} -
+                            {{ Helper::getCanonicalDate($to_date, 'default') }}</strong></small>
                 </div>
             </div>
             <div class="row">
@@ -67,19 +64,18 @@
                     <span style="float: right;font-weight:700"> Opening Balance : {{ Hyvikk::get('currency') }}
                         {{ bcdiv($opening_balance, 1, 2) }}</span>
                     <table class="table table-bordered table-striped table-hover">
-
                         <thead class="thead-inverse">
-                            <thead>
-                                <tr>
-                                    <th>SL#</th>
-                                    <th>Date</th>
-                                    <th>Ref. No.</th>
-                                    <th>Particulars</th>
-                                    <th>Debit</th>
-                                    <th>Credit</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
+                            <tr>
+                                <th>SL#</th>
+                                <th>Date</th>
+                                <th>Ref. No.</th>
+                                <th>Particulars</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                                <th>Balance</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach ($transactions as $k => $row)
                                 <tr>
@@ -88,27 +84,28 @@
                                     <td>{{ $row->transaction_id }}</td>
                                     <td>
                                         @if ($row->param_id == 18)
-                                            {{-- @if (empty($row->fuel))
-                      {{dd($row)}}
-                  @endif --}}
-                                            @if ($row->is_bulk != 1)
+                                            @if ($row->is_bulk != 1 && $row->booking)
                                                 Freight of
-                                                {{ Hyvikk::get('currency') }}{{ $row->booking->total_price }}
-                                                containing {{ $row->booking->material }}({{ $row->booking->loadqty }}
-                                                {{ Helper::getParamFromID($row->booking->loadtype)->label }})
-                                                transported by
-                                                <strong>{{ $row->booking->vehicle->license_plate }}</strong>({{ $row->booking->driver->name }})
-                                                on {{ Helper::getCanonicalDateTime($row->booking->pickup, 'default') }}
-                                                for {{ $row->booking->distance }} from
-                                                {{ $row->booking->pickup_addr }} to {{ $row->booking->dest_addr }} in
-                                                {{ $row->booking->duration_map }}
+                                                {{ Hyvikk::get('currency') }}{{ $row->booking->total_price ?? '-' }}
+                                                containing {{ $row->booking->material ?? '-' }}
+                                                ({{ $row->booking->loadqty ?? '-' }}
+                                                {{ $row->booking->loadtype ? Helper::getParamFromID($row->booking->loadtype)->label : '-' }})
+                                                having price ({{ $row->booking->loadprice ?? '-' }}) transported by
+                                                <strong>{{ optional($row->booking->vehicle)->license_plate ?? '-' }}</strong>
+                                                ({{ optional($row->booking->driver)->name ?? '-' }})
+                                                on
+                                                {{ Helper::getCanonicalDateTime($row->booking->pickup ?? null, 'default') }}
+                                                for {{ $row->booking->distance ?? '-' }}
+                                                from {{ $row->booking->pickup_addr ?? '-' }}
+                                                to {{ $row->booking->dest_addr ?? '-' }}
+                                                in {{ $row->booking->duration_map ?? '-' }}
                                             @endif
+
                                             @if ($row->is_bulk == 1)
-                                                {{-- {{dd($row->bulk_data)}} --}}
                                                 Bulk Paid towards Booking
                                             @endif
                                         @else
-                                            {{ dd($row) }}
+                                            Unexpected transaction type
                                         @endif
                                     </td>
                                     <td>
@@ -126,6 +123,7 @@
                                         @endif
                                     </td>
                                     <td>{{ bcdiv($row->total, 1, 2) - bcdiv($row->customer_payment, 1, 2) }}</td>
+                                    <td>{{ $row->remarks ?? '-' }}</td>
                                 </tr>
                             @endforeach
                             <tr>
@@ -134,7 +132,14 @@
                                 <th nowrap>{{ Hyvikk::get('currency') }}
                                     {{ bcdiv($transactions->where('is_bulk', null)->sum('total'), 1, 2) }}</th>
                                 <th nowrap>{{ Hyvikk::get('currency') }}
-                                    {{ bcdiv($transactions->where('is_bulk', 1)->sum('$row->customer_payment'), 1, 2) }}</th>
+                                    {{ bcdiv(
+                                        $transactions->filter(function ($transaction) {
+                                                return $transaction->is_bulk !== 1 && $transaction->customer_payment !== null;
+                                            })->sum('customer_payment'),
+                                        1,
+                                        2,
+                                    ) }}
+                                </th>
 
                                 <th nowrap>{{ Hyvikk::get('currency') }}
                                     {{ bcdiv(

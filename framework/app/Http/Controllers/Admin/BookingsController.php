@@ -556,6 +556,7 @@ class BookingsController extends Controller
         $debit = Transaction::where('type', 24)->sum('total');
         return (float) $credit - (float) $debit;
     }
+    
     public function store(BookingRequest $request)
     {
         $blob = collect(Helper::decode($request->_blob));
@@ -757,18 +758,11 @@ class BookingsController extends Controller
     }
     public function update(Request $request)
     {
-        // dd($request->toArray());
         $booking = Bookings::whereId($request->get("id"))->first();
         $blob = collect(Helper::decode($request->_blob));
-        // dd($blob);
-        // dd($blob->loadprice);
-        // dd($request->toArray());
+
         $datepickup = date("Y-m-d H:i:s", strtotime($request->get("pickup")));
         $datedropoff = date("Y-m-d H:i:s", strtotime($request->get("dropoff")));
-        // dd($datepickup.'--'.$datedropoff);
-        // $xx = $this->check_booking($datepickup, $datedropoff, $request->get("vehicle_id"));
-        // dd($xx);
-        // dd(12);
         $bookid = $booking->id;
 
         unset($request->picklat);
@@ -778,9 +772,13 @@ class BookingsController extends Controller
         unset($request->dmileage);
 
         $request->merge(['pickup' => $datepickup, 'dropoff' => $datedropoff]);
+        
+        // Upload challan if exists
         if ($request->file('challan') && $request->file('challan')->isValid()) {
             $this->upload_doc($request->file('challan'), 'challan', $booking->id);
         }
+
+        // Update booking details
         $booking->user_id = $request->get("user_id");
         $booking->vehicle_id = $request->get("vehicle_id");
         $booking->driver_id = $request->get('driver_id');
@@ -799,38 +797,88 @@ class BookingsController extends Controller
         $booking->petrol_price = $blob['petrol_price']; // total pet price
         $booking->total_price = $blob['total_price'];
         $booking->advance_pay = $blob['advance_pay'];
+        $booking->payment_amount = $request->has('payment_amount') ? $request->payment_amount : null;
         $booking->accept_status = 1; //0=yet to accept, 1= accept
+        
         if ($booking->ride_status == null) {
             $booking->ride_status = "Upcoming";
         }
+        
         $booking->booking_type = 1;
+        $booking->party_name = $request->party_name;
+        $booking->narration = $request->narration;
         $booking->journey_date = date('d-m-Y', strtotime($datepickup));
         $booking->journey_time = date('H:i:s', strtotime($datepickup));
-
         $booking->pickup = $request->get("pickup");
         $booking->dropoff = $request->get("dropoff");
         $booking->pickup_addr = $request->get("pickup_addr");
         $booking->dest_addr = $request->get("dest_addr");
-        // dd($booking);
+        
         $booking->save();
-        // $booking->id
-        //Account Updating
-        $trns = Transaction::where(['from_id' => $booking->id, 'param_id' => 18]);
-        $total_p = (float) $blob['total_price'];
-        $advance_p = empty($blob['advance_pay']) ? 0 : (float) $blob['advance_pay'];
-        $trns->update(['total' => $total_p]);
-        $trns_id = $trns->first()->id;
-        // dd($trns_id);
 
-        $rem = $total_p - $advance_p;
-        IncomeExpense::where('transaction_id', $trns_id)->update(['amount' => $advance_p, 'remaining' => $rem]);
-        // Helper::toJSON(['param_id' => 18]);
+        // Update Driver Advance Transaction (if applicable)
+        if (!empty($blob['advance_pay'])) {
+            $driverTransaction = Transaction::where([
+                'from_id' => $bookid, 
+                'param_id' => 18, 
+                'type' => 24 // Debit transaction type
+            ])->first();
 
+            if ($driverTransaction) {
+                $driverTransaction->update([
+                    'total' => $blob['advance_pay']
+                ]);
+
+                $driverIncomeExpense = IncomeExpense::where('transaction_id', $driverTransaction->id)->first();
+                
+                if ($driverIncomeExpense) {
+                    $driverIncomeExpense->update([
+                        'amount' => $blob['advance_pay'],
+                        'remaining' => 0,
+                        'payment_method' => 16, // Cash
+                        'date' => date("Y-m-d H:i:s")
+                    ]);
+                }
+            }
+        }
+
+        // Update Customer Payment Transaction
+        $customerTransaction = Transaction::where([
+            'from_id' => $bookid, 
+            'param_id' => 18, 
+            'type' => 23 // Credit transaction type
+        ])->first();
+
+        if ($customerTransaction) {
+            // Update total amount
+            $customerTransaction->update([
+                'total' => $request->total_pay,
+                'advance_for' => !empty($request->payment_amount) ? 22 : null
+            ]);
+
+            // Update related Income Expense record
+            $customerIncomeExpense = IncomeExpense::where('transaction_id', $customerTransaction->id)->first();
+
+            if ($customerIncomeExpense) {
+                // Calculate payment amount and remaining
+                $payamount = !empty($request->payment_amount) ? $request->payment_amount : 0;
+                $remain = $request->total_pay - $payamount;
+
+                $customerIncomeExpense->update([
+                    'amount' => $payamount,
+                    'remaining' => $remain,
+                    'payment_method' => !empty($request->payment_type) ? $request->payment_type : 16,
+                    'date' => date("Y-m-d H:i:s"),
+                    'remarks' => !empty($request->remarks) ? $request->remarks : null
+                ]);
+            }
+        }
+
+        // Redirect logic
         if (Session::has('global_redirects') && !empty(Session::get('global_redirects')['booking_edit']))
             return redirect(Session::get('global_redirects')['booking_edit']);
         else
             return redirect()->back();
-        // return redirect()->route('bookings.index');
     }
 
     public function prev_address(Request $request)

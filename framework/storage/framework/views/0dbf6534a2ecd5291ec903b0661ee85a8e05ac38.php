@@ -183,6 +183,7 @@
 				<table class="table">
 					<tr>
 						<th style="float:right">Addtional Distance : <?php echo e(bcdiv($fodderdistance,1,2)); ?> km</th>
+						<th style="float:right">Booking Distance : <?php echo e(bcdiv($booking_distance,1,2)); ?> km</th>
 						<th style="float:right">Total Distance : <?php echo e(bcdiv($total_distance,1,2)); ?> km</th>
 						<th style="float:right">Additional Fuel : <?php echo e(bcdiv($fodderfuel,1,2)); ?> ltr</th>
 						<th style="float:right">Total Fuel: <?php echo e(bcdiv($total_fuel,1,2)); ?> ltr</th>

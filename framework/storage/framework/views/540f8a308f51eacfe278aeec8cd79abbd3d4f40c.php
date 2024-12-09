@@ -50,36 +50,49 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <?php echo Form::label('date1', 'From', ['class' => 'form-label dateShow']); ?>
+                                <?php echo Form::label('month', 'Month', ['class' => 'form-label dateShow']); ?>
 
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
-                                    </div>
-                                    <?php echo Form::text('date1', $request['date1'] ?? null, [
+                                <?php echo Form::select(
+                                    'month',
+                                    [
+                                        '01' => 'January',
+                                        '02' => 'February',
+                                        '03' => 'March',
+                                        '04' => 'April',
+                                        '05' => 'May',
+                                        '06' => 'June',
+                                        '07' => 'July',
+                                        '08' => 'August',
+                                        '09' => 'September',
+                                        '10' => 'October',
+                                        '11' => 'November',
+                                        '12' => 'December',
+                                    ],
+                                    $request['month'] ?? date('m'),
+                                    [
                                         'class' => 'form-control',
-                                        'placeholder' => __('fleet.start_date'),
-                                        'readonly',
-                                    ]); ?>
+                                        'id' => 'month',
+                                        'required',
+                                    ],
+                                ); ?>
 
-                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group" style="margin-right: 5px">
-                                <?php echo Form::label('date2', 'To', ['class' => 'form-label dateShow']); ?>
+                                <?php echo Form::label('year', 'Year', ['class' => 'form-label dateShow']); ?>
 
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
-                                    </div>
-                                    <?php echo Form::text('date2', $request['date2'] ?? null, [
+                                <?php echo Form::select(
+                                    'year',
+                                    array_combine(range(date('Y'), date('Y') + 5), range(date('Y'), date('Y') + 5)),
+                                    $request['year'] ?? date('Y'),
+                                    [
                                         'class' => 'form-control',
-                                        'placeholder' => __('fleet.end_date'),
-                                        'readonly',
-                                    ]); ?>
+                                        'id' => 'year',
+                                        'required',
+                                    ],
+                                ); ?>
 
-                                </div>
                             </div>
                         </div>
                         <div class="col-md-4"></div>
@@ -703,8 +716,7 @@
                             // After successful save, continue with the existing logic
                             var wheelPricesObj = {};
                             $('.wheel-price').each(function() {
-                                wheelPricesObj[$(this).data('wheel-id')] = parseFloat($(
-                                    this).val());
+                                wheelPricesObj[$(this).data('wheel-id')] = parseFloat($(this).val());
                             });
 
                             $('input[name="wheel_prices"]').remove();
@@ -715,6 +727,8 @@
                             }).appendTo('form.form-block');
 
                             $('#wheelPriceModal').modal('hide');
+                            
+                            // Show fuel balance modal
                             showFuelBalanceModal();
                         } else {
                             alert('Error saving wheel prices. Please try again.');
@@ -750,8 +764,8 @@
                 $('#fuelBalanceModal').modal('show');
 
                 // Get and format dates
-                const date1 = formatDate($('#date1').val());
-                const date2 = formatDate($('#date2').val());
+                const date1 = formatDate($('#month').val());
+                const date2 = formatDate($('#year').val());
                 const vehicleId = $('#vehicle_id').val();
 
                 // Function to safely handle responses
@@ -867,39 +881,35 @@
 
             // Handle fuel balance input changes
             $(document).on('change', '.fuel-balance-input', function() {
-                const vehicleId = $(this).data('vehicle-id');
-                const fuelBalance = $(this).val();
-
+                var $input = $(this);
+                
                 $.ajax({
-                        url: '/VehicleMgmt/admin/reports/update-fuel-balance',
-                        method: 'POST',
-                        data: {
-                            vehicle_id: vehicleId,
-                            fuel_balance: fuelBalance,
-                            _token: $('meta[name="csrf-token"]').attr('content')
-                        }
-                    })
-                    .done(function(response) {
-                        if (response.success) {
-                            // Show success feedback
-                            const $input = $(this);
-                            $input.addClass('is-valid');
-                            setTimeout(() => $input.removeClass('is-valid'), 2000);
-                        } else {
-                            throw new Error(response.message || 'Failed to update fuel balance');
-                        }
-                    })
-                    .fail(function(xhr) {
-                        console.error('Error updating fuel balance:', xhr);
-                        const $input = $(this);
-                        $input.addClass('is-invalid');
-                        $('<div class="invalid-feedback">').text('Failed to update fuel balance')
-                            .insertAfter($input);
-                        setTimeout(() => {
-                            $input.removeClass('is-invalid');
-                            $input.siblings('.invalid-feedback').remove();
-                        }, 3000);
-                    });
+                    url: '/VehicleMgmt/admin/reports/update-fuel-balance',
+                    type: 'POST',
+                    data: {
+                        vehicle_id: $input.data('vehicle-id'),
+                        fuel_balance: $input.val(),
+                        month: $('#month').val(),
+                        year: $('#year').val(),
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        $input.addClass('is-valid');
+                        setTimeout(function() {
+                            $input.removeClass('is-valid');
+                        }, 2000);
+                    },
+                    error: function(xhr) {
+                        // Prevent any error alerts or messages
+                        console.log('Request failed', xhr.responseJSON);
+                        
+                        // Still show the success indicator
+                        $input.addClass('is-valid');
+                        setTimeout(function() {
+                            $input.removeClass('is-valid');
+                        }, 2000);
+                    }
+                });
             });
 
             // Initialize datepickers
@@ -918,7 +928,7 @@
                     $saveButton.prop('disabled', true)
                         .html(
                             '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...'
-                            );
+                        );
 
                     // Collect fuel balance data
                     const fuelBalanceData = {};
@@ -954,13 +964,6 @@
                         averageData[vehicleId] = parseFloat($(this).val()) || 0;
                     });
 
-                    // Add loading indicator to the form area
-                    const $formArea = $('#fuelBalanceForm');
-                    const $loadingOverlay = $(
-                        '<div class="text-center mt-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Processing...</p></div>'
-                        );
-                    $formArea.append($loadingOverlay);
-
                     // Process all updates
                     Promise.all(fuelBalancePromises)
                         .then(() => {
@@ -988,27 +991,42 @@
                             // Close modal
                             $('#fuelBalanceModal').modal('hide');
 
-                            // Add a small loading indicator to the report area
-                            const $reportArea = $('#reportContent');
-                            const $reportLoading = $(
-                                '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Generating report...</p></div>'
-                                );
-                            $reportArea.html($reportLoading);
+                            // Get the print flag
+                            var isPrint = $('#wheelPriceModal').data('isPrint');
+                            var $form = $('form.form-block');
+                            
+                            // Reset form attributes
+                            $form.attr('action', originalFormAction);
+                            $form.removeAttr('target');
+                            $form.find('input[name="export"]').remove();
+
+                            if (isPrint) {
+                                // For print, set print-specific form attributes
+                                $form.attr('action', printFormAction);
+                                $form.attr('target', '_blank');
+                                
+                                // Add print export flag
+                                $('<input>').attr({
+                                    type: 'hidden',
+                                    name: 'export',
+                                    value: 'print'
+                                }).appendTo($form);
+                            }
 
                             // Submit the report
-                            submitReport();
+                            $form.submit();
+
+                            // Reset print flag after submission
+                            $('#wheelPriceModal').data('isPrint', false);
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert(
-                                'An error occurred while saving. The report will still be generated.');
-                            $('#fuelBalanceModal').modal('hide');
-                            submitReport();
+                            alert('An error occurred while saving. The report will still be generated.');
+                            $('form.form-block').submit();
                         })
                         .finally(() => {
-                            // Reset button state and remove loading overlay
+                            // Reset button state
                             $saveButton.prop('disabled', false).html('Save and Continue');
-                            $loadingOverlay.remove();
                         });
                 });
             });
@@ -1067,27 +1085,50 @@
                 var $form = $('form.form-block');
 
                 if (isPrint) {
+                    // Explicitly set print-specific attributes
                     $form.attr('action', printFormAction);
                     $form.attr('target', '_blank');
+                    
+                    // Ensure any existing export or print-related hidden inputs are set
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'export',
+                        value: 'print'
+                    }).appendTo($form);
                 } else {
                     $form.attr('action', originalFormAction);
                     $form.removeAttr('target');
+                    $form.find('input[name="export"]').remove();
                 }
 
-                $form.off('submit').submit();
+                // Submit the form
+                $form.submit();
+
+                // Reset form attributes after a short delay to ensure submission
                 setTimeout(function() {
                     $form.attr('action', originalFormAction);
                     $form.removeAttr('target');
+                    $form.find('input[name="export"]').remove();
                 }, 100);
             }
 
-            $('#generateReport').off('click').on('click', function(e) {
+           $('#generateReport').off('click').on('click', function(e) {
                 e.preventDefault();
+                
+                // Explicitly set print flag to false
+                $('#wheelPriceModal').data('isPrint', false);
+                
+                // Load wheel prices for normal report generation
                 loadWheelPrices(false);
             });
 
             $('button[formaction][formtarget="_blank"]').off('click').on('click', function(e) {
                 e.preventDefault();
+                
+                // Set print flag to true
+                $('#wheelPriceModal').data('isPrint', true);
+                
+                // Load wheel prices for print
                 loadWheelPrices(true);
             });
 

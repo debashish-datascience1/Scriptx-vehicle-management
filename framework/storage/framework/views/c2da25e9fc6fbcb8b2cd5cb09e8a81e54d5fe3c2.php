@@ -33,8 +33,6 @@
 </head>
 
 <body onload="window.print();">
-    
-
     <div class="wrapper">
         <!-- Main content -->
         <section class="invoice">
@@ -49,18 +47,17 @@
 
                         </span>
                         <small class="pull-right"> <b><?php echo app('translator')->getFromJson('fleet.date'); ?> : </b>
-                            <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'), 'default')); ?> /
-                            <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'))); ?></small>
-                    </h2>
+                            <strong><?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'), 'default')); ?> /
+                            <?php echo e(Helper::getCanonicalDateTime(date('Y-m-d H:i:s'))); ?></strong></small>
                 </div>
                 <!-- /.col -->
             </div>
             <div class="row">
                 <div class="col-md-12 text-center">
                     <h3>Customer Payment Report</h3>
-                    <h4><?php echo e($customer_data->name); ?></h4>
-                    <small><?php echo e(Helper::getCanonicalDate($from_date, 'default')); ?> -
-                        <?php echo e(Helper::getCanonicalDate($to_date, 'default')); ?></small>
+                    <h4><strong><?php echo e($customer_data->name); ?></strong></h4>
+                    <small><strong><?php echo e(Helper::getCanonicalDate($from_date, 'default')); ?> -
+                        <?php echo e(Helper::getCanonicalDate($to_date, 'default')); ?></strong></small>
                 </div>
             </div>
             <div class="row">
@@ -69,19 +66,18 @@
 
                         <?php echo e(bcdiv($opening_balance, 1, 2)); ?></span>
                     <table class="table table-bordered table-striped table-hover">
-
                         <thead class="thead-inverse">
-                            <thead>
-                                <tr>
-                                    <th>SL#</th>
-                                    <th>Date</th>
-                                    <th>Ref. No.</th>
-                                    <th>Particulars</th>
-                                    <th>Debit</th>
-                                    <th>Credit</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
+                            <tr>
+                                <th>SL#</th>
+                                <th>Date</th>
+                                <th>Ref. No.</th>
+                                <th>Particulars</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                                <th>Balance</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr>
@@ -90,30 +86,32 @@
                                     <td><?php echo e($row->transaction_id); ?></td>
                                     <td>
                                         <?php if($row->param_id == 18): ?>
-                                            
-                                            <?php if($row->is_bulk != 1): ?>
-                                                Freight of
-                                                <?php echo e(Hyvikk::get('currency')); ?><?php echo e($row->booking->total_price); ?>
+                                            <?php if($row->is_bulk != 1 && $row->booking): ?>
+                                                Freight of 
+                                                <?php echo e(Hyvikk::get('currency')); ?><?php echo e($row->booking->total_price ?? '-'); ?>
 
-                                                containing <?php echo e($row->booking->material); ?>(<?php echo e($row->booking->loadqty); ?>
+                                                containing <?php echo e($row->booking->material ?? '-'); ?> 
+                                                (<?php echo e($row->booking->loadqty ?? '-'); ?> 
+                                                <?php echo e($row->booking->loadtype ? Helper::getParamFromID($row->booking->loadtype)->label : '-'); ?>)
+                                                having price (<?php echo e($row->booking->loadprice ?? '-'); ?>) transported by
+                                                <strong><?php echo e(optional($row->booking->vehicle)->license_plate ?? '-'); ?></strong>
+                                                (<?php echo e(optional($row->booking->driver)->name ?? '-'); ?>)
+                                                on <?php echo e(Helper::getCanonicalDateTime($row->booking->pickup ?? null, 'default')); ?>
 
-                                                <?php echo e(Helper::getParamFromID($row->booking->loadtype)->label); ?>)
-                                                transported by
-                                                <strong><?php echo e($row->booking->vehicle->license_plate); ?></strong>(<?php echo e($row->booking->driver->name); ?>)
-                                                on <?php echo e(Helper::getCanonicalDateTime($row->booking->pickup, 'default')); ?>
+                                                for <?php echo e($row->booking->distance ?? '-'); ?> 
+                                                from <?php echo e($row->booking->pickup_addr ?? '-'); ?>
 
-                                                for <?php echo e($row->booking->distance); ?> from
-                                                <?php echo e($row->booking->pickup_addr); ?> to <?php echo e($row->booking->dest_addr); ?> in
-                                                <?php echo e($row->booking->duration_map); ?>
+                                                to <?php echo e($row->booking->dest_addr ?? '-'); ?>
+
+                                                in <?php echo e($row->booking->duration_map ?? '-'); ?>
 
                                             <?php endif; ?>
+                                            
                                             <?php if($row->is_bulk == 1): ?>
-                                                
                                                 Bulk Paid towards Booking
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <?php echo e(dd($row)); ?>
-
+                                            Unexpected transaction type
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -133,6 +131,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo e(bcdiv($row->total, 1, 2) - bcdiv($row->customer_payment, 1, 2)); ?></td>
+                                    <td><?php echo e($row->remarks ?? '-'); ?></td>
                                 </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             <tr>
@@ -143,7 +142,11 @@
                                     <?php echo e(bcdiv($transactions->where('is_bulk', null)->sum('total'), 1, 2)); ?></th>
                                 <th nowrap><?php echo e(Hyvikk::get('currency')); ?>
 
-                                    <?php echo e(bcdiv($transactions->where('is_bulk', 1)->sum('$row->customer_payment'), 1, 2)); ?></th>
+                                    <?php echo e(bcdiv($transactions->filter(function($transaction) { 
+                                        return $transaction->is_bulk !== 1 && $transaction->customer_payment !== null;
+                                    })->sum('customer_payment'), 1, 2)); ?>
+
+                                </th>
 
                                 <th nowrap><?php echo e(Hyvikk::get('currency')); ?>
 
@@ -166,5 +169,4 @@
     <!-- ./wrapper -->
 </body>
 
-</html>
-<?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/reports/customerPaymentPrint.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/reports/customerPaymentPrint.blade.php ENDPATH**/ ?>
