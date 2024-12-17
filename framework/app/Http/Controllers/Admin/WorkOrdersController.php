@@ -178,6 +178,7 @@ class WorkOrdersController extends Controller
                     $current_tyres = array_filter(explode(',', $parts_model->tyres_used ?? ''));
                     $remaining_tyres = array_diff($current_tyres, $newArray);
                     $parts_model->tyres_used = implode(',', $remaining_tyres);
+                    $parts_model->tyre_numbers = implode(',', $remaining_tyres);
                     $parts_model->save();
                 }
         

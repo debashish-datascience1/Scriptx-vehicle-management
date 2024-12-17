@@ -304,7 +304,7 @@
                                                                 </td>
                                                                 <td><?php echo e(Hyvikk::get('currency')); ?>
 
-                                                                    <?php echo e(Helper::properDecimals(array_sum($fs->total))); ?>
+                                                                    <?php echo e(Helper::properDecimals(($fs->total[0]))); ?>
 
                                                                 </td>
                                                             </tr>

@@ -218,7 +218,7 @@
                       <td>{{$k}}</td>
                       <td>{{count($fs->id)}} time(s)</td>
                       <td>{{array_sum($fs->ltr)}} {{ $k!='Lubricant' ? Hyvikk::get('fuel_unit') : 'pc'}}</td>
-                      <td>{{Hyvikk::get('currency')}} {{Helper::properDecimals(array_sum($fs->total))}}</td>
+                      <td>{{Hyvikk::get('currency')}} {{Helper::properDecimals(($fs->total[0]))}}</td>
                     </tr>
                     @endforeach
                     @else

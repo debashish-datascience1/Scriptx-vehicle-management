@@ -221,7 +221,7 @@
                       <td><?php echo e($k); ?></td>
                       <td><?php echo e(count($fs->id)); ?> time(s)</td>
                       <td><?php echo e(array_sum($fs->ltr)); ?> <?php echo e($k!='Lubricant' ? Hyvikk::get('fuel_unit') : 'pc'); ?></td>
-                      <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals(array_sum($fs->total))); ?></td>
+                      <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(Helper::properDecimals(($fs->total[0]))); ?></td>
                     </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     <?php else: ?>
