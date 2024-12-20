@@ -5450,7 +5450,7 @@ class ReportsController extends Controller
 				'month' => $request->month,
 				'year' => $request->year
 			])->update([
-				'balance' => $request->fuel_balance
+				'month_end_balance' => $request->fuel_balance
 			]);
 			
 			return response()->json(['success' => true], 200);
@@ -5469,14 +5469,14 @@ class ReportsController extends Controller
 			$selectedYear = $request->get('date2', date('Y'));
 
 			// Calculate previous month and year
-			// $previousMonth = $selectedMonth - 1;
-			// $previousYear = $selectedYear;
+			$previousMonth = $selectedMonth - 1;
+			$previousYear = $selectedYear;
 
-			// // Handle year rollover for January
-			// if ($previousMonth == 0) {
-			// 	$previousMonth = 12;
-			// 	$previousYear -= 1;
-			// }
+			// Handle year rollover for January
+			if ($previousMonth == 0) {
+				$previousMonth = 12;
+				$previousYear -= 1;
+			}
 
 			// Create start and end dates for the selected month
 			$start = date('01-m-Y', strtotime("{$selectedYear}-{$selectedMonth}-01"));
@@ -5502,8 +5502,8 @@ class ReportsController extends Controller
 			foreach ($vehicles as $vehicle) {
 				// Fetch initial balance from previous month's fuel_balance table
 				$fuelBalanceRecord = FuelBalance::where('vehicle_id', $vehicle->id)
-					->where('month', $selectedMonth)
-					->where('year', $selectedYear)
+					->where('month', $previousMonth)
+					->where('year', $previousYear)
 					->first();
 				
 				// Get fuel records for date range
@@ -5519,7 +5519,7 @@ class ReportsController extends Controller
 					->get();
 
 				// Calculate initial balance from previous month's end balance
-				$initialBalance = $fuelBalanceRecord ? floatval($fuelBalanceRecord->balance) : 0;
+				$initialBalance = $fuelBalanceRecord ? floatval($fuelBalanceRecord->month_end_balance) : 0;
 				$totalFuel = floatval($fuelRecords->sum('qty'));
 				$totalWithBalance = $totalFuel + $initialBalance;
 				
@@ -5572,6 +5572,8 @@ class ReportsController extends Controller
 				'start_date' => $startDate,
 				'end_date' => $endDate,
 				'vehicle_id' => $vehicleId,
+				'previous_month' => $previousMonth,
+				'previous_year' => $previousYear,
 				'results' => $results
 			]);
 
@@ -5615,14 +5617,6 @@ class ReportsController extends Controller
 			// Prepare logging
 			$processedVehicles = [];
 			$unprocessedVehicles = [];
-
-			// Calculate next month and year
-			$nextMonth = $month + 1;
-			$nextYear = $year;
-			if ($nextMonth > 12) {
-				$nextMonth = 1;
-				$nextYear += 1;
-			}
 
 			DB::beginTransaction();
 
@@ -5673,11 +5667,11 @@ class ReportsController extends Controller
 					continue;
 				}
 
-				// Store or update fuel balance for current month
+				// Store or update fuel balance
 				$initialBalance = floatval($balanceData['initial_balance'] ?? 0);
 				$remainingFuel = floatval($balanceData['remaining_fuel'] ?? 0);
 
-				$currentMonthFuelBalance = FuelBalance::updateOrCreate(
+				$fuelBalance = FuelBalance::updateOrCreate(
 					[
 						'vehicle_id' => $vehicle->id,
 						'month' => $month,
@@ -5686,20 +5680,6 @@ class ReportsController extends Controller
 					[
 						'balance' => $initialBalance,
 						'month_end_balance' => $remainingFuel
-					]
-				);
-
-				// Create or update fuel balance for next month
-				// Use the current month's month_end_balance as the initial balance for next month
-				$nextMonthFuelBalance = FuelBalance::updateOrCreate(
-					[
-						'vehicle_id' => $vehicle->id,
-						'month' => $nextMonth,
-						'year' => $nextYear
-					],
-					[
-						'balance' => $remainingFuel,  // Use current month's end balance as next month's initial balance
-						'month_end_balance' => NULL  // Initially set to the same value
 					]
 				);
 
@@ -5714,10 +5694,8 @@ class ReportsController extends Controller
 				'total_processed' => count($processedVehicles),
 				'processed_vehicles' => $processedVehicles,
 				'unprocessed_vehicles' => $unprocessedVehicles,
-				'current_month' => $month,
-				'current_year' => $year,
-				'next_month' => $nextMonth,
-				'next_year' => $nextYear
+				'month' => $month,
+				'year' => $year
 			]);
 
 			return response()->json([
@@ -5742,121 +5720,6 @@ class ReportsController extends Controller
 			], 500);
 		}
 	}
-
-	// public function storeFuelBalanceRecords(Request $request)
-	// {
-	// 	try {
-	// 		$month = $request->input('month', date('m'));
-	// 		$year = $request->input('year', date('Y'));
-	// 		$fuelBalances = $request->input('fuel_balances', []);
-	// 		$vehicleId = $request->input('vehicle_id', 'all');
-
-	// 		// Prepare logging
-	// 		$processedVehicles = [];
-	// 		$unprocessedVehicles = [];
-
-	// 		DB::beginTransaction();
-
-	// 		// If vehicle_id is 'all', get all vehicles in the Ranisati group
-	// 		if ($vehicleId === 'all') {
-	// 			$groupId = DB::table('vehicle_group')
-	// 				->whereRaw('LOWER(name) LIKE ?', ['%ranisati%'])
-	// 				->whereNull('deleted_at')
-	// 				->value('id');
-
-	// 			if (!$groupId) {
-	// 				\Log::warning('No Ranisati vehicle group found');
-	// 				return response()->json([
-	// 					'success' => false,
-	// 					'message' => 'Vehicle group "Ranisati" not found'
-	// 				], 404);
-	// 			}
-
-	// 			// Process all vehicles in the group
-	// 			$vehicles = VehicleModel::where('group_id', $groupId)
-	// 				->whereNull('deleted_at')
-	// 				->get();
-	// 		} else {
-	// 			// If a specific vehicle is selected
-	// 			$vehicles = VehicleModel::where('id', $vehicleId)
-	// 				->whereNull('deleted_at')
-	// 				->get();
-	// 		}
-
-	// 		// Process each vehicle
-	// 		foreach ($vehicles as $vehicle) {
-	// 			// Create vehicle identifier
-	// 			$vehicleName = trim(implode('-', array_filter([
-	// 				$vehicle->make,
-	// 				$vehicle->model,
-	// 				$vehicle->license_plate
-	// 			])));
-
-	// 			// Check if balance exists for this vehicle
-	// 			$balanceData = $fuelBalances[$vehicleName] ?? null;
-
-	// 			if (!$balanceData) {
-	// 				\Log::warning("No balance data for vehicle", [
-	// 					'vehicle_id' => $vehicle->id,
-	// 					'vehicle_name' => $vehicleName
-	// 				]);
-	// 				$unprocessedVehicles[] = $vehicleName;
-	// 				continue;
-	// 			}
-
-	// 			// Store or update fuel balance
-	// 			$initialBalance = floatval($balanceData['initial_balance'] ?? 0);
-	// 			$remainingFuel = floatval($balanceData['remaining_fuel'] ?? 0);
-
-	// 			$fuelBalance = FuelBalance::updateOrCreate(
-	// 				[
-	// 					'vehicle_id' => $vehicle->id,
-	// 					'month' => $month,
-	// 					'year' => $year
-	// 				],
-	// 				[
-	// 					'balance' => $initialBalance,
-	// 					'month_end_balance' => $remainingFuel
-	// 				]
-	// 			);
-
-	// 			$processedVehicles[] = $vehicle->id;
-	// 		}
-
-	// 		DB::commit();
-
-	// 		// Logging
-	// 		\Log::info('Fuel Balance Processing Summary', [
-	// 			'total_vehicles' => $vehicles->count(),
-	// 			'total_processed' => count($processedVehicles),
-	// 			'processed_vehicles' => $processedVehicles,
-	// 			'unprocessed_vehicles' => $unprocessedVehicles,
-	// 			'month' => $month,
-	// 			'year' => $year
-	// 		]);
-
-	// 		return response()->json([
-	// 			'success' => true,
-	// 			'message' => 'Fuel balance records stored successfully',
-	// 			'processed' => count($processedVehicles),
-	// 			'unprocessed' => $unprocessedVehicles
-	// 		]);
-
-	// 	} catch (\Exception $e) {
-	// 		DB::rollBack();
-			
-	// 		\Log::error('Fuel Balance Storage Error', [
-	// 			'message' => $e->getMessage(),
-	// 			'trace' => $e->getTraceAsString(),
-	// 			'request_data' => $request->all()
-	// 		]);
-
-	// 		return response()->json([
-	// 			'success' => false,
-	// 			'message' => 'Error storing fuel balance records: ' . $e->getMessage()
-	// 		], 500);
-	// 	}
-	// }
 	// Helper method to parse and format dates flexibly
 	private function parseAndFormatDate($dateString)
 	{
@@ -6038,16 +5901,16 @@ class ReportsController extends Controller
 					}
 				}
 				// Get fuel data
-				$fuelModel1 = FuelModel::where('vehicle_id', $vehicle->id)
-					->whereBetween('date', [$startDateTime, $endDateTime])
-					->whereNull('deleted_at')
-					->get();
+				// $fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
+				// 	->whereBetween('date', [$startDateTime, $endDateTime])
+				// 	->whereNull('deleted_at')
+				// 	->get();
 				
-				$fuelArray = [];
+				// $fuelArray = [];
 				// $totalFuelCost = 0;
 				// $totalFuelQty = 0;
 				
-				// foreach ($fuelModel1 as $f) {
+				// foreach ($fuelModel as $f) {
 				// 	$fuelName = FuelType::find($f->fuel_type)->fuel_name;
 				// 	$fuelArray[$fuelName]['id'][] = $f->id;
 				// 	$fuelArray[$fuelName]['ltr'][] = $f->qty;
@@ -6055,23 +5918,6 @@ class ReportsController extends Controller
 				// 	$totalFuelCost += $f->qty * $f->cost_per_unit;
 				// 	$totalFuelQty += $f->qty;
 				// }
-				// Calculate total for other fuel types
-				$otherFuelTotal = 0;
-
-				foreach ($fuelModel1 as $f) {
-					$fuelName = FuelType::find($f->fuel_type)->fuel_name;
-					
-					// Skip Diesel and Petrol
-					if (in_array($fuelName, ['Diesel', 'Petrol'])) {
-						continue;
-					}
-					
-					$fuelArray[$fuelName]['id'][] = $f->id;
-					$fuelArray[$fuelName]['ltr'][] = $f->qty;
-					$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
-					
-					$otherFuelTotal += $f->qty * $f->cost_per_unit;
-				}
 
 				$vehicleName = trim(implode('-', array_filter([
 					$vehicle->make,
@@ -6157,6 +6003,7 @@ class ReportsController extends Controller
 				foreach ($driver_advance_details as $detail) {
 					$advanceWithLabel += $detail->value;
 				}
+
 				$summary[] = [
 					'vehicle' => $vehicle,
 					// 'bookings_count' => $bookings->count(),
@@ -6166,7 +6013,7 @@ class ReportsController extends Controller
 					'total_revenue' => $totalPrice,
 					'fuel_cost' => $totalFuelCost,
 					'fuel_qty' => $expectedConsumption,
-					'fuel_details' => $fuelArray,
+					// 'fuel_details' => $fuelArray,
 					'tyre_cost' => $tyreCost,
 					'work_orders' => $workorders->count(),
 					'work_order_total' => $workOrderTotal, 
@@ -6174,7 +6021,7 @@ class ReportsController extends Controller
 					'driver_advance' => $totalAdvance,
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
-					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel  + $otherFuelTotal,
+					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel,
                 	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
                 	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
 					'avg_revenue_per_km' => $totalKms > 0 ? $totalPrice / $totalKms : 0,
@@ -6256,7 +6103,7 @@ class ReportsController extends Controller
 				$fuelName = FuelType::find($f->fuel_type)->fuel_name;
 				$fuelArray[$fuelName]['id'][] = $f->id;
 				$fuelArray[$fuelName]['ltr'][] = $f->qty;
-				$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+				$fuelArray[$fuelName]['total'][] = $currentTotalFuelCost;
 				$totalFuelCost += $f->qty * $f->cost_per_unit;
 				$totalFuelQty += $f->qty;
 			}
@@ -6347,7 +6194,6 @@ class ReportsController extends Controller
 			$data['book'] = Helper::toCollection($book);
 			$data['fuels'] = Helper::toCollection($fuelArray);
 			$data['advances'] = Helper::toCollection($advance);
-			$data['totalFuelCost'] = $currentTotalFuelCost;
 		}
 
 		$data['request'] = $request->all();
@@ -6512,41 +6358,6 @@ class ReportsController extends Controller
 						return $dailyCost * $daysInPeriod;
 					});
 
-					$fuelModel1 = FuelModel::where('vehicle_id', $vehicle->id)
-					->whereBetween('date', [$startDateTime, $endDateTime])
-					->whereNull('deleted_at')
-					->get();
-				
-					$fuelArray = [];
-					// $totalFuelCost = 0;
-					// $totalFuelQty = 0;
-					
-					// foreach ($fuelModel1 as $f) {
-					// 	$fuelName = FuelType::find($f->fuel_type)->fuel_name;
-					// 	$fuelArray[$fuelName]['id'][] = $f->id;
-					// 	$fuelArray[$fuelName]['ltr'][] = $f->qty;
-					// 	$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
-					// 	$totalFuelCost += $f->qty * $f->cost_per_unit;
-					// 	$totalFuelQty += $f->qty;
-					// }
-					// Calculate total for other fuel types
-					$otherFuelTotal = 0;
-
-					foreach ($fuelModel1 as $f) {
-						$fuelName = FuelType::find($f->fuel_type)->fuel_name;
-						
-						// Skip Diesel and Petrol
-						if (in_array($fuelName, ['Diesel', 'Petrol'])) {
-							continue;
-						}
-						
-						$fuelArray[$fuelName]['id'][] = $f->id;
-						$fuelArray[$fuelName]['ltr'][] = $f->qty;
-						$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
-						
-						$otherFuelTotal += $f->qty * $f->cost_per_unit;
-					}
-
 					$vehicleName = trim(implode('-', array_filter([
 						$vehicle->make,
 						$vehicle->model,
@@ -6555,12 +6366,12 @@ class ReportsController extends Controller
 		
 					// Add expected consumption from fuel balance results
 					$expectedConsumption = $fuelBalanceResults[$vehicleName]['expected_consumption'] ?? 0;
-
+	
 					$fuelModel = FuelModel::where('vehicle_id', $vehicle->id)
 					->whereBetween('date', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at')
 					->first(); // Get the first fuel record to get the cost per unit
-
+	
 					$totalFuelCost = 0;
 					if ($fuelModel) {
 						$costPerUnit = $fuelModel->cost_per_unit ?? 0;
@@ -6666,7 +6477,7 @@ class ReportsController extends Controller
 					'maintenance_cost' => $maintenanceCost,
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
-					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel + $otherFuelTotal,
+					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel,
 					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
 				];
 			}
@@ -6781,7 +6592,7 @@ class ReportsController extends Controller
 				$fuelName = FuelType::find($f->fuel_type)->fuel_name;
 				$fuelArray[$fuelName]['id'][] = $f->id;
 				$fuelArray[$fuelName]['ltr'][] = $f->qty;
-				$fuelArray[$fuelName]['total'][] = $f->qty * $f->cost_per_unit;
+				$fuelArray[$fuelName]['total'][] = $currentTotalFuelCost;
 				$totalFuelCost += $f->qty * $f->cost_per_unit;
 				$totalFuelQty += $f->qty;
 			}
@@ -6846,8 +6657,6 @@ class ReportsController extends Controller
 			$data['book'] = Helper::toCollection($book);
 			$data['fuels'] = Helper::toCollection($fuelArray);
 			$data['advances'] = Helper::toCollection($advance);
-			$data['totalFuelCost'] = $currentTotalFuelCost;
-
 		}
 
 		$data['request'] = $request->all();

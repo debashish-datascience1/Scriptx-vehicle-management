@@ -251,7 +251,6 @@
                                         </tr>
                                         <tr>
                                             <table class="table table-bordered table-striped">
-
                                                 <thead>
                                                     <tr>
                                                         <td colspan="4" align="center"
@@ -270,11 +269,18 @@
                                                             <tr>
                                                                 <td>{{ $k }}</td>
                                                                 <td>{{ count($fs->id) }} time(s)</td>
-                                                                <td>{{ array_sum($fs->ltr) }}
+                                                                <td>
+                                                                    {{ array_sum($fs->ltr) }}
                                                                     {{ $k != 'Lubricant' ? Hyvikk::get('fuel_unit') : 'pc' }}
                                                                 </td>
-                                                                <td>{{ Hyvikk::get('currency') }}
-                                                                    {{ Helper::properDecimals(($fs->total[0])) }}
+                                                                <td>
+                                                                    @if ($k == 'Diesel' || $k == 'Petrol')
+                                                                        {{ Hyvikk::get('currency') }}
+                                                                        {{ Helper::properDecimals($totalFuelCost) }}
+                                                                    @else
+                                                                        {{ Hyvikk::get('currency') }}
+                                                                        {{ Helper::properDecimals(array_sum($fs->total)) }}
+                                                                    @endif
                                                                 </td>
                                                             </tr>
                                                         @endforeach
@@ -677,7 +683,8 @@
                             // After successful save, continue with the existing logic
                             var wheelPricesObj = {};
                             $('.wheel-price').each(function() {
-                                wheelPricesObj[$(this).data('wheel-id')] = parseFloat($(this).val());
+                                wheelPricesObj[$(this).data('wheel-id')] = parseFloat($(
+                                    this).val());
                             });
 
                             $('input[name="wheel_prices"]').remove();
@@ -688,7 +695,7 @@
                             }).appendTo('form.form-block');
 
                             $('#wheelPriceModal').modal('hide');
-                            
+
                             // Show fuel balance modal
                             showFuelBalanceModal();
                         } else {
@@ -787,7 +794,7 @@
                                         vehicleName,
                                         averages[vehicleId] || 0,
                                         (fuelBalances[vehicleName] ? fuelBalances[vehicleName]
-                                            .remaining_fuel : 0) || 0
+                                            .initial_balance : 0) || 0
                                     );
                                 }
                             });
@@ -799,7 +806,7 @@
                                     vehicleId,
                                     vehicleName,
                                     averages[vehicleId] || 0,
-                                    (fuelBalances[vehicleName] ? fuelBalances[vehicleName].remaining_fuel :
+                                    (fuelBalances[vehicleName] ? fuelBalances[vehicleName].initial_balance :
                                         0) || 0
                                 );
                             }
@@ -843,7 +850,7 @@
             // Handle fuel balance input changes
             $(document).on('change', '.fuel-balance-input', function() {
                 var $input = $(this);
-                
+
                 $.ajax({
                     url: '/VehicleMgmt/admin/reports/update-fuel-balance',
                     type: 'POST',
@@ -863,7 +870,7 @@
                     error: function(xhr) {
                         // Prevent any error alerts or messages
                         console.log('Request failed', xhr.responseJSON);
-                        
+
                         // Still show the success indicator
                         $input.addClass('is-valid');
                         setTimeout(function() {
@@ -955,7 +962,7 @@
                             // Get the print flag
                             var isPrint = $('#wheelPriceModal').data('isPrint');
                             var $form = $('form.form-block');
-                            
+
                             // Reset form attributes
                             $form.attr('action', originalFormAction);
                             $form.removeAttr('target');
@@ -965,7 +972,7 @@
                                 // For print, set print-specific form attributes
                                 $form.attr('action', printFormAction);
                                 $form.attr('target', '_blank');
-                                
+
                                 // Add print export flag
                                 $('<input>').attr({
                                     type: 'hidden',
@@ -982,7 +989,8 @@
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('An error occurred while saving. The report will still be generated.');
+                            alert(
+                                'An error occurred while saving. The report will still be generated.');
                             $('form.form-block').submit();
                         })
                         .finally(() => {
@@ -1049,7 +1057,7 @@
                     // Explicitly set print-specific attributes
                     $form.attr('action', printFormAction);
                     $form.attr('target', '_blank');
-                    
+
                     // Ensure any existing export or print-related hidden inputs are set
                     $('<input>').attr({
                         type: 'hidden',
@@ -1073,22 +1081,22 @@
                 }, 100);
             }
 
-           $('#generateReport').off('click').on('click', function(e) {
+            $('#generateReport').off('click').on('click', function(e) {
                 e.preventDefault();
-                
+
                 // Explicitly set print flag to false
                 $('#wheelPriceModal').data('isPrint', false);
-                
+
                 // Load wheel prices for normal report generation
                 loadWheelPrices(false);
             });
 
             $('button[formaction][formtarget="_blank"]').off('click').on('click', function(e) {
                 e.preventDefault();
-                
+
                 // Set print flag to true
                 $('#wheelPriceModal').data('isPrint', true);
-                
+
                 // Load wheel prices for print
                 loadWheelPrices(true);
             });
