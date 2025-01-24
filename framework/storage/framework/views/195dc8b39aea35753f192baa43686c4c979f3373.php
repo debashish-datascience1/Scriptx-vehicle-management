@@ -79,11 +79,15 @@
                 </tr>
                 <tr>
                     <td>Booking Income</td>
-                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income - $tyre_sales, 2)); ?></td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($total_income - $tyre_sales - $bulk_payment_income, 2)); ?></td>
                 </tr>
                 <tr>
                     <td>Tyre Sales</td>
                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($tyre_sales, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Bulk Payment Income</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($bulk_payment_income, 2)); ?></td>
                 </tr>
                 <tr class="total-row">
                     <td>Total Income</td>
@@ -122,6 +126,10 @@
                 <tr>
                     <td>FastTag Expenses</td>
                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fastag_expenses, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Bulk Payment Expenses</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($bulk_payment_expense, 2)); ?></td>
                 </tr>
                 <tr class="total-row">
                     <td>Total Expenses</td>

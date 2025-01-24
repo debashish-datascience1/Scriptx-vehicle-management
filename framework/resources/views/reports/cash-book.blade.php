@@ -118,11 +118,15 @@
                             <div class="summary-item">
                                 <strong>Booking Income:</strong>
                                 <span>{{ Hyvikk::get('currency') }}
-                                    {{ number_format($total_income - $tyre_sales, 2) }}</span>
+                                    {{ number_format($total_income - $tyre_sales - $bulk_payment_income, 2) }}</span>
                             </div>
                             <div class="summary-item">
                                 <strong>Tyre Sales:</strong>
                                 <span>{{ Hyvikk::get('currency') }} {{ number_format($tyre_sales, 2) }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <strong>Bulk Payment Income:</strong>
+                                <span>{{ Hyvikk::get('currency') }} {{ number_format($bulk_payment_income, 2) }}</span>
                             </div>
                             <div class="summary-item">
                                 <strong>Total Income:</strong>
@@ -155,6 +159,10 @@
                             <div class="summary-item">
                                 <strong>FastTag Expenses:</strong>
                                 <span>{{ Hyvikk::get('currency') }} {{ number_format($fastag_expenses, 2) }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <strong>Bulk Payment Expenses:</strong>
+                                <span>{{ Hyvikk::get('currency') }} {{ number_format($bulk_payment_expense, 2) }}</span>
                             </div>
                             <div class="summary-item">
                                 <strong>Total Expenses:</strong>

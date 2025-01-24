@@ -84,7 +84,7 @@
 
                                 <?php echo Form::select(
                                     'year',
-                                    array_combine(range(date('Y'), date('Y') + 5), range(date('Y'), date('Y') + 5)),
+                                    array_combine(range(date('Y') - 2, date('Y') + 3), range(date('Y') - 2, date('Y') + 3)),
                                     $request['year'] ?? date('Y'),
                                     [
                                         'class' => 'form-control',
@@ -1031,7 +1031,8 @@
                         .catch(error => {
                             console.error('Error:', error);
                             alert(
-                                'An error occurred while saving. The report will still be generated.');
+                                'An error occurred while saving. The report will still be generated.'
+                                );
                             $('form.form-block').submit();
                         })
                         .finally(() => {

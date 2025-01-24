@@ -9,7 +9,7 @@ class BulkPayment extends Model {
 
     use SoftDeletes;
 	protected $table = 'bulk_payment';
-	protected $fillable = ['bank_id','date','amount','cv_id'];
+	protected $fillable = ['bank_id','date','amount','cv_id','cv_name'];
 
     public function bank(){
         return $this->belongsTo("App\Model\BankAccount","bank_id",'id');

@@ -3569,6 +3569,14 @@ class ReportsController extends Controller
 
 		$total_income += $tyre_sales;
 
+		$bulk_payment_income = DB::table('bulk_payment')
+			->whereDate('date', $date)
+			->where('cv_name', 'booking')
+			->whereNull('deleted_at')
+			->sum('amount');
+
+		$total_income += $bulk_payment_income;
+
 		// Calculate fuel costs for all vehicles on the given date
 		$fuel_costs = FuelModel::whereDate('date', $date)
 			->whereNull('deleted_at')
@@ -3593,6 +3601,12 @@ class ReportsController extends Controller
 			->whereNull('deleted_at')
 			->sum('amount');
 
+		$bulk_payment_expense = DB::table('bulk_payment')
+			->whereDate('date', $date)
+			->where('cv_name', '!=', 'booking')
+			->whereNull('deleted_at')
+			->sum('amount');
+
 		// Calculate tyre purchase costs for the day
 		$tyre_purchase = DB::table('parts_invoice')
 			->whereDate('date_of_purchase', $date)
@@ -3612,7 +3626,7 @@ class ReportsController extends Controller
 			->sum('amount');
 
 		// Rest of the code remains the same
-		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses;
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses + $bulk_payment_expense;
 		$cash_balance = $total_income - $total_expenses;
 
 		$data = [
@@ -3625,6 +3639,8 @@ class ReportsController extends Controller
 			'tyre_purchase' => round($tyre_purchase, 2),
 			'work_order_costs' => round($work_order_costs, 2),
 			'fastag_expenses' => round($fastag_expenses, 2),  
+			'bulk_payment_income' => round($bulk_payment_income, 2),
+			'bulk_payment_expense' => round($bulk_payment_expense, 2),
 			'cash_balance' => round($cash_balance, 2),
 			'bookings' => $bookings,
 			'tyre_sales' => round($tyre_sales, 2),
@@ -3659,6 +3675,14 @@ class ReportsController extends Controller
 		// Add tyre sales to total income
 		$total_income += $tyre_sales;
 
+		$bulk_payment_income = DB::table('bulk_payment')
+			->whereDate('date', $date)
+			->where('cv_name', 'booking')
+			->whereNull('deleted_at')
+			->sum('amount');
+
+		$total_income += $bulk_payment_income;
+
 		// Calculate fuel costs for all vehicles on the given date
 		$fuel_costs = FuelModel::whereDate('date', $date)
 			->whereNull('deleted_at')
@@ -3695,6 +3719,12 @@ class ReportsController extends Controller
 			->whereNull('deleted_at')
 			->sum('price');
 
+		$bulk_payment_expense = DB::table('bulk_payment')
+			->whereDate('date', $date)
+			->where('cv_name', '!=', 'booking')
+			->whereNull('deleted_at')
+			->sum('amount');
+
 		// Calculate FastTag expenses for the day
 		$fastag_expenses = DB::table('bank_transactions')
 			->whereDate('date', $date)
@@ -3702,7 +3732,7 @@ class ReportsController extends Controller
 			->sum('amount');
 
 		// Calculate total expenses (now including FastTag)
-		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses;
+		$total_expenses = $fuel_costs + $other_costs + $legal_costs + $tyre_purchase + $work_order_costs + $fastag_expenses + $bulk_payment_expense;
 
 		$cash_balance = $total_income - $total_expenses;
 
@@ -3714,6 +3744,8 @@ class ReportsController extends Controller
 			'other_costs' => round($other_costs, 2),
 			'legal_costs' => round($legal_costs, 2),
 			'tyre_purchase' => round($tyre_purchase, 2),
+			'bulk_payment_income' => round($bulk_payment_income, 2),
+			'bulk_payment_expense' => round($bulk_payment_expense, 2),
 			'work_order_costs' => round($work_order_costs, 2),
 			'fastag_expenses' => round($fastag_expenses, 2),
 			'cash_balance' => round($cash_balance, 2),
@@ -6117,7 +6149,7 @@ class ReportsController extends Controller
 					->get();
 				
 				$workOrderTotal = WorkOrders::where('vehicle_id', $vehicle->id)
-					->whereBetween('created_at', [$startDateTime, $endDateTime])
+					->whereBetween('required_by', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at')
 					->sum('grand_total');
 
@@ -6175,7 +6207,7 @@ class ReportsController extends Controller
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
 					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel  + $otherFuelTotal,
-                	'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
+                	'net_profit' => $totalPrice - $totalFuelCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
                 	// 'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary,
 					'avg_revenue_per_km' => $totalKms > 0 ? $totalPrice / $totalKms : 0,
 					'avg_fuel_cost_per_km' => $totalKms > 0 ? $totalFuelCost / $totalKms : 0
@@ -6310,7 +6342,7 @@ class ReportsController extends Controller
 
 			// Get work orders
 			$workorders = WorkOrders::where('vehicle_id', $vehicle_id)
-				->whereBetween('created_at', [$startDateTime, $endDateTime])
+				->whereBetween('required_by', [$startDateTime, $endDateTime])
 				->whereNull('deleted_at')  
 				->get();
 			
@@ -6614,7 +6646,7 @@ class ReportsController extends Controller
 					->get();
 				
 				$workOrderTotal = WorkOrders::where('vehicle_id', $vehicle->id)
-					->whereBetween('created_at', [$startDateTime, $endDateTime])
+					->whereBetween('required_by', [$startDateTime, $endDateTime])
 					->whereNull('deleted_at')
 					->sum('grand_total');
 
@@ -6667,7 +6699,7 @@ class ReportsController extends Controller
 					'legal_cost' => $legalCost,
 					'driver_salary' => $driver_salary,
 					'other' => $totalAdvance + $fastagAmount - $advanceWithLabel + $otherFuelTotal,
-					'net_profit' => $totalPrice - $totalFuelCost - $maintenanceCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
+					'net_profit' => $totalPrice - $totalFuelCost - $tyreCost - $legalCost - $driver_salary - $totalAdvance - $workOrderTotal - $fastagAmount,
 				];
 			}
 			
