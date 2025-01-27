@@ -987,6 +987,18 @@
                   <p><?php echo app('translator')->getFromJson('fleet.manage_fuel'); ?></p>
                 </a>
               </li>
+              <li class="nav-item">
+                  <a href="<?php echo e(route('fuel_purchase.index')); ?>" class="nav-link <?php if(Request::is('admin/fuel_purchase*')): ?> active <?php endif; ?>">
+                      <i class="fa fa-shopping-cart nav-icon"></i>
+                      <p><?php echo app('translator')->getFromJson('fleet.fuel_purchase'); ?></p>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a href="<?php echo e(route('fuel_manage.index')); ?>" class="nav-link <?php if(Request::is('admin/fuel_manage*')): ?> active <?php endif; ?>">
+                      <i class="fa fa-gas-pump nav-icon"></i>
+                      <p><?php echo app('translator')->getFromJson('fleet.fuel_manage'); ?></p>
+                  </a>
+              </li>
             </ul>
           </li> <?php endif; ?>
 

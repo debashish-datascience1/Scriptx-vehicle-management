@@ -1060,6 +1060,18 @@
                   <p>@lang('fleet.manage_fuel')</p>
                 </a>
               </li>
+              <li class="nav-item">
+                  <a href="{{ route('fuel_purchase.index') }}" class="nav-link @if(Request::is('admin/fuel_purchase*')) active @endif">
+                      <i class="fa fa-shopping-cart nav-icon"></i>
+                      <p>@lang('fleet.fuel_purchase')</p>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a href="{{ route('fuel_manage.index') }}" class="nav-link @if(Request::is('admin/fuel_manage*')) active @endif">
+                      <i class="fa fa-gas-pump nav-icon"></i>
+                      <p>@lang('fleet.fuel_manage')</p>
+                  </a>
+              </li>
             </ul>
           </li> @endif
 

@@ -482,6 +482,10 @@ Route::namespace('Admin')->group(function () {
 
         Route::get('payment-settings', 'SettingsController@payment_settings');
         Route::post('payment-settings', 'SettingsController@payment_settings_post');
+
+        Route::resource('/fuel_purchase', 'FuelPurchaseController');
+        Route::resource('/fuel_manage', 'FuelManageController');
+        Route::get('/fuel-manage/get-available-stock', 'FuelManageController@getAvailableStock')->name('fuel_manage.get_available_stock');
     });
 
     Route::group(['middleware' => ['lang_check', 'auth']], function () {
@@ -510,4 +514,6 @@ Route::namespace('Admin')->group(function () {
     Route::group(['middleware' => ['lang_check', 'auth', 'superadmin']], function () {
         Route::resource('/users', 'UsersController')->middleware('userpermission:0');
     });
+
+    
 });
