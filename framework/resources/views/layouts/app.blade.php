@@ -1055,7 +1055,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="{{ route('fuel.index') }}" class="nav-link @if(Request::is('admin/fuel*') && !Request::is('admin/fuel/create') && !Request::is('admin/fuel/report') && !Request::is('admin/fuel/report-vehicle')) active @endif">
+                <a href="{{ route('fuel.index') }}" class="nav-link @if(Request::is('admin/fuel') || Request::is('admin/fuel/edit/*') || Request::is('admin/fuel/view/*')) active @endif">
                   <i class="fa fa-history nav-icon"></i>
                   <p>@lang('fleet.manage_fuel')</p>
                 </a>
@@ -1068,8 +1068,8 @@
               </li>
               <li class="nav-item">
                   <a href="{{ route('fuel_manage.index') }}" class="nav-link @if(Request::is('admin/fuel_manage*')) active @endif">
-                      <i class="fa fa-gas-pump nav-icon"></i>
-                      <p>@lang('fleet.fuel_manage')</p>
+                    <i class="nav-icon fa fa-filter"></i> 
+                    <p>@lang('fleet.fuel_manage')</p>
                   </a>
               </li>
             </ul>

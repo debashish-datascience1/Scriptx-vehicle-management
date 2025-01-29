@@ -108,6 +108,10 @@
                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fuel_costs, 2)); ?></td>
                 </tr>
                 <tr>
+                    <td>Fuel Purchase</td>
+                    <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fuel_purchase, 2)); ?></td>
+                </tr>
+                <tr>
                     <td>Driver Advances</td>
                     <td><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($other_costs, 2)); ?></td>
                 </tr>

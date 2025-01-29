@@ -108,6 +108,10 @@
                     <td>{{ Hyvikk::get('currency') }} {{ number_format($fuel_costs, 2) }}</td>
                 </tr>
                 <tr>
+                    <td>Fuel Purchase</td>
+                    <td>{{ Hyvikk::get('currency') }} {{ number_format($fuel_purchase, 2) }}</td>
+                </tr>
+                <tr>
                     <td>Driver Advances</td>
                     <td>{{ Hyvikk::get('currency') }} {{ number_format($other_costs, 2) }}</td>
                 </tr>

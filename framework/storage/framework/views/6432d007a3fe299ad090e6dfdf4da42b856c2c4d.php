@@ -143,6 +143,10 @@
                                 <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fuel_costs, 2)); ?></span>
                             </div>
                             <div class="summary-item">
+                                <strong>Fuel Purchase:</strong>
+                                <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($fuel_purchase, 2)); ?></span>
+                            </div>
+                            <div class="summary-item">
                                 <strong>Driver Advances:</strong>
                                 <span><?php echo e(Hyvikk::get('currency')); ?> <?php echo e(number_format($other_costs, 2)); ?></span>
                             </div>

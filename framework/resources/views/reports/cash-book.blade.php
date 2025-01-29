@@ -140,6 +140,10 @@
                                 <span>{{ Hyvikk::get('currency') }} {{ number_format($fuel_costs, 2) }}</span>
                             </div>
                             <div class="summary-item">
+                                <strong>Fuel Purchase:</strong>
+                                <span>{{ Hyvikk::get('currency') }} {{ number_format($fuel_purchase, 2) }}</span>
+                            </div>
+                            <div class="summary-item">
                                 <strong>Driver Advances:</strong>
                                 <span>{{ Hyvikk::get('currency') }} {{ number_format($other_costs, 2) }}</span>
                             </div>
