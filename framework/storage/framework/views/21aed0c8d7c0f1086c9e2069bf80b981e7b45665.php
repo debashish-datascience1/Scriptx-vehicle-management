@@ -847,6 +847,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="<?php echo e(route('reports.fuel-purchase')); ?>" class="nav-link <?php if(Request::is('admin/reports/fuel-purchase')): ?> active <?php endif; ?>">
+                  <i class="fa fa-book nav-icon"></i>
+                  <p>Fuel Purchase Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="<?php echo e(route('reports.fuel-type')); ?>" class="nav-link <?php if(Request::is('admin/reports/fuel-type')): ?> active <?php endif; ?>">
                   <i class="fa fa-exclamation nav-icon"></i>
                   <p>Fuel Type Report</p>
@@ -993,12 +999,7 @@
                       <p><?php echo app('translator')->getFromJson('fleet.fuel_purchase'); ?></p>
                   </a>
               </li>
-              <li class="nav-item">
-                  <a href="<?php echo e(route('fuel_manage.index')); ?>" class="nav-link <?php if(Request::is('admin/fuel_manage*')): ?> active <?php endif; ?>">
-                    <i class="nav-icon fa fa-filter"></i> 
-                    <p><?php echo app('translator')->getFromJson('fleet.fuel_manage'); ?></p>
-                  </a>
-              </li>
+              
             </ul>
           </li> <?php endif; ?>
 

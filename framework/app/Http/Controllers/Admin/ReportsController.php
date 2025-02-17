@@ -13,6 +13,7 @@ use App\Model\FuelBalance;
 use App\Model\PartsModel;
 use App\Model\PartsCategoryModel;
 use App\Model\FuelModel;
+use App\Model\FuelPurchase;
 use App\Model\IncCats;
 use App\Model\IncomeModel;
 use App\Model\ServiceItemsModel;
@@ -1646,6 +1647,126 @@ class ReportsController extends Controller
 		return view("reports.monthly", $data);
 	}
 
+	public function fuelPurchase()
+	{
+		// Get vendors and fuel types for dropdowns
+		$data['vendors'] = Vendor::where('type', 'fuel')->get();
+		
+		// Create vendor dropdown with "ALL" option
+		$vendor_dropdown = ['all' => 'ALL'];
+		foreach ($data['vendors'] as $vendor) {
+			$vendor_dropdown[$vendor->id] = $vendor->name;
+		}
+		$data['vendors'] = $vendor_dropdown;
+		
+		// Get fuel types with "ALL" option
+		$fuel_types = FuelType::pluck('fuel_name', 'id')->toArray();
+		$data['fuel_types'] = ['all' => 'ALL'] + $fuel_types;
+		
+		return view('reports.fuel-purchase', $data);
+	}
+
+	public function fuelPurchasePost(Request $request)
+	{
+		// Get vendors and fuel types for dropdowns
+		$data['vendors'] = Vendor::where('type', 'fuel')->get();
+		$vendor_dropdown = ['all' => 'ALL'];
+		foreach ($data['vendors'] as $vendor) {
+			$vendor_dropdown[$vendor->id] = $vendor->name;
+		}
+		$data['vendors'] = $vendor_dropdown;
+		
+		$fuel_types = FuelType::pluck('fuel_name', 'id')->toArray();
+		$data['fuel_types'] = ['all' => 'ALL'] + $fuel_types;
+		
+		$data['request'] = $request;
+		
+		// Validate input
+		$request->validate([
+			'vendor_id' => 'required',
+			'from_date' => 'required',
+			'to_date' => 'required'
+		]);
+		
+		// Convert dates to proper format
+		$from_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->from_date)));
+		$to_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->to_date)));
+		
+		// Base query for fuel purchases - removed deleted_at condition
+		$query = FuelPurchase::whereBetween('date', [$from_date, $to_date]);
+		
+		// Apply vendor filter if not "all"
+		if ($request->vendor_id !== 'all') {
+			$query->where('vendor_id', $request->vendor_id);
+		}
+		
+		// Apply fuel type filter if not "all"
+		if ($request->fuel_type !== 'all') {
+			$query->where('fuel_type_id', $request->fuel_type);
+		}
+		
+		// Fetch fuel purchase records
+		$data['transactions'] = $query->get();
+		
+		// Calculate total amount
+		$data['total_amount'] = $query->sum('amount');
+		
+		return view('reports.fuel-purchase', $data);
+	}
+
+	public function printFuelPurchase(Request $request)
+	{
+		// Validate input
+		$request->validate([
+			'vendor_id' => 'required',
+			'from_date' => 'required',
+			'to_date' => 'required'
+		]);
+
+		// Convert dates to proper format
+		$from_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->from_date)));
+		$to_date = date('Y-m-d', strtotime(str_replace('/', '-', $request->to_date)));
+
+		// Base query for fuel purchases
+		$query = FuelPurchase::whereBetween('date', [$from_date, $to_date]);
+
+		// Handle 'ALL' options
+		if ($request->vendor_id === 'all') {
+			$vendor = new \stdClass();
+			$vendor->name = 'ALL Vendors';
+		} else {
+			$vendor = Vendor::findOrFail($request->vendor_id);
+			$query->where('vendor_id', $request->vendor_id);
+		}
+
+		if ($request->fuel_type !== 'all') {
+			$query->where('fuel_type_id', $request->fuel_type);
+		}
+
+		// Fetch records and calculate total
+		$transactions = $query->get();
+		$total_amount = $query->sum('amount');
+
+		// Get fuel type name if specific type selected
+		$fuel_type_name = 'ALL Types';
+		if ($request->fuel_type !== 'all') {
+			$fuel_type = FuelType::find($request->fuel_type);
+			$fuel_type_name = $fuel_type ? $fuel_type->fuel_name : 'Unknown';
+		}
+
+		// Prepare view data
+		$data = [
+			'transactions' => $transactions,
+			'total_amount' => $total_amount,
+			'vendor' => $vendor,
+			'fuel_type_name' => $fuel_type_name,
+			'from_date' => $from_date,
+			'to_date' => $to_date
+		];
+
+		return view('reports.print-fuel-purchase', $data);
+	}
+
 	public function fuel()
 	{
 		// dd($_POST);
@@ -1669,91 +1790,21 @@ class ReportsController extends Controller
 		return view('reports.fuel', $data);
 	}
 
-	// public function fuel_post(Request $request)
-	// {
-
-	// 	// dd($request->all());
-
-	// 	$data['vehicles'] = VehicleModel::select(
-	// 		DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
-	// 		'id'
-	// 	)
-	// 		->pluck('vehicle_name', 'id');
-
-	// 	$vehicle_id = $request->get('vehicle_id');
-	// 	$fuel_type = $request->get('fuel_type');
-	// 	$data['vehicle_id'] = $vehicle_id;
-	// 	$data['vehicle_id'] = $vehicle_id;
-	// 	if ($request->get('date1') == null)
-	// 		$start = FuelModel::orderBy('date', 'asc')->take(1)->first('date')->date;
-	// 	else
-	// 		$start = date('Y-m-d', strtotime($request->get('date1')));
-
-	// 	if ($request->get('date2') == null)
-	// 		$end = FuelModel::orderBy('date', 'desc')->take(1)->first('date')->date;
-	// 	else
-	// 		$end = date('Y-m-d', strtotime($request->get('date2')));
-
-	// 	// dd($start);
-	// 	// dd($end);
-
-
-
-	// 	if (!empty($vehicle_id) && !empty($fuel_type)) {
-	// 		$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	} else if (empty($vehicle_id) && !empty($fuel_type)) {
-	// 		$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	} else if (!empty($vehicle_id) && empty($fuel_type)) {
-	// 		$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	} else {
-	// 		$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	}
-
-
-	// 	foreach ($data['fuel'] as $f) {
-	// 		$f->total = empty($f->total) ? $f->qty * $f->cost_per_unit : $f->total;
-	// 		$f->gtotal = empty($f->grand_total) ? $f->total : $f->grand_total;
-	// 	}
-
-	// 	// Total KM
-	// 	if (!empty($vehicle_id)) {
-	// 		$bookingdata = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
-	// 	} else {
-	// 		$bookingdata = Bookings::whereBetween('pickup', [$start, $end])->get();
-	// 	}
-	// 	$total_km = [];
-	// 	foreach ($bookingdata as $bd) {
-	// 		$total_km[] = Helper::removeKM($bd->getMeta('distance'));
-	// 	}
-
-	// 	// Helper::totalBookingIncome($vehicle_id);
-	// 	// $data['details'] = WorkOrders::select(['vendor_id', DB::raw('sum(price) as total')])->whereBetween('created_at', [$start, $end])->whereIn('vehicle_id', $vehicle_ids)->groupBy('vendor_id')->get();
-	// 	// dd();
-	// 	$data['fuel_types'] = FuelType::pluck('fuel_name', 'id');
-	// 	$data['fuel_totalprice'] = $data['fuel']->sum('total');
-	// 	$data['fuel_totalqty'] = $data['fuel']->sum('qty');
-	// 	$data['total_km'] = array_sum($total_km);
-	// 	$data['result'] = "";
-	// 	$data['request'] = $request->all();
-	// 	$data['months'] = Helper::getMonths(true);
-	// 	$data['dates'] = [$start, $end];
-	// 	$data['date1'] = $start;
-	// 	$data['date2'] = $end;
-	// 	// dd($data);
-	// 	return view('reports.fuel', $data);
-	// }
-
 	public function fuel_post(Request $request)
 	{
+
+		// dd($request->all());
+
 		$data['vehicles'] = VehicleModel::select(
 			DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
 			'id'
-		)->pluck('vehicle_name', 'id');
+		)
+			->pluck('vehicle_name', 'id');
 
 		$vehicle_id = $request->get('vehicle_id');
 		$fuel_type = $request->get('fuel_type');
 		$data['vehicle_id'] = $vehicle_id;
-
+		$data['vehicle_id'] = $vehicle_id;
 		if ($request->get('date1') == null)
 			$start = FuelModel::orderBy('date', 'asc')->take(1)->first('date')->date;
 		else
@@ -1764,64 +1815,41 @@ class ReportsController extends Controller
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
 
-		// Get regular fuel entries
+		// dd($start);
+		// dd($end);
+
+
+
 		if (!empty($vehicle_id) && !empty($fuel_type)) {
-			$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])
-				->whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		} else if (empty($vehicle_id) && !empty($fuel_type)) {
-			$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)
-				->whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		} else if (!empty($vehicle_id) && empty($fuel_type)) {
-			$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)
-				->whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		} else {
-			$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		}
 
-		// Get own stock entries from fuel_management
-		if (!empty($vehicle_id)) {
-			$data['own_stock'] = DB::table('fuel_management')
-				->where('vehicle_id', $vehicle_id)
-				->whereBetween('date', [$start, $end])
-				->orderBy('date', 'DESC')
-				->get();
-		} else {
-			$data['own_stock'] = DB::table('fuel_management')
-				->whereBetween('date', [$start, $end])
-				->orderBy('date', 'DESC')
-				->get();
-		}
 
 		foreach ($data['fuel'] as $f) {
 			$f->total = empty($f->total) ? $f->qty * $f->cost_per_unit : $f->total;
 			$f->gtotal = empty($f->grand_total) ? $f->total : $f->grand_total;
 		}
 
-		// Calculate own stock total quantity
-		$data['own_stock_total_qty'] = $data['own_stock']->sum('quantity');
-
-		// Rest of the existing code remains the same
+		// Total KM
 		if (!empty($vehicle_id)) {
-			$bookingdata = Bookings::where('vehicle_id', $vehicle_id)
-				->whereBetween('pickup', [$start, $end])
-				->get();
+			$bookingdata = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
 		} else {
 			$bookingdata = Bookings::whereBetween('pickup', [$start, $end])->get();
 		}
-
 		$total_km = [];
 		foreach ($bookingdata as $bd) {
 			$total_km[] = Helper::removeKM($bd->getMeta('distance'));
 		}
 
+		// Helper::totalBookingIncome($vehicle_id);
+		// $data['details'] = WorkOrders::select(['vendor_id', DB::raw('sum(price) as total')])->whereBetween('created_at', [$start, $end])->whereIn('vehicle_id', $vehicle_ids)->groupBy('vendor_id')->get();
+		// dd();
 		$data['fuel_types'] = FuelType::pluck('fuel_name', 'id');
 		$data['fuel_totalprice'] = $data['fuel']->sum('total');
 		$data['fuel_totalqty'] = $data['fuel']->sum('qty');
@@ -1832,9 +1860,102 @@ class ReportsController extends Controller
 		$data['dates'] = [$start, $end];
 		$data['date1'] = $start;
 		$data['date2'] = $end;
-
+		// dd($data);
 		return view('reports.fuel', $data);
 	}
+
+	// public function fuel_post(Request $request)
+	// {
+	// 	$data['vehicles'] = VehicleModel::select(
+	// 		DB::raw("CONCAT(make,'-',model,'-',license_plate) AS vehicle_name"),
+	// 		'id'
+	// 	)->pluck('vehicle_name', 'id');
+
+	// 	$vehicle_id = $request->get('vehicle_id');
+	// 	$fuel_type = $request->get('fuel_type');
+	// 	$data['vehicle_id'] = $vehicle_id;
+
+	// 	if ($request->get('date1') == null)
+	// 		$start = FuelModel::orderBy('date', 'asc')->take(1)->first('date')->date;
+	// 	else
+	// 		$start = date('Y-m-d', strtotime($request->get('date1')));
+
+	// 	if ($request->get('date2') == null)
+	// 		$end = FuelModel::orderBy('date', 'desc')->take(1)->first('date')->date;
+	// 	else
+	// 		$end = date('Y-m-d', strtotime($request->get('date2')));
+
+	// 	// Get regular fuel entries
+	// 	if (!empty($vehicle_id) && !empty($fuel_type)) {
+	// 		$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	} else if (empty($vehicle_id) && !empty($fuel_type)) {
+	// 		$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	} else if (!empty($vehicle_id) && empty($fuel_type)) {
+	// 		$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	} else {
+	// 		$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	}
+
+	// 	// Get own stock entries from fuel_management
+	// 	if (!empty($vehicle_id)) {
+	// 		$data['own_stock'] = DB::table('fuel_management')
+	// 			->where('vehicle_id', $vehicle_id)
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy('date', 'DESC')
+	// 			->get();
+	// 	} else {
+	// 		$data['own_stock'] = DB::table('fuel_management')
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy('date', 'DESC')
+	// 			->get();
+	// 	}
+
+	// 	foreach ($data['fuel'] as $f) {
+	// 		$f->total = empty($f->total) ? $f->qty * $f->cost_per_unit : $f->total;
+	// 		$f->gtotal = empty($f->grand_total) ? $f->total : $f->grand_total;
+	// 	}
+
+	// 	// Calculate own stock total quantity
+	// 	$data['own_stock_total_qty'] = $data['own_stock']->sum('quantity');
+
+	// 	// Rest of the existing code remains the same
+	// 	if (!empty($vehicle_id)) {
+	// 		$bookingdata = Bookings::where('vehicle_id', $vehicle_id)
+	// 			->whereBetween('pickup', [$start, $end])
+	// 			->get();
+	// 	} else {
+	// 		$bookingdata = Bookings::whereBetween('pickup', [$start, $end])->get();
+	// 	}
+
+	// 	$total_km = [];
+	// 	foreach ($bookingdata as $bd) {
+	// 		$total_km[] = Helper::removeKM($bd->getMeta('distance'));
+	// 	}
+
+	// 	$data['fuel_types'] = FuelType::pluck('fuel_name', 'id');
+	// 	$data['fuel_totalprice'] = $data['fuel']->sum('total');
+	// 	$data['fuel_totalqty'] = $data['fuel']->sum('qty');
+	// 	$data['total_km'] = array_sum($total_km);
+	// 	$data['result'] = "";
+	// 	$data['request'] = $request->all();
+	// 	$data['months'] = Helper::getMonths(true);
+	// 	$data['dates'] = [$start, $end];
+	// 	$data['date1'] = $start;
+	// 	$data['date2'] = $end;
+
+	// 	return view('reports.fuel', $data);
+	// }
 
 	public function yearly()
 	{
@@ -2597,82 +2718,14 @@ class ReportsController extends Controller
 	}
 	
 
-	// public function print_fuel(Request $request)
-	// {
-	// 	// dd($request->all());
-
-	// 	$vehicle_id = $request->get('vehicle_id');
-	// 	$fuel_type = $request->get('fuel_type');
-	// 	$data['vehicle_id'] = $vehicle_id;
-	// 	$data['vehicle_id'] = $vehicle_id;
-	// 	if ($request->get('date1') == null)
-	// 		$start = FuelModel::orderBy('date', 'asc')->take(1)->first('date')->date;
-	// 	else
-	// 		$start = date('Y-m-d', strtotime($request->get('date1')));
-
-	// 	if ($request->get('date2') == null)
-	// 		$end = FuelModel::orderBy('date', 'desc')->take(1)->first('date')->date;
-	// 	else
-	// 		$end = date('Y-m-d', strtotime($request->get('date2')));
-
-	// 	// dd($start);
-	// 	// dd($end);
-
-
-
-	// 	if (!empty($vehicle_id) && !empty($fuel_type)) {
-	// 		$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	} else if (empty($vehicle_id) && !empty($fuel_type)) {
-	// 		$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	} else if (!empty($vehicle_id) && empty($fuel_type)) {
-	// 		$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	} else {
-	// 		$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
-	// 	}
-
-
-	// 	foreach ($data['fuel'] as $f) {
-	// 		$f->total = empty($f->total) ? $f->qty * $f->cost_per_unit : $f->total;
-	// 		$f->gtotal = empty($f->grand_total) ? $f->total : $f->grand_total;
-	// 	}
-
-	// 	// Total KM
-	// 	if (!empty($vehicle_id)) {
-	// 		$bookingdata = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
-	// 	} else {
-	// 		$bookingdata = Bookings::whereBetween('pickup', [$start, $end])->get();
-	// 	}
-	// 	$total_km = [];
-	// 	foreach ($bookingdata as $bd) {
-	// 		$total_km[] = Helper::removeKM($bd->getMeta('distance'));
-	// 	}
-
-	// 	// Helper::totalBookingIncome($vehicle_id);
-	// 	// $data['details'] = WorkOrders::select(['vendor_id', DB::raw('sum(price) as total')])->whereBetween('created_at', [$start, $end])->whereIn('vehicle_id', $vehicle_ids)->groupBy('vendor_id')->get();
-	// 	// dd();
-	// 	$data['vehicle'] = !empty($vehicle_id) ? VehicleModel::find($vehicle_id) : null;
-	// 	$data['fuelType'] = !empty($fuel_type) ? FuelType::find($fuel_type) : null;
-	// 	$data['date'] = date("Y-m-d H:i:s");
-	// 	$data['result'] = "";
-	// 	$data['request'] = $request->all();
-	// 	$data['fuel_totalprice'] = $data['fuel']->sum('total');
-	// 	$data['fuel_totalqty'] = $data['fuel']->sum('qty');
-	// 	$data['total_km'] = array_sum($total_km);
-	// 	$data['vehicle'] = VehicleModel::find($request->get('vehicle_id'));
-	// 	$data['from_date'] = Helper::getCanonicalDate($start);
-	// 	$data['to_date'] = Helper::getCanonicalDate($end);
-	// 	$data['grand_total'] = 0;
-
-	// 	// dd($data);
-	// 	return view('reports.print_fuel', $data);
-	// }
-
 	public function print_fuel(Request $request)
 	{
+		// dd($request->all());
+
 		$vehicle_id = $request->get('vehicle_id');
 		$fuel_type = $request->get('fuel_type');
 		$data['vehicle_id'] = $vehicle_id;
-
+		$data['vehicle_id'] = $vehicle_id;
 		if ($request->get('date1') == null)
 			$start = FuelModel::orderBy('date', 'asc')->take(1)->first('date')->date;
 		else
@@ -2683,63 +2736,41 @@ class ReportsController extends Controller
 		else
 			$end = date('Y-m-d', strtotime($request->get('date2')));
 
-		// Get regular fuel entries
+		// dd($start);
+		// dd($end);
+
+
+
 		if (!empty($vehicle_id) && !empty($fuel_type)) {
-			$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])
-				->whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		} else if (empty($vehicle_id) && !empty($fuel_type)) {
-			$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)
-				->whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		} else if (!empty($vehicle_id) && empty($fuel_type)) {
-			$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)
-				->whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)->whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		} else {
-			$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])
-				->orderBy("date", "DESC")
-				->get();
+			$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])->orderBy("date", "DESC")->get();
 		}
 
-		// Get own stock entries
-		if (!empty($vehicle_id)) {
-			$data['own_stock'] = DB::table('fuel_management')
-				->where('vehicle_id', $vehicle_id)
-				->whereBetween('date', [$start, $end])
-				->orderBy('date', 'DESC')
-				->get();
-		} else {
-			$data['own_stock'] = DB::table('fuel_management')
-				->whereBetween('date', [$start, $end])
-				->orderBy('date', 'DESC')
-				->get();
-		}
 
 		foreach ($data['fuel'] as $f) {
 			$f->total = empty($f->total) ? $f->qty * $f->cost_per_unit : $f->total;
 			$f->gtotal = empty($f->grand_total) ? $f->total : $f->grand_total;
 		}
 
-		// Calculate own stock total quantity
-		$data['own_stock_total_qty'] = $data['own_stock']->sum('quantity');
-
+		// Total KM
 		if (!empty($vehicle_id)) {
-			$bookingdata = Bookings::where('vehicle_id', $vehicle_id)
-				->whereBetween('pickup', [$start, $end])
-				->get();
+			$bookingdata = Bookings::where('vehicle_id', $vehicle_id)->whereBetween('pickup', [$start, $end])->get();
 		} else {
 			$bookingdata = Bookings::whereBetween('pickup', [$start, $end])->get();
 		}
-
 		$total_km = [];
 		foreach ($bookingdata as $bd) {
 			$total_km[] = Helper::removeKM($bd->getMeta('distance'));
 		}
 
+		// Helper::totalBookingIncome($vehicle_id);
+		// $data['details'] = WorkOrders::select(['vendor_id', DB::raw('sum(price) as total')])->whereBetween('created_at', [$start, $end])->whereIn('vehicle_id', $vehicle_ids)->groupBy('vendor_id')->get();
+		// dd();
 		$data['vehicle'] = !empty($vehicle_id) ? VehicleModel::find($vehicle_id) : null;
 		$data['fuelType'] = !empty($fuel_type) ? FuelType::find($fuel_type) : null;
 		$data['date'] = date("Y-m-d H:i:s");
@@ -2753,8 +2784,98 @@ class ReportsController extends Controller
 		$data['to_date'] = Helper::getCanonicalDate($end);
 		$data['grand_total'] = 0;
 
+		// dd($data);
 		return view('reports.print_fuel', $data);
 	}
+
+	// public function print_fuel(Request $request)
+	// {
+	// 	$vehicle_id = $request->get('vehicle_id');
+	// 	$fuel_type = $request->get('fuel_type');
+	// 	$data['vehicle_id'] = $vehicle_id;
+
+	// 	if ($request->get('date1') == null)
+	// 		$start = FuelModel::orderBy('date', 'asc')->take(1)->first('date')->date;
+	// 	else
+	// 		$start = date('Y-m-d', strtotime($request->get('date1')));
+
+	// 	if ($request->get('date2') == null)
+	// 		$end = FuelModel::orderBy('date', 'desc')->take(1)->first('date')->date;
+	// 	else
+	// 		$end = date('Y-m-d', strtotime($request->get('date2')));
+
+	// 	// Get regular fuel entries
+	// 	if (!empty($vehicle_id) && !empty($fuel_type)) {
+	// 		$data['fuel'] = FuelModel::where(['vehicle_id' => $vehicle_id, 'fuel_type' => $fuel_type])
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	} else if (empty($vehicle_id) && !empty($fuel_type)) {
+	// 		$data['fuel'] = FuelModel::where('fuel_type', $fuel_type)
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	} else if (!empty($vehicle_id) && empty($fuel_type)) {
+	// 		$data['fuel'] = FuelModel::where('vehicle_id', $vehicle_id)
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	} else {
+	// 		$data['fuel'] = FuelModel::whereBetween('date', [$start, $end])
+	// 			->orderBy("date", "DESC")
+	// 			->get();
+	// 	}
+
+	// 	// Get own stock entries
+	// 	if (!empty($vehicle_id)) {
+	// 		$data['own_stock'] = DB::table('fuel_management')
+	// 			->where('vehicle_id', $vehicle_id)
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy('date', 'DESC')
+	// 			->get();
+	// 	} else {
+	// 		$data['own_stock'] = DB::table('fuel_management')
+	// 			->whereBetween('date', [$start, $end])
+	// 			->orderBy('date', 'DESC')
+	// 			->get();
+	// 	}
+
+	// 	foreach ($data['fuel'] as $f) {
+	// 		$f->total = empty($f->total) ? $f->qty * $f->cost_per_unit : $f->total;
+	// 		$f->gtotal = empty($f->grand_total) ? $f->total : $f->grand_total;
+	// 	}
+
+	// 	// Calculate own stock total quantity
+	// 	$data['own_stock_total_qty'] = $data['own_stock']->sum('quantity');
+
+	// 	if (!empty($vehicle_id)) {
+	// 		$bookingdata = Bookings::where('vehicle_id', $vehicle_id)
+	// 			->whereBetween('pickup', [$start, $end])
+	// 			->get();
+	// 	} else {
+	// 		$bookingdata = Bookings::whereBetween('pickup', [$start, $end])->get();
+	// 	}
+
+	// 	$total_km = [];
+	// 	foreach ($bookingdata as $bd) {
+	// 		$total_km[] = Helper::removeKM($bd->getMeta('distance'));
+	// 	}
+
+	// 	$data['vehicle'] = !empty($vehicle_id) ? VehicleModel::find($vehicle_id) : null;
+	// 	$data['fuelType'] = !empty($fuel_type) ? FuelType::find($fuel_type) : null;
+	// 	$data['date'] = date("Y-m-d H:i:s");
+	// 	$data['result'] = "";
+	// 	$data['request'] = $request->all();
+	// 	$data['fuel_totalprice'] = $data['fuel']->sum('total');
+	// 	$data['fuel_totalqty'] = $data['fuel']->sum('qty');
+	// 	$data['total_km'] = array_sum($total_km);
+	// 	$data['vehicle'] = VehicleModel::find($request->get('vehicle_id'));
+	// 	$data['from_date'] = Helper::getCanonicalDate($start);
+	// 	$data['to_date'] = Helper::getCanonicalDate($end);
+	// 	$data['grand_total'] = 0;
+
+	// 	return view('reports.print_fuel', $data);
+	// }
 
 	public function print_yearly(Request $request)
 	{

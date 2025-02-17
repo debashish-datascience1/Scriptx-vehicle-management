@@ -920,6 +920,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="{{ route('reports.fuel-purchase') }}" class="nav-link @if(Request::is('admin/reports/fuel-purchase')) active @endif">
+                  <i class="fa fa-book nav-icon"></i>
+                  <p>Fuel Purchase Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="{{ route('reports.fuel-type') }}" class="nav-link @if(Request::is('admin/reports/fuel-type')) active @endif">
                   <i class="fa fa-exclamation nav-icon"></i>
                   <p>Fuel Type Report</p>
@@ -1066,12 +1072,12 @@
                       <p>@lang('fleet.fuel_purchase')</p>
                   </a>
               </li>
-              <li class="nav-item">
+              {{-- <li class="nav-item">
                   <a href="{{ route('fuel_manage.index') }}" class="nav-link @if(Request::is('admin/fuel_manage*')) active @endif">
                     <i class="nav-icon fa fa-filter"></i> 
                     <p>@lang('fleet.fuel_manage')</p>
                   </a>
-              </li>
+              </li> --}}
             </ul>
           </li> @endif
 

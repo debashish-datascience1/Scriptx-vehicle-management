@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\FuelRequest;
 use App\Model\Expense;
 use App\Model\FuelModel;
+use App\Model\FuelPurchase;
 use App\Model\VehicleModel;
 use App\Model\Vendor;
 use App\Model\FuelType;
@@ -277,6 +278,57 @@ class FuelController extends Controller
 		$data['is_gst'] = [1 => 'Yes', 2 => 'No'];
 		// dd($data);
 		return view('fuel.create', $data);
+	}
+
+	// public function getAvailableStock(Request $request)
+    // {
+    //     // Calculate available stock
+    //     $availableStock = FuelPurchase::sum('quantity');
+
+    //     // Optional: Subtract used stock
+    //     // $usedStock = FuelManagement::sum('quantity');
+    //     // $availableStock -= $usedStock;
+
+    //     return response()->json([
+    //         'available_stock' => max(0, $availableStock)
+    //     ]);
+    // }
+
+	public function getAvailableStock(Request $request)
+	{
+		try {
+			// Get the Ranisati Own Stock vendor ID
+			$ranisatiVendor = Vendor::where('name', 'Ranisati Own Stock')
+								->first();
+
+			if (!$ranisatiVendor) {
+				return response()->json([
+					'available_stock' => 0,
+					'error' => 'Vendor not found'
+				]);
+			}
+
+			// Calculate total purchased stock
+			$totalPurchased = FuelPurchase::sum('quantity');
+
+			// Calculate total used stock for Ranisati Own Stock vendor
+			$totalUsed = FuelModel::whereNull('deleted_at')
+							->where('vendor_name', $ranisatiVendor->id)
+							->sum('qty');
+
+			// Calculate available stock (purchased - used)
+			$availableStock = $totalPurchased - $totalUsed;
+
+			return response()->json([
+				'available_stock' => max(0, $availableStock)
+			]);
+
+		} catch (\Exception $e) {
+			return response()->json([
+				'available_stock' => 0,
+				'error' => 'Error calculating stock: ' . $e->getMessage()
+			], 500);
+		}
 	}
 
 	public function store(FuelRequest $request)

@@ -130,6 +130,9 @@ Route::namespace('Admin')->group(function () {
         Route::resource('service-reminder', 'ServiceReminderController')->middleware('userpermission:9');
         Route::resource('service-item', 'ServiceItemsController')->middleware('userpermission:9');
 
+        Route::get('admin/reports/fuel-purchase', 'ReportsController@fuelPurchase')->name('reports.fuel-purchase');
+        Route::post('admin/reports/fuel-purchase', 'ReportsController@fuelPurchasePost')->name('reports.fuel-purchase-post');
+        Route::post('admin/reports/print-fuel-purchase', 'ReportsController@printFuelPurchase')->name('print.fuel-purchase.report');
         Route::get('/reports/fastag', 'ReportsController@fastag')->name('reports.fastag');
         Route::post('/reports/fastag', 'ReportsController@fastagPost')->name('reports.fastag');
         Route::post('print-fastag-report', 'ReportsController@printFastagReport')->name('print.fastag.report');
@@ -486,6 +489,7 @@ Route::namespace('Admin')->group(function () {
         Route::resource('/fuel_purchase', 'FuelPurchaseController');
         Route::resource('/fuel_manage', 'FuelManageController');
         Route::get('/fuel-manage/get-available-stock', 'FuelManageController@getAvailableStock')->name('fuel_manage.get_available_stock');
+        Route::get('/get-available-stock', 'FuelController@getAvailableStock')->name('get_available_stock');
     });
 
     Route::group(['middleware' => ['lang_check', 'auth']], function () {
