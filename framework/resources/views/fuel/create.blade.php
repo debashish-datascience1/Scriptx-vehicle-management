@@ -114,6 +114,16 @@
                             </div>
 
                             <div class="form-group">
+                                {!! Form::label('group_transport', __('fleet.selectTransporter'), ['class' => 'form-label']) !!}
+                                <select id="group_transport" name="group_transport" class="form-control">
+                                    <option value="">-</option>
+                                    @foreach ($groups as $group)
+                                        <option value="{{ $group->id }}">{{ $group->group_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group">
                                 {!! Form::label('date', __('fleet.date'), ['class' => 'form-label']) !!}
                                 <div class='input-group'>
                                     <div class="input-group-prepend">
@@ -299,8 +309,12 @@
         </div>
     </div>
 
+<script>
+    var getAvailableStockUrl = "{{ route('get_available_stock') }}";
+    var fuelGstCalculateUrl = "{{ route('fuel.fuel_gstcalculate') }}";
+    var csrfToken = "{{ csrf_token() }}"; 
+</script>
 @endsection
-
 @section('script')
     <script src="{{ asset('assets/js/moment.js') }}"></script>
     <!-- bootstrap datepicker -->
@@ -320,13 +334,20 @@
             // Keep track of original stock for calculations
             let originalStock = 0;
 
+            // Initialize Select2 for dropdowns
             $("#vehicle_id").select2({
                 placeholder: "@lang('fleet.selectVehicle')"
             });
+
             $("#vendor_name").select2({
                 placeholder: "@lang('fleet.select_fuel_vendor')"
             });
 
+            $("#group_transport").select2({
+                placeholder: "@lang('fleet.selectGroup')"
+            });
+
+            // Initialize datepicker
             $('#date').datepicker({
                 autoclose: true,
                 format: 'dd-mm-yyyy'
@@ -336,12 +357,13 @@
                 var date = e.date.format("dd-mm-yyyy");
             });
 
-            //Flat green color scheme for iCheck
+            // Initialize iCheck
             $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
                 checkboxClass: 'icheckbox_flat-green',
                 radioClass: 'iradio_flat-green'
             });
 
+            // Handle fuel from radio change
             $(".fuel_from").change(function() {
                 if ($("#r1").attr("checked")) {
                     $('#vendor_name').show();
@@ -352,15 +374,12 @@
 
             // Handle vendor selection change
             $("#vendor_name").on('change', function() {
-                // Get the selected vendor name
                 var selectedVendorName = $(this).find("option:selected").text().trim();
 
                 if (selectedVendorName === 'Ranisati Own Stock') {
-                    // Show the stock container and fetch available stock
                     $("#available_stock_container").show();
                     fetchAvailableStock();
                 } else {
-                    // Hide the stock container for other vendors
                     $("#available_stock_container").hide();
                     $("#available_stock").val('');
                     originalStock = 0;
@@ -369,13 +388,11 @@
 
             function fetchAvailableStock() {
                 $.ajax({
-                    url: "{{ route('get_available_stock') }}",
+                    url: getAvailableStockUrl,
                     type: 'GET',
                     success: function(response) {
                         $("#available_stock").val(response.available_stock);
                         originalStock = parseFloat(response.available_stock);
-
-                        // Update display if quantity is already entered
                         updateAvailableStockDisplay();
                     },
                     error: function(xhr) {
@@ -393,10 +410,8 @@
                     var requestedQty = parseFloat($("#qty").val()) || 0;
                     var updatedStock = originalStock - requestedQty;
 
-                    // Update the available stock display
                     $("#available_stock").val(updatedStock.toFixed(2));
 
-                    // Visual feedback for low stock
                     if (updatedStock < 0) {
                         $("#available_stock").css('color', 'red');
                     } else {
@@ -413,8 +428,7 @@
                     var requestedQty = parseFloat($(this).val()) || 0;
 
                     if (requestedQty > originalStock) {
-                        alert("Quantity cannot exceed available stock of " + originalStock + " " +
-                            "{{ Hyvikk::get('fuel_unit') }}");
+                        alert("Quantity cannot exceed available stock of " + originalStock);
                         $(this).val(originalStock);
                         requestedQty = originalStock;
                     }
@@ -429,6 +443,14 @@
                 var qty = $("#qty").val();
                 var costa = $("#cost_per_unit").val();
                 var date = $("#date").val();
+                var group = $("#group_transport").val();
+
+                // Validate group selection
+                if (!group) {
+                    alert("Please select a transport group");
+                    $("#group_transport").focus();
+                    return false;
+                }
 
                 if (selectedVendorName === 'Ranisati Own Stock') {
                     var updatedStock = parseFloat($("#available_stock").val());
@@ -481,14 +503,14 @@
                 var sgst = $("#sgst").val();
 
                 var sendData = {
-                    _token: "{{ csrf_token() }}",
+                    _token: csrfToken,
                     cost: cost,
                     qty: qty,
                     cgst: cgst,
                     sgst: sgst
                 };
 
-                $.post("{{ route('fuel.fuel_gstcalculate') }}", sendData)
+                $.post(fuelGstCalculateUrl, sendData)
                     .done(function(data) {
                         if (!isNaN(data.total) && data.total != 0) {
                             $(".smallfuel").show();
@@ -541,7 +563,6 @@
                     $("#total_amount").val('');
                 }
             });
-
         });
     </script>
 @endsection

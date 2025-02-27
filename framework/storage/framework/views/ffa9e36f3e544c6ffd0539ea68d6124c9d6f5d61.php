@@ -849,7 +849,7 @@
               <li class="nav-item">
                 <a href="<?php echo e(route('reports.fuel-transport')); ?>" class="nav-link <?php if(Request::is('admin/reports/fuel-transport')): ?> active <?php endif; ?>">
                   <i class="fa fa-truck nav-icon"></i>
-                  <p>Fuel Transport Report</p>
+                  <p>Transporter Report</p>
                 </a>
               </li>
               <li class="nav-item">
@@ -1003,6 +1003,12 @@
                   <a href="<?php echo e(route('fuel_purchase.index')); ?>" class="nav-link <?php if(Request::is('admin/fuel_purchase*')): ?> active <?php endif; ?>">
                       <i class="fa fa-shopping-cart nav-icon"></i>
                       <p><?php echo app('translator')->getFromJson('fleet.fuel_purchase'); ?></p>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a href="<?php echo e(route('groups.index')); ?>" class="nav-link <?php if(Request::is('admin/groups*')): ?> active <?php endif; ?>">
+                      <i class="fa fa-users nav-icon"></i>
+                      <p><?php echo app('translator')->getFromJson('fleet.manageGroups'); ?></p>
                   </a>
               </li>
               
@@ -1505,4 +1511,4 @@ $(document).ready(function() {
 
 <?php echo $__env->yieldContent('script'); ?>
 </body>
-</html><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/layouts/app.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\xampp\htdocs\VehicleMgmt\framework\resources\views/layouts/app.blade.php ENDPATH**/ ?>

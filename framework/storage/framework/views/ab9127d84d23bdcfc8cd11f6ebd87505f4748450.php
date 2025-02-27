@@ -139,6 +139,31 @@
                             </div>
 
                             <div class="form-group">
+                                <?php echo Form::label('group_transport', __('fleet.groupTransport'), ['class' => 'form-label']); ?>
+
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <select id="group_transport" name="group_transport" class="form-control">
+                                            <option value="">-</option>
+                                            <?php $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($group->id); ?>"
+                                                    <?php if($data->group_transport_id == $group->id): ?> selected <?php endif; ?>>
+                                                    <?php echo e($group->group_name); ?>
+
+                                                </option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary" data-toggle="modal"
+                                            data-target="#addGroupModal">
+                                            <i class="fa fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
                                 <?php echo Form::label('start_meter', __('fleet.start_meter'), ['class' => 'form-label']); ?>
 
                                 <?php echo Form::number('start_meter', $data->start_meter, ['class' => 'form-control', 'required']); ?>
@@ -351,249 +376,319 @@
         </div>
     </div>
 
+    <div class="modal fade" id="addGroupModal" tabindex="-1" role="dialog" aria-labelledby="addGroupModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addGroupModalLabel">Add New Transport Group</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="group_name">Group Name</label>
+                        <input type="text" class="form-control" id="group_name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveGroup">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <?php $__env->stopSection(); ?>
 
+<script>
+    var storeGroupUrl = "<?php echo e(route('admin.group.store')); ?>";
+</script>
+
 <?php $__env->startSection('script'); ?>
-<script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
-<script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
-<script type="text/javascript">
-    // Check Number and Decimal
-    function isNumber(evt, element) {
-        var charCode = (evt.which) ? evt.which : event.keyCode;
-        if (
-            (charCode != 46 || $(element).val().indexOf('.') != -1) && // "." CHECK DOT, AND ONLY ONE.
-            (charCode < 48 || charCode > 57))
-            return false;
-        return true;
-    }
+    <script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
+    <script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
+    <script type="text/javascript">
+        // Check Number and Decimal
+        function isNumber(evt, element) {
+            var charCode = (evt.which) ? evt.which : event.keyCode;
+            if (
+                (charCode != 46 || $(element).val().indexOf('.') != -1) && // "." CHECK DOT, AND ONLY ONE.
+                (charCode < 48 || charCode > 57))
+                return false;
+            return true;
+        }
 
-    $(document).ready(function() {
-        // Keep track of original stock and initial quantity
-        let originalStock = 0;
-        let initialQty = parseFloat($("#qty").val()) || 0;
+        $(document).ready(function() {
+            // Keep track of original stock and initial quantity
+            let originalStock = 0;
+            let initialQty = parseFloat($("#qty").val()) || 0;
 
-        // Initialize Select2
-        $("#vehicle_id").select2({
-            placeholder: "<?php echo app('translator')->getFromJson('fleet.selectVehicle'); ?>"
-        });
-        
-        $("#vendor_name").select2({
-            placeholder: "<?php echo app('translator')->getFromJson('fleet.select_fuel_vendor'); ?>"
-        });
+            // Initialize Select2
+            $("#vehicle_id").select2({
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.selectVehicle'); ?>"
+            });
 
-        // Initialize datepicker
-        $('#date').datepicker({
-            autoclose: true,
-            format: 'dd-mm-yyyy'
-        });
+            $("#vendor_name").select2({
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.select_fuel_vendor'); ?>"
+            });
 
-        $("#date").on("dp.change", function(e) {
-            var date = e.date.format("dd-mm-yyyy");
-        });
+            $("#group_transport").select2({
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.selectGroup'); ?>"
+            });
 
-        // Check initial vendor and show stock if needed
-        setTimeout(function() {
-            var initialVendorName = $("#vendor_name").find("option:selected").text().trim();
-            if (initialVendorName === 'Ranisati Own Stock') {
-                $("#available_stock_container").show();
-                fetchAvailableStock();
-            }
-        }, 500); // Small delay to ensure Select2 is fully initialized
+            // Initialize datepicker
+            $('#date').datepicker({
+                autoclose: true,
+                format: 'dd-mm-yyyy'
+            });
 
-        // Handle vendor selection change
-        $("#vendor_name").on('change', function() {
-            var selectedVendorName = $(this).find("option:selected").text().trim();
+            $("#date").on("dp.change", function(e) {
+                var date = e.date.format("dd-mm-yyyy");
+            });
 
-            if (selectedVendorName === 'Ranisati Own Stock') {
-                $("#available_stock_container").show();
-                fetchAvailableStock();
-            } else {
-                $("#available_stock_container").hide();
-                $("#available_stock").val('');
-                originalStock = 0;
-            }
-        });
+            // Check initial vendor and show stock if needed
+            setTimeout(function() {
+                var initialVendorName = $("#vendor_name").find("option:selected").text().trim();
+                if (initialVendorName === 'Ranisati Own Stock') {
+                    $("#available_stock_container").show();
+                    fetchAvailableStock();
+                }
+            }, 500); // Small delay to ensure Select2 is fully initialized
 
-        function fetchAvailableStock() {
-            $.ajax({
-                url: "<?php echo e(route('get_available_stock')); ?>",
-                type: 'GET',
-                success: function(response) {
-                    // Add initial quantity back to get true available stock
-                    originalStock = parseFloat(response.available_stock) + initialQty;
-                    updateAvailableStockDisplay();
-                },
-                error: function(xhr) {
-                    console.error('Error fetching stock:', xhr);
-                    $("#available_stock").val('Error loading stock');
+            // Handle vendor selection change
+            $("#vendor_name").on('change', function() {
+                var selectedVendorName = $(this).find("option:selected").text().trim();
+
+                if (selectedVendorName === 'Ranisati Own Stock') {
+                    $("#available_stock_container").show();
+                    fetchAvailableStock();
+                } else {
+                    $("#available_stock_container").hide();
+                    $("#available_stock").val('');
                     originalStock = 0;
                 }
             });
-        }
 
-        function updateAvailableStockDisplay() {
-            var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
-
-            if (selectedVendorName === 'Ranisati Own Stock') {
-                var currentQty = parseFloat($("#qty").val()) || 0;
-                var updatedStock = originalStock - currentQty;
-
-                $("#available_stock").val(updatedStock.toFixed(2));
-
-                if (updatedStock < 0) {
-                    $("#available_stock").css('color', 'red');
-                } else {
-                    $("#available_stock").css('color', 'black');
-                }
-            }
-        }
-
-        // Handle quantity changes
-        $("#qty").on('input change', function() {
-            var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
-
-            if (selectedVendorName === 'Ranisati Own Stock') {
-                var requestedQty = parseFloat($(this).val()) || 0;
-
-                if (requestedQty > originalStock) {
-                    alert("Quantity cannot exceed available stock of " + originalStock + " " +
-                        "<?php echo e(Hyvikk::get('fuel_unit')); ?>");
-                    $(this).val(originalStock);
-                    requestedQty = originalStock;
-                }
-
-                updateAvailableStockDisplay();
-            }
-
-            // Trigger cost calculations
-            $(this).trigger('keyup');
-        });
-
-        // Flat green color scheme for iCheck
-        $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
-            checkboxClass: 'icheckbox_flat-green',
-            radioClass: 'iradio_flat-green'
-        });
-
-        // Handle form submission validation
-        $(document).on("click", "#addBtn", function() {
-            var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
-            var qty = $("#qty").val();
-            var costa = $("#cost_per_unit").val();
-            var date = $("#date").val();
-
-            if (selectedVendorName === 'Ranisati Own Stock') {
-                var updatedStock = parseFloat($("#available_stock").val());
-
-                if (updatedStock < 0) {
-                    alert("Cannot proceed with negative stock value");
-                    return false;
-                }
-            }
-
-            if (date == '' || date == null) {
-                alert("Date cannot be empty");
-                $("#date").focus();
-                return false;
-            }
-
-            if (qty == null || qty == 0 || costa == null || costa == 0) {
-                alert("Quantity and Per Unit cannot be empty or zero");
-                if (qty == null || qty == 0) {
-                    $("#qty").focus();
-                    return false;
-                }
-                if (costa == null || costa == 0) {
-                    $("#cost_per_unit").focus();
-                    return false;
-                }
-                return false;
-            } else if ((qty == null || qty == 0) && (costa != null || costa != 0)) {
-                alert("Quantity cannot be empty or zero");
-                if (qty == null || qty == 0) {
-                    $("#qty").focus();
-                    return false;
-                }
-                return false;
-            } else if ((qty != null || qty != 0) && (costa == null || costa == 0)) {
-                alert("Cost per Unit cannot be empty or zero");
-                if (costa == null || costa == 0) {
-                    $("#cost_per_unit").focus();
-                    return false;
-                }
-                return false;
-            }
-        });
-
-        // Handle cost calculations with GST
-        $(document).on('keyup', '#cost_per_unit,#qty,#cgst,#sgst', function() {
-            var cost = $("#cost_per_unit").val();
-            var qty = $("#qty").val();
-            var cgst = $("#cgst").val();
-            var sgst = $("#sgst").val();
-
-            var sendData = {
-                _token: "<?php echo e(csrf_token()); ?>",
-                cost: cost,
-                qty: qty,
-                cgst: cgst,
-                sgst: sgst
-            };
-
-            $.post("<?php echo e(route('fuel.fuel_gstcalculate')); ?>", sendData)
-                .done(function(data) {
-                    if (!isNaN(data.total) && data.total != 0) {
-                        $(".smallfuel").show();
-                        $(".fueltot").html(data.total);
-                    } else {
-                        $(".smallfuel").hide();
-                        $(".fueltot").html('');
-                    }
-
-                    if (!isNaN(data.cgstval) && data.cgstval != 0) {
-                        $("#cgst_amt").val(data.cgstval);
-                    } else {
-                        $("#cgst_amt").val('');
-                    }
-
-                    if (!isNaN(data.sgstval) && data.sgstval != 0) {
-                        $("#sgst_amt").val(data.sgstval);
-                    } else {
-                        $("#sgst_amt").val('');
-                    }
-
-                    if (!isNaN(data.grandtotal) && data.grandtotal != 0) {
-                        $("#total_amount").val(data.grandtotal);
-                    } else {
-                        $("#total_amount").val('');
+            function fetchAvailableStock() {
+                $.ajax({
+                    url: "<?php echo e(route('get_available_stock')); ?>",
+                    type: 'GET',
+                    success: function(response) {
+                        // Add initial quantity back to get true available stock
+                        originalStock = parseFloat(response.available_stock) + initialQty;
+                        updateAvailableStockDisplay();
+                    },
+                    error: function(xhr) {
+                        console.error('Error fetching stock:', xhr);
+                        $("#available_stock").val('Error loading stock');
+                        originalStock = 0;
                     }
                 });
-        });
-
-        // Handle fuel type change
-        $("#fuel_type").change(function() {
-            var meter = $("#start_meter");
-            $(this).val() == '3' ? meter.prop('required', false) : meter.prop('required', true);
-        });
-
-        // Handle GST selection change
-        $("#is_gst").change(function() {
-            var is_gst = $("#is_gst").val();
-            var cgst = $("#cgst");
-            var sgst = $("#sgst");
-
-            if (is_gst == 1) {
-                cgst.prop('readonly', false).prop('required', true);
-                sgst.prop('readonly', false).prop('required', true);
-            } else {
-                cgst.prop('readonly', true).prop('required', false).val('');
-                sgst.prop('readonly', true).prop('required', false).val('');
-                $("#sgst_amt").val('');
-                $("#cgst_amt").val('');
-                $("#total_amount").val('');
             }
+
+            $("#saveGroup").click(function() {
+                var groupName = $("#group_name").val();
+                if (!groupName) {
+                    alert("Please enter a group name");
+                    return;
+                }
+
+                $.ajax({
+                    url: storeGroupUrl,
+                    type: 'POST',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content'),
+                        group_name: groupName
+                    },
+                    success: function(response) {
+                        // Add new option to select
+                        var newOption = new Option(response.group_name, response.id, true,
+                        true);
+                        $("#group_transport").append(newOption).trigger('change');
+
+                        // Close modal and clear input
+                        $("#addGroupModal").modal('hide');
+                        $("#group_name").val('');
+
+                        // Show success message
+                        alert('Group added successfully!');
+                    },
+                    error: function(xhr) {
+                        alert('Error adding group: ' + (xhr.responseJSON?.message ||
+                            'Unknown error'));
+                    }
+                });
+            });
+
+            function updateAvailableStockDisplay() {
+                var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
+
+                if (selectedVendorName === 'Ranisati Own Stock') {
+                    var currentQty = parseFloat($("#qty").val()) || 0;
+                    var updatedStock = originalStock - currentQty;
+
+                    $("#available_stock").val(updatedStock.toFixed(2));
+
+                    if (updatedStock < 0) {
+                        $("#available_stock").css('color', 'red');
+                    } else {
+                        $("#available_stock").css('color', 'black');
+                    }
+                }
+            }
+
+            // Handle quantity changes
+            $("#qty").on('input change', function() {
+                var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
+
+                if (selectedVendorName === 'Ranisati Own Stock') {
+                    var requestedQty = parseFloat($(this).val()) || 0;
+
+                    if (requestedQty > originalStock) {
+                        alert("Quantity cannot exceed available stock of " + originalStock + " " +
+                            "<?php echo e(Hyvikk::get('fuel_unit')); ?>");
+                        $(this).val(originalStock);
+                        requestedQty = originalStock;
+                    }
+
+                    updateAvailableStockDisplay();
+                }
+
+                // Trigger cost calculations
+                $(this).trigger('keyup');
+            });
+
+            // Flat green color scheme for iCheck
+            $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
+                checkboxClass: 'icheckbox_flat-green',
+                radioClass: 'iradio_flat-green'
+            });
+
+            // Handle form submission validation
+            $(document).on("click", "#addBtn", function() {
+                var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
+                var qty = $("#qty").val();
+                var costa = $("#cost_per_unit").val();
+                var date = $("#date").val();
+
+                if (selectedVendorName === 'Ranisati Own Stock') {
+                    var updatedStock = parseFloat($("#available_stock").val());
+
+                    if (updatedStock < 0) {
+                        alert("Cannot proceed with negative stock value");
+                        return false;
+                    }
+                }
+
+                if (date == '' || date == null) {
+                    alert("Date cannot be empty");
+                    $("#date").focus();
+                    return false;
+                }
+
+                if (qty == null || qty == 0 || costa == null || costa == 0) {
+                    alert("Quantity and Per Unit cannot be empty or zero");
+                    if (qty == null || qty == 0) {
+                        $("#qty").focus();
+                        return false;
+                    }
+                    if (costa == null || costa == 0) {
+                        $("#cost_per_unit").focus();
+                        return false;
+                    }
+                    return false;
+                } else if ((qty == null || qty == 0) && (costa != null || costa != 0)) {
+                    alert("Quantity cannot be empty or zero");
+                    if (qty == null || qty == 0) {
+                        $("#qty").focus();
+                        return false;
+                    }
+                    return false;
+                } else if ((qty != null || qty != 0) && (costa == null || costa == 0)) {
+                    alert("Cost per Unit cannot be empty or zero");
+                    if (costa == null || costa == 0) {
+                        $("#cost_per_unit").focus();
+                        return false;
+                    }
+                    return false;
+                }
+            });
+
+            // Handle cost calculations with GST
+            $(document).on('keyup', '#cost_per_unit,#qty,#cgst,#sgst', function() {
+                var cost = $("#cost_per_unit").val();
+                var qty = $("#qty").val();
+                var cgst = $("#cgst").val();
+                var sgst = $("#sgst").val();
+
+                var sendData = {
+                    _token: "<?php echo e(csrf_token()); ?>",
+                    cost: cost,
+                    qty: qty,
+                    cgst: cgst,
+                    sgst: sgst
+                };
+
+                $.post("<?php echo e(route('fuel.fuel_gstcalculate')); ?>", sendData)
+                    .done(function(data) {
+                        if (!isNaN(data.total) && data.total != 0) {
+                            $(".smallfuel").show();
+                            $(".fueltot").html(data.total);
+                        } else {
+                            $(".smallfuel").hide();
+                            $(".fueltot").html('');
+                        }
+
+                        if (!isNaN(data.cgstval) && data.cgstval != 0) {
+                            $("#cgst_amt").val(data.cgstval);
+                        } else {
+                            $("#cgst_amt").val('');
+                        }
+
+                        if (!isNaN(data.sgstval) && data.sgstval != 0) {
+                            $("#sgst_amt").val(data.sgstval);
+                        } else {
+                            $("#sgst_amt").val('');
+                        }
+
+                        if (!isNaN(data.grandtotal) && data.grandtotal != 0) {
+                            $("#total_amount").val(data.grandtotal);
+                        } else {
+                            $("#total_amount").val('');
+                        }
+                    });
+            });
+
+            // Handle fuel type change
+            $("#fuel_type").change(function() {
+                var meter = $("#start_meter");
+                $(this).val() == '3' ? meter.prop('required', false) : meter.prop('required', true);
+            });
+
+            // Handle GST selection change
+            $("#is_gst").change(function() {
+                var is_gst = $("#is_gst").val();
+                var cgst = $("#cgst");
+                var sgst = $("#sgst");
+
+                if (is_gst == 1) {
+                    cgst.prop('readonly', false).prop('required', true);
+                    sgst.prop('readonly', false).prop('required', true);
+                } else {
+                    cgst.prop('readonly', true).prop('required', false).val('');
+                    sgst.prop('readonly', true).prop('required', false).val('');
+                    $("#sgst_amt").val('');
+                    $("#cgst_amt").val('');
+                    $("#total_amount").val('');
+                }
+            });
+            $('#addGroupModal').on('hidden.bs.modal', function() {
+                $("#group_name").val('');
+            });
         });
-    });
-</script>
+    </script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp7.4\htdocs\VehicleMgmt\framework\resources\views/fuel/edit.blade.php ENDPATH**/ ?>

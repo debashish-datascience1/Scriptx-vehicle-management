@@ -1,5 +1,4 @@
-@extends('layouts.app')
-@section('extra_css')
+<?php $__env->startSection('extra_css'); ?>
     <style type="text/css">
         /* The switch - the box around the slider */
         .switch {
@@ -73,98 +72,108 @@
             background-color: #fff;
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-datepicker.min.css') }}">
-@endsection
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('fuel.index') }}">@lang('fleet.fuel')</a></li>
-    <li class="breadcrumb-item active">@lang('fleet.edit_fuel')</li>
-@endsection
-@section('content')
+    <link rel="stylesheet" href="<?php echo e(asset('assets/css/bootstrap-datepicker.min.css')); ?>">
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('breadcrumb'); ?>
+    <li class="breadcrumb-item"><a href="<?php echo e(route('fuel.index')); ?>"><?php echo app('translator')->getFromJson('fleet.fuel'); ?></a></li>
+    <li class="breadcrumb-item active"><?php echo app('translator')->getFromJson('fleet.add_fuel'); ?></li>
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('content'); ?>
     <div class="row">
         <div class="col-md-12">
             <div class="card card-success">
                 <div class="card-header">
-                    <h3 class="card-title">@lang('fleet.edit_fuel')</h3>
+                    <h3 class="card-title"><?php echo app('translator')->getFromJson('fleet.addFuel'); ?></h3>
                 </div>
 
                 <div class="card-body">
-                    @if (count($errors) > 0)
+                    <?php if(count($errors) > 0): ?>
                         <div class="alert alert-danger">
                             <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
+                                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <li><?php echo e($error); ?></li>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </ul>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                    {!! Form::open(['route' => ['fuel.update', $data->id], 'method' => 'PATCH']) !!}
-                    {!! Form::hidden('user_id', Auth::user()->id) !!}
-                    {!! Form::hidden('vehicle_id', $vehicle_id) !!}
+                    <?php echo Form::open(['route' => 'fuel.store', 'method' => 'post']); ?>
+
+                    <?php echo Form::hidden('user_id', Auth::user()->id); ?>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                {!! Form::label('vehicle_id', __('fleet.selectVehicle'), ['class' => 'form-label']) !!}
+                                <?php echo Form::label('vehicle_id', __('fleet.selectVehicle'), ['class' => 'form-label']); ?>
+
                                 <select id="vehicle_id" name="vehicle_id" class="form-control" required>
                                     <option value="">-</option>
-                                    @foreach ($vehicles as $vehicle)
-                                        <option value="{{ $vehicle->id }}" @if ($vehicle->id == $vehicle_id) selected @endif>
-                                            {{ $vehicle->make }} - {{ $vehicle->model }} -
-                                            {{ $vehicle->license_plate }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $vehicles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($vehicle->id); ?>"><?php echo e($vehicle->make); ?> - <?php echo e($vehicle->model); ?> -
+                                            <?php echo e($vehicle->license_plate); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
 
                             <div class="form-group">
-                                {!! Form::label('group_transport_id', __('fleet.selectTransporter'), ['class' => 'form-label']) !!}
-                                <select id="group_transport_id" name="group_transport_id" class="form-control">
+                                <?php echo Form::label('group_transport', __('fleet.selectTransporter'), ['class' => 'form-label']); ?>
+
+                                <select id="group_transport" name="group_transport" class="form-control">
                                     <option value="">-</option>
-                                    @foreach ($groups as $group)
-                                        <option value="{{ $group->id }}" {{ $data->group_transport_id == $group->id ? 'selected' : '' }}>
-                                            {{ $group->group_name }}
-                                        </option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($group->id); ?>"><?php echo e($group->group_name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
 
                             <div class="form-group">
-                                {!! Form::label('date', __('fleet.date'), ['class' => 'form-label']) !!}
+                                <?php echo Form::label('date', __('fleet.date'), ['class' => 'form-label']); ?>
+
                                 <div class='input-group'>
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><span class="fa fa-calendar"></span>
                                         </span>
                                     </div>
-                                    {!! Form::text('date', Helper::indianDateFormat($data->date), ['class' => 'form-control', 'required']) !!}
+                                    <?php echo Form::text('date', Helper::indianDateFormat(), ['class' => 'form-control', 'required', 'readonly']); ?>
+
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                {!! Form::label('start_meter', __('fleet.start_meter'), ['class' => 'form-label']) !!}
-                                {!! Form::number('start_meter', $data->start_meter, ['class' => 'form-control', 'required']) !!}
-                                <small>@lang('fleet.meter_reading')</small>
+                                <?php echo Form::label('start_meter', __('fleet.start_meter'), ['class' => 'form-label']); ?>
+
+                                <?php echo Form::number('start_meter', null, ['class' => 'form-control', 'required']); ?>
+
+                                <small><?php echo app('translator')->getFromJson('fleet.meter_reading'); ?></small>
                             </div>
 
                             <div class="form-group">
-                                {!! Form::label('reference', __('fleet.reference'), ['class' => 'form-label']) !!}
-                                {!! Form::text('reference', $data->reference, ['class' => 'form-control']) !!}
+                                <?php echo Form::label('reference', __('fleet.reference'), ['class' => 'form-label']); ?>
+
+                                <?php echo Form::text('reference', null, ['class' => 'form-control']); ?>
+
                             </div>
 
                             <div class="form-group">
-                                {!! Form::label('province', __('fleet.province'), ['class' => 'form-label']) !!}
-                                {!! Form::text('province', $data->province, ['class' => 'form-control']) !!}
+                                <?php echo Form::label('province', __('fleet.province'), ['class' => 'form-label']); ?>
+
+                                <?php echo Form::text('province', null, ['class' => 'form-control']); ?>
+
                             </div>
 
                             <div class="form-group">
-                                {!! Form::label('note', __('fleet.note'), ['class' => 'form-label']) !!}
-                                {!! Form::text('note', $data->note, ['class' => 'form-control']) !!}
+                                <?php echo Form::label('note', __('fleet.note'), ['class' => 'form-label']); ?>
+
+                                <?php echo Form::text('note', null, ['class' => 'form-control']); ?>
+
                             </div>
                             <div class="form-group row">
                                 <div class="col-md-6">
-                                    <h4>@lang('fleet.complete_fill_up')</h4>
+                                    <h4><?php echo app('translator')->getFromJson('fleet.complete_fill_up'); ?></h4>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="switch">
-                                        <input type="checkbox" name="complete" value="1" @if ($data->complete == 1) checked @endif>
+                                        <input type="checkbox" name="complete" value="1">
                                         <span class="slider round"></span>
                                     </label>
                                 </div>
@@ -174,16 +183,14 @@
                         <div class="col-md-6">
                             <div class="card card-solid">
                                 <div class="card-header">
-                                    <h3 class="card-title">@lang('fleet.fuel_coming_from')</h3>
+                                    <h3 class="card-title"><?php echo app('translator')->getFromJson('fleet.fuel_coming_from'); ?></h3>
                                 </div>
                                 <div class="card-body">
                                     <select id="vendor_name" name="vendor_name" class="form-control" required>
                                         <option value="">- Select Vendor -</option>
-                                        @foreach ($vendors as $vendor)
-                                            <option value="{{ $vendor->id }}" @if ($data->vendor_name == $vendor->id) selected @endif>
-                                                {{ $vendor->name }}
-                                            </option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $vendors; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vendor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($vendor->id); ?>"> <?php echo e($vendor->name); ?> </option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
 
                                     <div id="available_stock_container" style="display: none;" class="mt-3">
@@ -191,7 +198,7 @@
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="available_stock" readonly>
                                             <div class="input-group-append">
-                                                <span class="input-group-text">{{ Hyvikk::get('fuel_unit') }}</span>
+                                                <span class="input-group-text"><?php echo e(Hyvikk::get('fuel_unit')); ?></span>
                                             </div>
                                         </div>
                                     </div>
@@ -201,35 +208,44 @@
                             <div class="card card-solid">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        @lang('fleet.fuel')
+                                        <?php echo app('translator')->getFromJson('fleet.fuel'); ?>
                                     </h3>
                                 </div>
                                 <div class="card-body">
                                     <div class="form-group">
-                                        {!! Form::label('fuel_type', __('fleet.fuelType'), ['class' => 'form-label']) !!}
+                                        <?php echo Form::label('fuel_type', __('fleet.fuelType'), ['class' => 'form-label']); ?>
+
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text"><i class="fa fa-exclamation"></i></span>
                                             </div>
-                                            {!! Form::select('fuel_type', $oil, $data->fuel_type, [
+                                            <?php echo Form::select('fuel_type', $oil, null, [
                                                 'class' => 'form-control',
+                                                'placeholder' => 'Choose fuel type',
                                                 'required',
-                                            ]) !!}
+                                            ]); ?>
+
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        {!! Form::label('qty', __('fleet.qty') . ' (' . Hyvikk::get('fuel_unit') . ')', ['class' => 'form-label']) !!}
-                                        {!! Form::text('qty', $data->qty, ['class' => 'form-control', 'required']) !!}
+                                        <?php echo Form::label('qty', __('fleet.qty') . ' (' . Hyvikk::get('fuel_unit') . ')', ['class' => 'form-label']); ?>
+
+                                        <?php echo Form::text('qty', '0.00', ['class' => 'form-control', 'required']); ?>
+
                                     </div>
                                     <div class="form-group">
-                                        {!! Form::label('cost_per_unit', __('fleet.cost_per_unit'), ['class' => 'form-label']) !!}
+                                        <?php echo Form::label('cost_per_unit', __('fleet.cost_per_unit'), ['class' => 'form-label']); ?>
+
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
-                                                <span class="input-group-text">{{ Hyvikk::get('currency') }}</span>
+                                                <span class="input-group-text"><?php echo e(Hyvikk::get('currency')); ?></span>
                                             </div>
-                                            {!! Form::text('cost_per_unit', $data->cost_per_unit, ['class' => 'form-control', 'required']) !!}
+                                            <?php echo Form::text('cost_per_unit', '0.00', ['class' => 'form-control', 'required']); ?>
+
                                         </div>
                                     </div>
+                                    <small class="smallfuel" style="display: none;">Total Fuel Price &nbsp;<span
+                                            class="fa fa-inr"></span>&nbsp;<span class="fueltot"></span></small>
                                 </div>
                             </div>
                         </div>
@@ -247,52 +263,65 @@
                                         <div class="col-md-4">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    {!! Form::label('Is GST?', __('fleet.isGst'), ['class' => 'form-label']) !!}
-                                                    {!! Form::select('is_gst', $is_gst, $data->is_gst, [
+                                                    <?php echo Form::label('Is GST?', __('fleet.isGst'), ['class' => 'form-label']); ?>
+
+                                                    <?php echo Form::select('is_gst', $is_gst, null, [
                                                         'class' => 'form-control',
                                                         'id' => 'is_gst',
+                                                        'placeholder' => 'Select',
                                                         'required',
-                                                    ]) !!}
+                                                    ]); ?>
+
                                                 </div>
                                                 <div class="col-md-6">
-                                                    {!! Form::label('cgst', __('fleet.cgst') . ' %', ['class' => 'form-label']) !!}
-                                                    {!! Form::text('cgst', $data->cgst, [
+                                                    <?php echo Form::label('cgst', __('fleet.cgst') . ' %', ['class' => 'form-label']); ?>
+
+                                                    <?php echo Form::text('cgst', null, [
                                                         'class' => 'form-control',
                                                         'id' => 'cgst',
                                                         'placeholder' => 'Enter %',
                                                         'onkeypress' => 'return isNumber(event,this)',
                                                         'required',
-                                                    ]) !!}
+                                                    ]); ?>
+
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    {!! Form::label('cgst_amt', __('fleet.cgst_amt'), ['class' => 'form-label']) !!}
-                                                    {!! Form::text('cgst_amt', $data->cgst_amt, ['class' => 'form-control', 'id' => 'cgst_amt', 'readonly']) !!}
+                                                    <?php echo Form::label('cgst_amt', __('fleet.cgst_amt'), ['class' => 'form-label']); ?>
+
+                                                    <?php echo Form::text('cgst_amt', null, ['class' => 'form-control', 'id' => 'cgst_amt', 'readonly']); ?>
+
                                                 </div>
                                                 <div class="col-md-6">
-                                                    {!! Form::label('sgst', __('fleet.sgst') . ' %', ['class' => 'form-label']) !!}
-                                                    {!! Form::text('sgst', $data->sgst, [
+                                                    <?php echo Form::label('sgst', __('fleet.sgst') . ' %', ['class' => 'form-label']); ?>
+
+                                                    <?php echo Form::text('sgst', null, [
                                                         'class' => 'form-control',
                                                         'id' => 'sgst',
                                                         'placeholder' => 'Enter %',
                                                         'onkeypress' => 'return isNumber(event,this)',
                                                         'required',
-                                                    ]) !!}
+                                                    ]); ?>
+
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    {!! Form::label('sgst_amt', __('fleet.sgst_amt'), ['class' => 'form-label']) !!}
-                                                    {!! Form::text('sgst_amt', $data->sgst_amt, ['class' => 'form-control', 'id' => 'sgst_amt', 'readonly']) !!}
+                                                    <?php echo Form::label('sgst_amt', __('fleet.sgst_amt'), ['class' => 'form-label']); ?>
+
+                                                    <?php echo Form::text('sgst_amt', null, ['class' => 'form-control', 'id' => 'sgst_amt', 'readonly']); ?>
+
                                                 </div>
                                                 <div class="col-md-6">
-                                                    {!! Form::label('total_amount', __('fleet.total_amount'), ['class' => 'form-label']) !!}
-                                                    {!! Form::text('total_amount', $data->total_amount, ['class' => 'form-control', 'id' => 'total_amount', 'readonly']) !!}
+                                                    <?php echo Form::label('total_amount', __('fleet.total_amount'), ['class' => 'form-label']); ?>
+
+                                                    <?php echo Form::text('total_amount', null, ['class' => 'form-control', 'id' => 'total_amount', 'readonly']); ?>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -303,7 +332,8 @@
                     </div>
                     <div class="row">
                         <div class="col-md-12">
-                            {!! Form::submit(__('fleet.update'), ['class' => 'btn btn-success']) !!}
+                            <?php echo Form::submit(__('fleet.add_fuel'), ['class' => 'btn btn-success', 'id' => 'addBtn']); ?>
+
                         </div>
                     </div>
                 </div>
@@ -312,16 +342,15 @@
     </div>
 
 <script>
-    var getAvailableStockUrl = "{{ route('get_available_stock') }}";
-    var fuelGstCalculateUrl = "{{ route('fuel.fuel_gstcalculate') }}";
-    var csrfToken = "{{ csrf_token() }}";
+    var getAvailableStockUrl = "<?php echo e(route('get_available_stock')); ?>";
+    var fuelGstCalculateUrl = "<?php echo e(route('fuel.fuel_gstcalculate')); ?>";
+    var csrfToken = "<?php echo e(csrf_token()); ?>"; 
 </script>
-@endsection
-
-@section('script')
-    <script src="{{ asset('assets/js/moment.js') }}"></script>
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('script'); ?>
+    <script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
     <!-- bootstrap datepicker -->
-    <script src="{{ asset('assets/js/bootstrap-datepicker.min.js') }}"></script>
+    <script src="<?php echo e(asset('assets/js/bootstrap-datepicker.min.js')); ?>"></script>
     <script type="text/javascript">
         // Check Number and Decimal
         function isNumber(evt, element) {
@@ -339,15 +368,15 @@
 
             // Initialize Select2 for dropdowns
             $("#vehicle_id").select2({
-                placeholder: "@lang('fleet.selectVehicle')"
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.selectVehicle'); ?>"
             });
 
             $("#vendor_name").select2({
-                placeholder: "@lang('fleet.select_fuel_vendor')"
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.select_fuel_vendor'); ?>"
             });
 
             $("#group_transport").select2({
-                placeholder: "@lang('fleet.selectGroup')"
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.selectGroup'); ?>"
             });
 
             // Initialize datepicker
@@ -356,15 +385,23 @@
                 format: 'dd-mm-yyyy'
             });
 
-            // Handle datepicker change
-            $("#date").on("change", function(e) {
-                var date = e.target.value;
+            $("#date").on("dp.change", function(e) {
+                var date = e.date.format("dd-mm-yyyy");
             });
 
             // Initialize iCheck
             $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
                 checkboxClass: 'icheckbox_flat-green',
                 radioClass: 'iradio_flat-green'
+            });
+
+            // Handle fuel from radio change
+            $(".fuel_from").change(function() {
+                if ($("#r1").attr("checked")) {
+                    $('#vendor_name').show();
+                } else {
+                    $('#vendor_name').hide();
+                }
             });
 
             // Handle vendor selection change
@@ -432,19 +469,18 @@
                 }
             });
 
-            // Handle form submission validation
-            $("form").submit(function(e) {
+            // Handle Add Button click
+            $(document).on("click", "#addBtn", function() {
+                var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
                 var qty = $("#qty").val();
                 var costa = $("#cost_per_unit").val();
                 var date = $("#date").val();
                 var group = $("#group_transport").val();
-                var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
 
                 // Validate group selection
                 if (!group) {
                     alert("Please select a transport group");
                     $("#group_transport").focus();
-                    e.preventDefault();
                     return false;
                 }
 
@@ -453,32 +489,40 @@
 
                     if (updatedStock < 0) {
                         alert("Cannot proceed with negative stock value");
-                        e.preventDefault();
                         return false;
                     }
                 }
 
-                if (!date) {
+                if (date == '' || date == null) {
                     alert("Date cannot be empty");
                     $("#date").focus();
-                    e.preventDefault();
                     return false;
                 }
 
-                if (!qty || qty == 0 || !costa || costa == 0) {
-                    if (!qty || qty == 0) {
-                        alert("Quantity cannot be empty or zero");
+                if (qty == null || qty == 0 || costa == null || costa == 0) {
+                    alert("Quantity and Per Unit cannot be empty or zero");
+                    if (qty == null || qty == 0) {
                         $("#qty").focus();
-                        e.preventDefault();
                         return false;
                     }
-                    if (!costa || costa == 0) {
-                        alert("Cost per Unit cannot be empty or zero");
+                    if (costa == null || costa == 0) {
                         $("#cost_per_unit").focus();
-                        e.preventDefault();
                         return false;
                     }
-                    e.preventDefault();
+                    return false;
+                } else if ((qty == null || qty == 0) && (costa != null || costa != 0)) {
+                    alert("Quantity cannot be empty or zero");
+                    if (qty == null || qty == 0) {
+                        $("#qty").focus();
+                        return false;
+                    }
+                    return false;
+                } else if ((qty != null || qty != 0) && (costa == null || costa == 0)) {
+                    alert("Cost per Unit cannot be empty or zero");
+                    if (costa == null || costa == 0) {
+                        $("#cost_per_unit").focus();
+                        return false;
+                    }
                     return false;
                 }
             });
@@ -551,17 +595,8 @@
                     $("#total_amount").val('');
                 }
             });
-
-            // Trigger initial calculations on page load if values exist
-            if ($("#cost_per_unit").val() && $("#qty").val()) {
-                $("#cost_per_unit").trigger('keyup');
-            }
-
-            // Check vendor name on page load
-            if ($("#vendor_name").find("option:selected").text().trim() === 'Ranisati Own Stock') {
-                $("#available_stock_container").show();
-                fetchAvailableStock();
-            }
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\VehicleMgmt\framework\resources\views/fuel/create.blade.php ENDPATH**/ ?>

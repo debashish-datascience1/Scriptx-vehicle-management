@@ -920,6 +920,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="{{ route('reports.fuel-transport') }}" class="nav-link @if(Request::is('admin/reports/fuel-transport')) active @endif">
+                  <i class="fa fa-truck nav-icon"></i>
+                  <p>Transporter Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="{{ route('reports.fuel-purchase') }}" class="nav-link @if(Request::is('admin/reports/fuel-purchase')) active @endif">
                   <i class="fa fa-book nav-icon"></i>
                   <p>Fuel Purchase Report</p>
@@ -1070,6 +1076,12 @@
                   <a href="{{ route('fuel_purchase.index') }}" class="nav-link @if(Request::is('admin/fuel_purchase*')) active @endif">
                       <i class="fa fa-shopping-cart nav-icon"></i>
                       <p>@lang('fleet.fuel_purchase')</p>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a href="{{ route('groups.index') }}" class="nav-link @if(Request::is('admin/groups*')) active @endif">
+                      <i class="fa fa-users nav-icon"></i>
+                      <p>@lang('fleet.manageGroups')</p>
                   </a>
               </li>
               {{-- <li class="nav-item">

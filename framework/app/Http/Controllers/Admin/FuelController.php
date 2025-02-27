@@ -7,6 +7,7 @@ use App\Http\Requests\FuelRequest;
 use App\Model\Expense;
 use App\Model\FuelModel;
 use App\Model\FuelPurchase;
+use App\Model\GroupTransport;
 use App\Model\VehicleModel;
 use App\Model\Vendor;
 use App\Model\FuelType;
@@ -266,6 +267,20 @@ class FuelController extends Controller
 		exit;
 	}
 
+	// public function create()
+	// {
+	// 	if (Auth::user()->group_id == null || Auth::user()->user_type == "S") {
+	// 		$data['vehicles'] = VehicleModel::whereIn_service("1")->get();
+	// 	} else {
+	// 		$data['vehicles'] = VehicleModel::where('group_id', Auth::user()->group_id)->whereIn_service("1")->get();
+	// 	}
+	// 	$data['vendors'] = Vendor::where('type', 'fuel')->get();
+	// 	$data['oil'] = FuelType::pluck('fuel_name', 'id');
+	// 	$data['is_gst'] = [1 => 'Yes', 2 => 'No'];
+	// 	// dd($data);
+	// 	return view('fuel.create', $data);
+	// }
+
 	public function create()
 	{
 		if (Auth::user()->group_id == null || Auth::user()->user_type == "S") {
@@ -276,7 +291,7 @@ class FuelController extends Controller
 		$data['vendors'] = Vendor::where('type', 'fuel')->get();
 		$data['oil'] = FuelType::pluck('fuel_name', 'id');
 		$data['is_gst'] = [1 => 'Yes', 2 => 'No'];
-		// dd($data);
+		$data['groups'] = GroupTransport::all(); // Add this line
 		return view('fuel.create', $data);
 	}
 
@@ -366,7 +381,9 @@ class FuelController extends Controller
 		$grandtotal = $total + $cgstval + $sgstval;
 		// $abc = [$cgstval,$sgstval,$total,$grandtotal];
 		// dd($abc);
+		$fuel->group_transport_id = $request->get('group_transport');
 		$fuel->is_gst = $isgst;
+		$fuel->group_transport_id = $request->get('group_transport');
 		$fuel->cgst = $cgst;
 		$fuel->sgst = $sgst;
 		$fuel->cgst_amt = bcdiv($cgstval, 1, 2);
@@ -419,30 +436,78 @@ class FuelController extends Controller
 		dd("show method");
 	}
 
+	// public function edit($id)
+	// {
+
+	// 	// return $id;
+	// 	//$data['vehicles'] = VehicleModel::get();
+	// 	// dd(Helper::isGlobalSearch());
+
+	// 	$index['data'] = $data = FuelModel::find($id);
+	// 	$index['vehicle_id'] = $data->vehicle_id;
+	// 	$index['vendors'] = Vendor::where('type', 'fuel')->get();
+	// 	$index['oil'] = FuelType::pluck('fuel_name', 'id');
+	// 	if (Auth::user()->group_id == null || Auth::user()->user_type == "S") {
+	// 		$index['vehicles'] = VehicleModel::whereIn_service("1")->get();
+	// 	} else {
+	// 		$index['vehicles'] = VehicleModel::where('group_id', Auth::user()->group_id)->whereIn_service("1")->get();
+	// 	}
+	// 	$index['is_gst'] = [1 => 'Yes', 2 => 'No'];
+	// 	//$data['vehicles'] = VehicleModel::get();
+	// 	//  dd($index);
+
+	// 	//setting up redirect sessions
+	// 	if (Helper::isGlobalSearch()) Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
+	// 	else Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
+	// 	// dd(session()->all());
+	// 	return view('fuel.edit', $index);
+	// }
+	// public function edit($id)
+	// {
+	// 	$index['data'] = $data = FuelModel::find($id);
+	// 	$index['vehicle_id'] = $data->vehicle_id;
+	// 	$index['vendors'] = Vendor::where('type', 'fuel')->get();
+	// 	$index['oil'] = FuelType::pluck('fuel_name', 'id');
+	// 	if (Auth::user()->group_id == null || Auth::user()->user_type == "S") {
+	// 		$index['vehicles'] = VehicleModel::whereIn_service("1")->get();
+	// 	} else {
+	// 		$index['vehicles'] = VehicleModel::where('group_id', Auth::user()->group_id)->whereIn_service("1")->get();
+	// 	}
+	// 	$index['is_gst'] = [1 => 'Yes', 2 => 'No'];
+	// 	$index['groups'] = GroupTransport::all(); // Add this line to get all transport groups
+
+	// 	//setting up redirect sessions
+	// 	if (Helper::isGlobalSearch()) {
+	// 		Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
+	// 	} else {
+	// 		Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
+	// 	}
+		
+	// 	return view('fuel.edit', $index);
+	// }
+
 	public function edit($id)
 	{
-
-		// return $id;
-		//$data['vehicles'] = VehicleModel::get();
-		// dd(Helper::isGlobalSearch());
-
 		$index['data'] = $data = FuelModel::find($id);
 		$index['vehicle_id'] = $data->vehicle_id;
 		$index['vendors'] = Vendor::where('type', 'fuel')->get();
 		$index['oil'] = FuelType::pluck('fuel_name', 'id');
+		
 		if (Auth::user()->group_id == null || Auth::user()->user_type == "S") {
 			$index['vehicles'] = VehicleModel::whereIn_service("1")->get();
 		} else {
 			$index['vehicles'] = VehicleModel::where('group_id', Auth::user()->group_id)->whereIn_service("1")->get();
 		}
+		
 		$index['is_gst'] = [1 => 'Yes', 2 => 'No'];
-		//$data['vehicles'] = VehicleModel::get();
-		//  dd($index);
-
-		//setting up redirect sessions
-		if (Helper::isGlobalSearch()) Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
-		else Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
-		// dd(session()->all());
+		$index['groups'] = GroupTransport::select('id', 'group_name')->get();
+	
+		if (Helper::isGlobalSearch()) {
+			Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
+		} else {
+			Session::put('global_redirects', ['fuel_edit' => url()->previous()]);
+		}
+		
 		return view('fuel.edit', $index);
 	}
 
@@ -479,6 +544,7 @@ class FuelController extends Controller
 		$grandtotal = $total + $cgstval + $sgstval;
 		// $abc = [$cgstval,$sgstval,$total,$grandtotal];
 		// dd($abc);
+		$fuel->group_transport_id = $request->get('group_transport');
 		$fuel->is_gst = $isgst;
 		$fuel->cgst = $cgst;
 		$fuel->sgst = $sgst;

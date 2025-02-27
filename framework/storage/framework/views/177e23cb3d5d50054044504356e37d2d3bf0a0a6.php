@@ -116,6 +116,28 @@
                             </div>
 
                             <div class="form-group">
+                                <?php echo Form::label('group_transport', __('fleet.groupTransport'), ['class' => 'form-label']); ?>
+
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <select id="group_transport" name="group_transport" class="form-control">
+                                            <option value="">-</option>
+                                            <?php $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($group->id); ?>"><?php echo e($group->group_name); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary" data-toggle="modal"
+                                            data-target="#addGroupModal">
+                                            <i class="fa fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="form-group">
                                 <?php echo Form::label('date', __('fleet.date'), ['class' => 'form-label']); ?>
 
                                 <div class='input-group'>
@@ -330,8 +352,36 @@
         </div>
     </div>
 
+    <div class="modal fade" id="addGroupModal" tabindex="-1" role="dialog" aria-labelledby="addGroupModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addGroupModalLabel">Add New Transport Group</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="group_name">Group Name</label>
+                        <input type="text" class="form-control" id="group_name" >
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveGroup">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 <?php $__env->stopSection(); ?>
 
+<script>
+    var storeGroupUrl = "<?php echo e(route('admin.group.store')); ?>";
+</script>
 <?php $__env->startSection('script'); ?>
     <script src="<?php echo e(asset('assets/js/moment.js')); ?>"></script>
     <!-- bootstrap datepicker -->
@@ -351,13 +401,20 @@
             // Keep track of original stock for calculations
             let originalStock = 0;
 
+            // Initialize Select2 for dropdowns
             $("#vehicle_id").select2({
                 placeholder: "<?php echo app('translator')->getFromJson('fleet.selectVehicle'); ?>"
             });
+
             $("#vendor_name").select2({
                 placeholder: "<?php echo app('translator')->getFromJson('fleet.select_fuel_vendor'); ?>"
             });
 
+            $("#group_transport").select2({
+                placeholder: "<?php echo app('translator')->getFromJson('fleet.selectGroup'); ?>"
+            });
+
+            // Initialize datepicker
             $('#date').datepicker({
                 autoclose: true,
                 format: 'dd-mm-yyyy'
@@ -367,12 +424,13 @@
                 var date = e.date.format("dd-mm-yyyy");
             });
 
-            //Flat green color scheme for iCheck
+            // Initialize iCheck
             $('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
                 checkboxClass: 'icheckbox_flat-green',
                 radioClass: 'iradio_flat-green'
             });
 
+            // Handle fuel from radio change
             $(".fuel_from").change(function() {
                 if ($("#r1").attr("checked")) {
                     $('#vendor_name').show();
@@ -383,30 +441,60 @@
 
             // Handle vendor selection change
             $("#vendor_name").on('change', function() {
-                // Get the selected vendor name
                 var selectedVendorName = $(this).find("option:selected").text().trim();
 
                 if (selectedVendorName === 'Ranisati Own Stock') {
-                    // Show the stock container and fetch available stock
                     $("#available_stock_container").show();
                     fetchAvailableStock();
                 } else {
-                    // Hide the stock container for other vendors
                     $("#available_stock_container").hide();
                     $("#available_stock").val('');
                     originalStock = 0;
                 }
             });
 
+            // Handle save group button click
+            $("#saveGroup").click(function() {
+                var groupName = $("#group_name").val();
+                if (!groupName) {
+                    alert("Please enter a group name");
+                    return;
+                }
+
+                $.ajax({
+                    url: storeGroupUrl, // This will now use the admin route
+                    type: 'POST',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content'),
+                        group_name: groupName
+                    },
+                    success: function(response) {
+                        // Add new option to select
+                        var newOption = new Option(response.group_name, response.id, true,
+                            true);
+                        $("#group_transport").append(newOption).trigger('change');
+
+                        // Close modal and clear input
+                        $("#addGroupModal").modal('hide');
+                        $("#group_name").val('');
+
+                        // Show success message
+                        alert('Group added successfully!');
+                    },
+                    error: function(xhr) {
+                        alert('Error adding group: ' + (xhr.responseJSON?.message ||
+                            'Unknown error'));
+                    }
+                });
+            });
+
             function fetchAvailableStock() {
                 $.ajax({
-                    url: "<?php echo e(route('get_available_stock')); ?>",
+                    url: route('get_available_stock'),
                     type: 'GET',
                     success: function(response) {
                         $("#available_stock").val(response.available_stock);
                         originalStock = parseFloat(response.available_stock);
-
-                        // Update display if quantity is already entered
                         updateAvailableStockDisplay();
                     },
                     error: function(xhr) {
@@ -424,10 +512,8 @@
                     var requestedQty = parseFloat($("#qty").val()) || 0;
                     var updatedStock = originalStock - requestedQty;
 
-                    // Update the available stock display
                     $("#available_stock").val(updatedStock.toFixed(2));
 
-                    // Visual feedback for low stock
                     if (updatedStock < 0) {
                         $("#available_stock").css('color', 'red');
                     } else {
@@ -445,7 +531,7 @@
 
                     if (requestedQty > originalStock) {
                         alert("Quantity cannot exceed available stock of " + originalStock + " " +
-                            "<?php echo e(Hyvikk::get('fuel_unit')); ?>");
+                            fuel_unit);
                         $(this).val(originalStock);
                         requestedQty = originalStock;
                     }
@@ -454,12 +540,30 @@
                 }
             });
 
+            // Check Number and Decimal
+            function isNumber(evt, element) {
+                var charCode = (evt.which) ? evt.which : event.keyCode;
+                if (
+                    (charCode != 46 || $(element).val().indexOf('.') != -1) && // "." CHECK DOT, AND ONLY ONE.
+                    (charCode < 48 || charCode > 57))
+                    return false;
+                return true;
+            }
+
             // Handle Add Button click
             $(document).on("click", "#addBtn", function() {
                 var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
                 var qty = $("#qty").val();
                 var costa = $("#cost_per_unit").val();
                 var date = $("#date").val();
+                var group = $("#group_transport").val();
+
+                // Validate group selection
+                if (!group) {
+                    alert("Please select a transport group");
+                    $("#group_transport").focus();
+                    return false;
+                }
 
                 if (selectedVendorName === 'Ranisati Own Stock') {
                     var updatedStock = parseFloat($("#available_stock").val());
@@ -512,14 +616,14 @@
                 var sgst = $("#sgst").val();
 
                 var sendData = {
-                    _token: "<?php echo e(csrf_token()); ?>",
+                    _token: csrf_token,
                     cost: cost,
                     qty: qty,
                     cgst: cgst,
                     sgst: sgst
                 };
 
-                $.post("<?php echo e(route('fuel.fuel_gstcalculate')); ?>", sendData)
+                $.post(route('fuel.fuel_gstcalculate'), sendData)
                     .done(function(data) {
                         if (!isNaN(data.total) && data.total != 0) {
                             $(".smallfuel").show();
@@ -573,6 +677,10 @@
                 }
             });
 
+            // Clear group modal input when modal is hidden
+            $('#addGroupModal').on('hidden.bs.modal', function() {
+                $("#group_name").val('');
+            });
         });
     </script>
 <?php $__env->stopSection(); ?>

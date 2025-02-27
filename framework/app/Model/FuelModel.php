@@ -11,7 +11,30 @@ class FuelModel extends Model
 	protected $dates = ['deleted_at'];
 	protected $appends = ['fuel_price'];
 	protected $table = "fuel";
-	protected $fillable = ['vehicle_id', 'user_id', 'start_meter', 'reference', 'provience', 'note', 'qty', 'fuel_from', 'cost_per_unit', 'complete', 'date', 'vendor_name', 'mileage_type', 'cgst', 'sgst', 'cgst_amt', 'sgst_amt', 'is_gst'];
+	protected $fillable = [
+        'vehicle_id', 
+        'user_id', 
+        'start_meter', 
+        'reference', 
+        'provience', 
+        'note', 
+        'qty', 
+        'fuel_from', 
+        'cost_per_unit', 
+        'complete', 
+        'date', 
+        'vendor_name', 
+        'mileage_type', 
+        'cgst', 
+        'sgst', 
+        'cgst_amt', 
+        'sgst_amt', 
+        'is_gst',
+        'group_transport_id',
+        'fuel_type',
+        'total',
+        'grand_total'
+    ];
 
 	function getFuelPriceAttribute()
 	{
@@ -20,7 +43,6 @@ class FuelModel extends Model
 
 	function vehicle_data()
 	{
-
 		return $this->belongsTo("App\Model\VehicleModel", "vehicle_id", "id")->withTrashed();
 	}
 
@@ -33,4 +55,9 @@ class FuelModel extends Model
 	{
 		return $this->belongsTo("App\Model\Vendor", 'vendor_name')->withTrashed();
 	}
+    
+    function group_transport()
+    {
+        return $this->belongsTo("App\Model\GroupTransport", "group_transport_id");
+    }
 }

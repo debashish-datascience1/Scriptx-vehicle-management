@@ -129,10 +129,16 @@ Route::namespace('Admin')->group(function () {
         Route::post('store-api', 'SettingsController@store_api')->middleware('userpermission:S');
         Route::resource('service-reminder', 'ServiceReminderController')->middleware('userpermission:9');
         Route::resource('service-item', 'ServiceItemsController')->middleware('userpermission:9');
-
-        Route::get('admin/reports/fuel-purchase', 'ReportsController@fuelPurchase')->name('reports.fuel-purchase');
-        Route::post('admin/reports/fuel-purchase', 'ReportsController@fuelPurchasePost')->name('reports.fuel-purchase-post');
-        Route::post('admin/reports/print-fuel-purchase', 'ReportsController@printFuelPurchase')->name('print.fuel-purchase.report');
+        Route::post('group/store', 'GroupTransportController@store')
+        ->name('admin.group.store')
+        ->middleware('userpermission:5');
+        Route::resource('/groups', 'GroupTransportController');
+        Route::get('/reports/fuel-transport', 'ReportsController@fuelTransport')->name('reports.fuel-transport');
+        Route::post('/reports/fuel-transport', 'ReportsController@fuelTransportPost')->name('reports.fuel-transport_post');
+        Route::post('print-fuel-transport-report', 'ReportsController@print_fuel_transport');
+        Route::get('/reports/fuel-purchase', 'ReportsController@fuelPurchase')->name('reports.fuel-purchase');
+        Route::post('/reports/fuel-purchase', 'ReportsController@fuelPurchasePost')->name('reports.fuel-purchase-post');
+        Route::post('/reports/print-fuel-purchase', 'ReportsController@printFuelPurchase')->name('print.fuel-purchase.report');
         Route::get('/reports/fastag', 'ReportsController@fastag')->name('reports.fastag');
         Route::post('/reports/fastag', 'ReportsController@fastagPost')->name('reports.fastag');
         Route::post('print-fastag-report', 'ReportsController@printFastagReport')->name('print.fastag.report');
