@@ -516,6 +516,11 @@ class FuelController extends Controller
 		// dd($request->all());
 		// dd($request->id);
 		$fuel = FuelModel::find($request->get("id"));
+		// dd($fuel);
+		if (!$fuel) {
+			// Handle the case where the record is not found
+			return redirect()->back()->with('error', 'Fuel record not found.');
+		}
 		$start_mtr = $request->get('start_meter');
 
 		// GST Calculations
@@ -544,7 +549,7 @@ class FuelController extends Controller
 		$grandtotal = $total + $cgstval + $sgstval;
 		// $abc = [$cgstval,$sgstval,$total,$grandtotal];
 		// dd($abc);
-		$fuel->group_transport_id = $request->get('group_transport');
+		$fuel->group_transport_id = $request->get('group_transport_id');
 		$fuel->is_gst = $isgst;
 		$fuel->cgst = $cgst;
 		$fuel->sgst = $sgst;

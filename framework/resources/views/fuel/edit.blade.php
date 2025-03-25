@@ -101,6 +101,7 @@
                     {!! Form::open(['route' => ['fuel.update', $data->id], 'method' => 'PATCH']) !!}
                     {!! Form::hidden('user_id', Auth::user()->id) !!}
                     {!! Form::hidden('vehicle_id', $vehicle_id) !!}
+                    {!! Form::hidden('id', $data->id) !!}
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -346,7 +347,7 @@
                 placeholder: "@lang('fleet.select_fuel_vendor')"
             });
 
-            $("#group_transport").select2({
+            $("#group_transport_id").select2({
                 placeholder: "@lang('fleet.selectGroup')"
             });
 
@@ -437,17 +438,20 @@
                 var qty = $("#qty").val();
                 var costa = $("#cost_per_unit").val();
                 var date = $("#date").val();
-                var group = $("#group_transport").val();
+                // Remove this line: var group = $("#group_transport").val();
                 var selectedVendorName = $("#vendor_name").find("option:selected").text().trim();
 
-                // Validate group selection
+                // Remove this entire block:
+                /*
                 if (!group) {
                     alert("Please select a transport group");
                     $("#group_transport").focus();
                     e.preventDefault();
                     return false;
                 }
+                */
 
+                // Keep the rest of your validation code
                 if (selectedVendorName === 'Ranisati Own Stock') {
                     var updatedStock = parseFloat($("#available_stock").val());
 
@@ -562,6 +566,8 @@
                 $("#available_stock_container").show();
                 fetchAvailableStock();
             }
+            $("#is_gst").trigger('change');
+
         });
     </script>
 @endsection
